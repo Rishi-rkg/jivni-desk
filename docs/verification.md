@@ -22,3 +22,11 @@ Only synthetic data was used. The screenshot below records the verified timeline
 ![Synthetic patient timeline](screenshots/patient-timeline.jpg)
 
 Envelope encryption remains unimplemented. The production startup guard and the documented deployment gates remain in force. Test success does not establish production readiness or regulatory compliance.
+
+## Laptop UX revision
+
+The subsequent laptop interface revision passed the frontend build and seven frontend tests. Browser verification at 1366 × 768 used synthetic fixtures in a temporary local database and covered the dashboard, patient tabs, preserving a note draft across tabs, the unsaved-navigation warning, saving a note, creating a visit and returning to Visits with confirmation. No backend schema or permission changes were made in this revision.
+
+![Laptop patient workspace](screenshots/laptop-patient.jpg)
+
+See [the UX decisions and flows](user-experience.md). Billing remains an inactive placeholder. Temporary preview servers and fixtures were removed after verification.

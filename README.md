@@ -17,6 +17,8 @@ A new, independent repository for a browser-based clinic record system. Django 5
 
 No messaging, AI requests, library-based treatment suggestions, billing or printing are enabled. Photo upload is implemented; browser webcam capture is a future addition.
 
+The interface now uses a laptop workspace with clinic navigation and patient-specific tabs. See [user flows and UX decisions](docs/user-experience.md) for the dashboard, visit workflow, navigation and draft behavior.
+
 ## Start with Docker Compose
 
 Install Docker Desktop with Compose v2 and Python 3.11+ to generate the local configuration. From this repository:
