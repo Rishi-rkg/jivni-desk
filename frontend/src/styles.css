@@ -66,6 +66,7 @@ tbody tr:hover { background: #f8fafb; }
 .patient-banner { position: sticky; top: 0; z-index: 2; background: #f5f7f8; padding: 12px 0; margin-bottom: 0; }
 .patient-banner h1 { font-size: 1.5rem; }
 .patient-banner p { margin-bottom: 5px; }
+.patient-code { font-size: .85rem; letter-spacing: .04em; }
 .record-id { font-size: .75rem; color: var(--muted); }
 summary { cursor: pointer; }
 .patient-layout { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 24px; align-items: start; }

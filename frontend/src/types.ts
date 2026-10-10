@@ -3,7 +3,7 @@ export interface Membership { clinic_id: string; clinic_name: string; role: Role
 export interface Session { user: { id: string; username: string; name: string }; clinic_id: string; memberships: Membership[]; csrf_token: string; idle_timeout_seconds?: number }
 export interface Address { line1: string; line2: string; city: string; region: string; postal_code: string; country: string }
 export interface Photo { id: string; mime_type: string; byte_size: number; created_at: string }
-export interface Patient { id: string; first_name: string; middle_name: string; last_name: string; date_of_birth: string; gender: string; phone: string; email: string; address: Address | null; photos: Photo[]; archived_at: string | null; created_at: string }
+export interface Patient { id: string; identifier?: string | null; whatsapp_number?: string; first_name: string; middle_name: string; last_name: string; date_of_birth: string; gender: string; phone: string; email: string; address: Address | null; photos: Photo[]; archived_at: string | null; created_at: string }
 export interface Note { id: string; patient: string; body: string; author_name: string; amends: string | null; created_at: string }
 export interface Observation { id?: string; kind: 'height' | 'weight'; value: string; unit: 'cm' | 'kg'; measured_at?: string }
 export interface PrescriptionItem { id?: string; medicine_name_snapshot: string; potency: string; dose: string; frequency: string; duration: string; instructions: string; quantity: number | null }

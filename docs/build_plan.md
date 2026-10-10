@@ -8,14 +8,14 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks: 53 backend tests (51 pass on SQLite, 2 PostgreSQL-only trigger tests skipped because this PC has no PostgreSQL) and 13 frontend tests.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks: 70 backend tests (67 pass on SQLite, 3 PostgreSQL-only trigger tests skipped because this PC has no PostgreSQL) and 13 frontend tests.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
 | Original phase | Built | Missing |
 | --- | --- | --- |
 | 1 Foundation | Login, sessions, six roles, clinic membership, audit events with outcome and source, PostgreSQL schema with append-only triggers, clinic settings, idle lock, audit log screen | Encryption and key handling, recovery key, backup, restore, second factor, password reset, user management screen |
-| 2 Patient MVP | Registration, search, profile, photo upload, notes, timeline | Webcam capture, barcode generation and lookup, `PatientIdentifier`, `whatsapp_number`, a screen to edit demographics |
+| 2 Patient MVP | Registration, search, profile, photo upload, notes, timeline, `PatientIdentifier` codes with scan lookup and reissue, `whatsapp_number`, duplicate check and demographic history (API only) | Webcam capture, printed barcode card, screens for editing demographics, duplicate warning and history, spreadsheet import |
 | 3 Clinical records | Visits with complaint, symptoms, history, assessment, internal notes, follow-up date, height and weight, prescriptions with snapshots, prescription history | Structured symptoms, `medicine_id` link and `doctor_notes` on prescription items, attachments, prescription PDF, any way to correct a saved visit |
 | 4 Billing and printing | Interface stubs only | Everything |
 | 5 Appointments and correspondence | Interface stub only | Everything |
@@ -36,7 +36,7 @@ These come from reading the code. Each is small now and expensive later.
 
 2. **Dates are judged in UTC.** `TIME_ZONE = "UTC"` in `backend/config/settings.py` and `not_future` in `backend/records/models.py` use the UTC date. A clinic east of UTC cannot enter today's date as a date of birth during its early morning, and follow-up dates are compared against the UTC date of the visit. Add a clinic time zone to clinic settings and use it for every "today" decision. *Fixed 2026-10-10.* `Clinic.time_zone`, `Clinic.today()`.
 3. **`archived_at` is a client-writable field.** `PatientSerializer` accepts any timestamp from any role that can edit demographics, including reception, and the same request can un-archive. Replace it with explicit archive and restore actions limited to owner and clinician, stamped by the server and audited under their own action names. *Fixed 2026-10-10.*
-4. **Demographic history is lost.** A PATCH overwrites fields, and sending `address: null` hard-deletes the address row. The audit log records that a change happened but not what changed. This breaks the original principle that historical records stay historical.
+4. **Demographic history is lost.** A PATCH overwrites fields, and sending `address: null` hard-deletes the address row. The audit log records that a change happened but not what changed. This breaks the original principle that historical records stay historical. *Fixed 2026-10-10 in the API:* every edit writes a `PatientRevision` with old and new values in the same transaction. A screen to view it is still to come.
 5. **A saved visit can never be corrected.** Visits are append-only from the first save, there is no draft state, and only notes support amendments. One typo in a potency is permanent.
 6. **`internal_notes` is shown to every clinical reader**, including assistants. The original plan calls these doctor-only notes. *Fixed 2026-10-10.* Returned only to owner and clinician.
 
@@ -50,8 +50,8 @@ These come from reading the code. Each is small now and expensive later.
 **Design gaps that block later phases**
 
 11. **Search will not survive encryption.** Patient search is `icontains` over plaintext columns. The search design must be settled before any field is encrypted.
-12. **No short patient identifier.** The UI shows a 36-character UUID. The original plan's `PatientIdentifier` (for example `PAT-W8KQ3G7DP9`) is not built, and barcodes depend on it.
-13. **No duplicate-patient check** at registration.
+12. **No short patient identifier.** The UI shows a 36-character UUID. The original plan's `PatientIdentifier` (for example `PAT-W8KQ3G7DP9`) is not built, and barcodes depend on it. *Fixed 2026-10-10:* codes are issued at registration, shown in the list and banner, searchable, resolvable by scan and reissuable.
+13. **No duplicate-patient check** at registration. *Fixed 2026-10-10 in the API* (`check-duplicates`); the registration screen does not call it yet. Phone numbers match only when written identically.
 14. **`/health/` does not check the database**, so it cannot be used for deployment health checks. *Fixed 2026-10-10.*
 
 **Tooling**
@@ -131,11 +131,11 @@ Phases 2 and 3 may proceed alongside step 2 on synthetic data. Real data waits f
 
 ### Phase 2: Patient MVP (mostly built)
 
-- **Patient identifier** (`PatientIdentifier`, finding 12): a short opaque random code per patient, shown in the banner in place of the UUID and reissuable if a card is lost.
-- **Barcode generation and lookup**: the identifier printed as Code 128 or QR on a patient card. Scanners act as keyboards, so the application has one global scan handler. A code resolves only for a signed-in user of the same clinic, every scan is audited, and a revoked code opens nothing. The card is printed with ordinary browser printing; no agent is needed yet.
+- ~~**Patient identifier** (`PatientIdentifier`, finding 12): a short opaque random code per patient, shown in the banner in place of the UUID and reissuable if a card is lost.~~ Built 2026-10-10.
+- **Barcode generation and lookup** (lookup endpoint built 2026-10-10; card printing and the global scan handler remain): the identifier printed as Code 128 or QR on a patient card. Scanners act as keyboards, so the application has one global scan handler. A code resolves only for a signed-in user of the same clinic, every scan is audited, and a revoked code opens nothing. The card is printed with ordinary browser printing; no agent is needed yet.
 - **Webcam capture** with crop and resize, through the existing protected photo store.
 - **Demographics editing screen** with a revision record for every change (finding 4), explicit archive and restore, and a duplicate check at registration (finding 13).
-- **`whatsapp_number`** as its own field, separate from phone.
+- ~~**`whatsapp_number`** as its own field, separate from phone.~~ Built 2026-10-10.
 - **Import** of existing patients from a spreadsheet, with a dry run and an error report (D8).
 
 Left out: appointments, money, messaging.

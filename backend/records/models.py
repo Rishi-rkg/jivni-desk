@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from decimal import Decimal
 from django.conf import settings
@@ -47,6 +48,7 @@ class Patient(StableRecord):
     date_of_birth = models.DateField()
     gender = models.CharField(max_length=20, choices=Gender.choices)
     phone = models.CharField(max_length=40, blank=True)
+    whatsapp_number = models.CharField(max_length=40, blank=True)
     email = models.EmailField(blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -114,6 +116,81 @@ class PatientPhoto(PatientLinked):
     byte_size = models.PositiveIntegerField()
     sha256 = models.CharField(max_length=64)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+
+
+CODE_PREFIX = "PAT-"
+# No 0, 1, I, L, O or U: the code is read aloud on the phone and typed from a card.
+CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
+CODE_LENGTH = 10
+
+
+def new_patient_code():
+    return CODE_PREFIX + "".join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
+
+
+def normalize_patient_code(text):
+    """Accept a scanned or typed code with or without the prefix, in any case. None if it cannot be one."""
+    value = "".join(str(text).split()).upper()
+    if value.startswith(CODE_PREFIX):
+        value = value[len(CODE_PREFIX):]
+    if len(value) != CODE_LENGTH or any(char not in CODE_ALPHABET for char in value):
+        return None
+    return CODE_PREFIX + value
+
+
+class PatientIdentifier(StableRecord):
+    """The short code staff say, print and scan. Random and meaningless without the database.
+
+    A patient has one active code. A lost card is handled by revoking the code and issuing another;
+    the code and its patient never change.
+    """
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="identifiers")
+    code = models.CharField(max_length=20, unique=True, editable=False)
+    issued_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="+")
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="+")
+
+    class Meta:
+        ordering = ["-created_at", "id"]
+        constraints = [models.UniqueConstraint(fields=["patient"], condition=models.Q(revoked_at__isnull=True), name="one_active_identifier_per_patient")]
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._original = (instance.code, instance.patient_id, instance.revoked_at)
+        return instance
+
+    def save(self, *args, **kwargs):
+        if hasattr(self, "_original"):
+            code, patient_id, revoked_at = self._original
+            if (self.code, self.patient_id) != (code, patient_id):
+                raise ValidationError("A patient code and its patient cannot be changed.")
+            if revoked_at and self.revoked_at != revoked_at:
+                raise ValidationError("A revoked patient code cannot be reactivated.")
+        super().save(*args, **kwargs)
+        self._original = (self.code, self.patient_id, self.revoked_at)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Patient codes are revoked, never deleted.")
+
+    @classmethod
+    def issue(cls, patient, user=None):
+        for _ in range(20):
+            code = new_patient_code()
+            if not cls.objects.filter(code=code).exists():
+                return cls.objects.create(patient=patient, code=code, issued_by=user)
+        raise RuntimeError("Could not generate a unique patient code.")
+
+
+class PatientRevision(AppendOnlyRecord):
+    """What changed in a patient's demographics, by whom. Holds old and new values, so it is as
+    sensitive as the patient record itself and must be encrypted with it."""
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="revisions")
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    changes = models.JSONField()
+
+    class Meta:
+        ordering = ["-created_at", "id"]
 
 
 class PatientNote(AppendOnlyRecord):

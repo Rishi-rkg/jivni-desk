@@ -54,7 +54,7 @@ function PatientList({ role }: { role: Role }) {
     <ErrorMessage message={error}/>{busy ? <p role="status">Loading patients…</p> : data && !error && <>
       <p className="muted">{data.count} patient{data.count !== 1 ? 's' : ''}</p>
       <div className="panel table-wrap"><table><thead><tr><th>Name</th><th>Date of birth</th><th>Phone</th><th>Patient ID</th></tr></thead><tbody>
-        {data.results.map(p => <tr key={p.id}><td><Link state={{ returnTo: location.pathname + location.search }} to={`/patients/${p.id}`}>{displayName(p)}</Link></td><td>{p.date_of_birth}</td><td>{p.phone || '—'}</td><td className="identifier">{p.id}</td></tr>)}
+        {data.results.map(p => <tr key={p.id}><td><Link state={{ returnTo: location.pathname + location.search }} to={`/patients/${p.id}`}>{displayName(p)}</Link></td><td>{p.date_of_birth}</td><td>{p.phone || '—'}</td><td className="identifier">{p.identifier || p.id}</td></tr>)}
       </tbody></table>{!data.results.length && <p className="empty">No patients found.</p>}</div>
       <div className="pagination"><button className="secondary" disabled={!data.previous} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page}</span><button className="secondary" disabled={!data.next} onClick={() => setPage(page + 1)}>Next</button></div>
     </>}</>;

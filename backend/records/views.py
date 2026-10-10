@@ -1,7 +1,7 @@
 import uuid
 from django.core.exceptions import ValidationError as ModelValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import FileResponse
 from django.utils import timezone
 from rest_framework import mixins, serializers, viewsets
@@ -10,8 +10,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from accounts.access import membership, require_role, CLINIC_ADMIN, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE
 from audit.models import AuditEvent, record_event
-from .models import Patient, PatientPhoto, PatientNote, Encounter
-from .serializers import PatientSerializer, PhotoSerializer, NoteSerializer, EncounterSerializer
+from .models import Patient, PatientIdentifier, PatientPhoto, PatientNote, Encounter, normalize_patient_code
+from .serializers import PatientSerializer, PhotoSerializer, NoteSerializer, EncounterSerializer, RevisionSerializer, DuplicateCheckSerializer
 from .storage import photo_store
 
 
@@ -49,20 +49,24 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
-        queryset = Patient.objects.filter(clinic=self.member.clinic).select_related("address").prefetch_related("photos")
+        active_codes = Prefetch("identifiers", queryset=PatientIdentifier.objects.filter(revoked_at__isnull=True), to_attr="active_identifiers")
+        queryset = Patient.objects.filter(clinic=self.member.clinic).select_related("address").prefetch_related("photos", active_codes)
         if self.action == "list":
             if self.request.query_params.get("archived") != "true":
                 queryset = queryset.filter(archived_at__isnull=True)
             search = self.request.query_params.get("search", "").strip()[:200]
             if search:
-                query = Q(first_name__icontains=search) | Q(middle_name__icontains=search) | Q(last_name__icontains=search) | Q(phone__icontains=search)
+                query = Q(first_name__icontains=search) | Q(middle_name__icontains=search) | Q(last_name__icontains=search) | Q(phone__icontains=search) | Q(whatsapp_number__icontains=search)
+                code = normalize_patient_code(search)
+                if code:
+                    query |= Q(identifiers__code=code, identifiers__revoked_at__isnull=True)
                 for word in search.split():
                     query |= Q(first_name__icontains=word) | Q(last_name__icontains=word)
                 try:
                     query |= Q(id=uuid.UUID(search))
                 except ValueError:
                     pass
-                queryset = queryset.filter(query)
+                queryset = queryset.filter(query).distinct()
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -96,6 +100,70 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         notes = patient.notes.select_related("author").order_by("-created_at", "id")[:50]
         self.event("patient.timeline", patient)
         return Response({"encounters": EncounterSerializer(encounters, many=True, context=self.get_serializer_context()).data, "notes": NoteSerializer(notes, many=True).data, "limit_per_type": 50})
+
+    @action(detail=False, methods=["get"], url_path=r"by-code/(?P<code>[^/]+)")
+    def by_code(self, request, code=None):
+        """Open the patient for a scanned or typed card code. Only an active code of this clinic resolves."""
+        normalized = normalize_patient_code(code)
+        patient = self.get_queryset().filter(identifiers__code=normalized, identifiers__revoked_at__isnull=True).first() if normalized else None
+        if not patient:
+            # The code itself is never written to the audit log.
+            record_event(request, "patient.scan", clinic=self.member.clinic, outcome="failed")
+            return Response({"detail": "No patient in this clinic has that code."}, status=404)
+        self.event("patient.scan", patient)
+        return Response(self.get_serializer(patient).data)
+
+    @action(detail=False, methods=["post"], url_path="check-duplicates")
+    def check_duplicates(self, request):
+        """Possible existing records for a patient about to be registered. Advice only; nothing is blocked.
+
+        A POST so that names and phone numbers never appear in a URL.
+        """
+        serializer = DuplicateCheckSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        phones = {value.strip() for value in [data.get("phone", ""), data.get("whatsapp_number", "")] if value.strip()}
+        first, last, born = data.get("first_name", "").strip(), data.get("last_name", "").strip(), data.get("date_of_birth")
+        query = Q(pk__in=[])
+        if phones:
+            query |= Q(phone__in=phones) | Q(whatsapp_number__in=phones)
+        if born and first:
+            query |= Q(date_of_birth=born, first_name__iexact=first)
+        if first and last:
+            query |= Q(first_name__iexact=first, last_name__iexact=last)
+        matches = []
+        for patient in self.get_queryset().filter(query).distinct()[:5]:
+            reasons = []
+            if phones & {patient.phone, patient.whatsapp_number}:
+                reasons.append("same phone number")
+            if born and patient.date_of_birth == born and patient.first_name.lower() == first.lower():
+                reasons.append("same first name and date of birth")
+            if first and last and patient.first_name.lower() == first.lower() and patient.last_name.lower() == last.lower():
+                reasons.append("same name")
+            matches.append({**self.get_serializer(patient).data, "reasons": reasons})
+        self.event("patient.duplicate_check")
+        return Response({"matches": matches})
+
+    @action(detail=True, methods=["get"])
+    def revisions(self, request, pk=None):
+        patient = self.get_object()
+        revisions = patient.revisions.select_related("changed_by")[:50]
+        self.event("patient.revisions", patient)
+        return Response({"revisions": RevisionSerializer(revisions, many=True).data, "limit": 50})
+
+    @action(detail=True, methods=["post"], url_path="reissue-code")
+    def reissue_code(self, request, pk=None):
+        """Lost or damaged card: the old code stops working at once and a new one is issued."""
+        require_role(request, DEMOGRAPHIC_WRITE)
+        patient = self.get_object()
+        with transaction.atomic():
+            for identifier in patient.identifiers.filter(revoked_at__isnull=True):
+                identifier.revoked_at = timezone.now()
+                identifier.revoked_by = request.user
+                identifier.save()
+            PatientIdentifier.issue(patient, request.user)
+            self.event("patient.reissue_code", patient)
+        return Response(self.get_serializer(self.get_queryset().get(pk=patient.pk)).data)
 
     @action(detail=True, methods=["post"])
     def archive(self, request, pk=None):

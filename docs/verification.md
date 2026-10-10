@@ -45,3 +45,7 @@ See [the UX decisions and flows](user-experience.md). Billing remains an inactiv
 The browser check confirmed: a date of birth of the clinic's today was accepted and tomorrow refused; `archived_at` sent in a PATCH was ignored; archive and restore worked and were audited; a session ended on the server produced the lock screen on the next save, a wrong password was refused, the right one unlocked, and the unsaved note was still in the field; the failed unlock appeared in the owner's audit log as a failed sign-in; clinic settings loaded and the audit log listed events with outcome, record and source address. The throwaway database and servers were removed afterwards.
 
 CI has still never run because the repository has no remote.
+
+## Phase 2 groundwork (2026-10-10)
+
+Patient codes, scan lookup, reissue, WhatsApp number, duplicate check and demographic history: 70 backend tests, 67 passed and 3 PostgreSQL-only trigger checks skipped; 13 frontend tests passed; TypeScript build passed; no migration drift. The data migration that issues codes to existing patients was run forwards and backwards on a throwaway SQLite database. **Not verified on PostgreSQL:** migration `0005_patient_code_guards` attaches the two existing guard functions to the new tables with the same statement form as migration `0002`, but it has not been executed against PostgreSQL.

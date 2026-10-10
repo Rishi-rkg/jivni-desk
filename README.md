@@ -82,7 +82,7 @@ This is a modular monolith. Each feature has a clear owner while transactions an
 | Future modules | `modules.contracts`: independently replaceable providers accepting clinic/resource IDs |
 | Browser | `frontend`: typed API client, role-aware screens, no patient data in local storage |
 
-Patient IDs are random UUIDv4, read-only in the API and protected from mutation by model validation and PostgreSQL triggers. UUIDs are identifiers, not authorization tokens. The patient’s clinic cannot change. Every related record derives its clinic from the patient/encounter; all querysets and writable relationship choices are scoped to the active membership.
+Patient IDs are random UUIDv4, read-only in the API and protected from mutation by model validation and PostgreSQL triggers. Staff use a separate short code (`PAT-` plus ten characters) that is random, carries no information, and can be revoked and reissued. UUIDs are identifiers, not authorization tokens. The patient’s clinic cannot change. Every related record derives its clinic from the patient/encounter; all querysets and writable relationship choices are scoped to the active membership.
 
 Height and weight are observations with units (`cm`, `kg`) and measurement dates, not mutable columns on the patient. An encounter and its nested observations, prescriptions, items and write audit event are committed in one transaction. Invalid nested data rolls the transaction back. Prescriptions preserve medicine name/potency/dose snapshots independently of any future medicine library.
 
@@ -113,6 +113,10 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | `/api/v1/auth/clinic/` | POST | Select an active authorized clinic |
 | `/api/v1/patients/` | GET, POST | Paginated registry; `search`, `page`, `archived=true` |
 | `/api/v1/patients/{id}/` | GET, PATCH | Demographics; `archived_at` is read-only |
+| `/api/v1/patients/by-code/{code}/` | GET | Open a patient from a scanned or typed card code; active codes of this clinic only |
+| `/api/v1/patients/check-duplicates/` | POST | Possible existing records before registering; advice only |
+| `/api/v1/patients/{id}/revisions/` | GET | Latest 50 demographic changes with old and new values |
+| `/api/v1/patients/{id}/reissue-code/` | POST | Revoke the patient's card code and issue a new one |
 | `/api/v1/patients/{id}/archive/`, `/restore/` | POST | Archive or restore; owner and clinician only; time set by the server |
 | `/api/v1/patients/{id}/timeline/` | GET | Latest 50 encounters and 50 notes; clinical roles only |
 | `/api/v1/patients/{id}/photos/` | POST | Multipart field `photo` |
