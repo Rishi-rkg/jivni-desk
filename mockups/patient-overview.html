@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patient record · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="patients" data-patient-tab="overview">
+<main class="content">
+  <div id="patient-head"></div>
+
+  <div class="cols cols-side">
+    <aside class="panel">
+      <div class="heading"><h2>Details</h2><a href="patient-register.html">Edit</a></div>
+      <dl>
+        <dt>Date of birth</dt><dd>14 Mar 1984</dd>
+        <dt>Phone · WhatsApp</dt><dd>+00 5550 0142</dd>
+        <dt>Email</dt><dd class="muted">Not recorded</dd>
+        <dt>Address</dt><dd>12 Lake Road, Example City</dd>
+        <dt>Family</dt><dd><a href="#">Sunita Rao-Mehta</a> (daughter)</dd>
+        <dt>Latest measurements</dt><dd>162 cm · 64.5 kg · BP 118/76<br><span class="muted small">06 Oct 2026 · <a href="#">history</a></span></dd>
+        <dt>Registered</dt><dd>09 Jun 2026</dd>
+      </dl>
+      <div class="warning" style="margin-bottom: 0"><strong>Alert</strong><br>Sensitive to camphor. <a href="#">Edit alerts</a></div>
+    </aside>
+
+    <div>
+      <div class="toolbar">
+        <strong>Timeline</strong>
+        <span class="chip on">All</span><span class="chip">Visits</span><span class="chip">Prescriptions</span><span class="chip">Billing</span><span class="chip">Messages</span><span class="chip">Notes</span><span class="chip">Documents</span>
+        <span class="spacer"></span>
+        <button class="secondary btn-sm">Add note</button><button class="secondary btn-sm">Add document</button>
+      </div>
+
+      <ul class="timeline">
+        <li><time>20 Oct 2026</time><span class="dot">A</span>
+          <div class="card"><strong>Follow-up appointment</strong> · 10:15 with Dr. R. Patel <span class="badge b-grey">Booked</span>
+            <div class="actions small" style="margin-top: 6px"><a href="#">Reschedule</a><a href="#">Cancel</a></div></div></li>
+        <li><time>06 Oct 2026</time><span class="dot">V</span>
+          <div class="card">
+            <div class="heading" style="margin-bottom: 8px"><span><strong>Follow-up visit</strong> · Dr. R. Patel <span class="badge b-green">Final</span></span><span class="actions small"><a href="#">Open</a><a href="#">Amend</a><a href="#">Print prescription</a></span></div>
+            <p><span class="muted">Complaint</span> Recurring headache, right-sided, worse in sunlight. About 50% better since last visit.</p>
+            <p style="margin-bottom: 4px"><span class="muted">Prescription</span></p>
+            <table class="small">
+              <tr><td style="padding: 4px 0">Arnica montana 30C</td><td style="padding: 4px 8px">4 pills, twice daily</td><td style="padding: 4px 0">14 days</td><td class="right" style="padding: 4px 0"><a href="print-label.html">Label</a></td></tr>
+              <tr><td style="padding: 4px 0">Nux vomica 200C</td><td style="padding: 4px 8px">1 dose at bedtime, weekly</td><td style="padding: 4px 0">2 doses</td><td class="right" style="padding: 4px 0"><a href="print-label.html">Label</a></td></tr>
+            </table>
+          </div></li>
+        <li><time>06 Oct 2026</time><span class="dot">B</span>
+          <div class="card"><strong>Invoice INV-2026-1042</strong> · 750.00 <span class="badge b-amber">Partially paid</span> · 500.00 cash received
+            <div class="actions small" style="margin-top: 6px"><a href="invoice.html">Open</a><a href="#">Record payment</a><a href="print-bill.html">Print</a></div></div></li>
+        <li><time>04 Sep 2026</time><span class="dot">M</span>
+          <div class="card"><strong>WhatsApp · 30 day check-in</strong> <span class="badge b-green">Delivered · read</span><p class="muted" style="margin: 4px 0 0">"Hello Anita, we hope you are doing well. It has been about a month since your visit…" · Reply received: "Much better, thank you."</p></div></li>
+        <li><time>30 Aug 2026</time><span class="dot">N</span>
+          <div class="card"><strong>Note</strong> · Reception<p style="margin: 4px 0 0">Prefers morning appointments. Call before 6 pm only.</p></div></li>
+        <li><time>06 Aug 2026</time><span class="dot">V</span>
+          <div class="card"><strong>Follow-up visit</strong> · Dr. R. Patel <span class="badge b-green">Final</span> <span class="badge">Amended 07 Aug</span><p class="muted" style="margin: 4px 0 0">Headache less frequent. Arnica montana 30C continued. <a href="#">Show details</a></p></div></li>
+        <li><time>22 Jul 2026</time><span class="dot">D</span>
+          <div class="card"><strong>Document</strong> · Blood report, 2 pages (PDF) <a href="#">View</a></div></li>
+        <li><time>09 Jun 2026</time><span class="dot">V</span>
+          <div class="card"><strong>First consultation</strong> · Dr. R. Patel <span class="badge b-green">Final</span><p class="muted" style="margin: 4px 0 0">Full case taken. <a href="#">Show details</a></p></div></li>
+      </ul>
+      <p class="right"><button class="secondary">Load earlier</button></p>
+    </div>
+  </div>
+  <p class="muted small">Reception and billing staff see this page without the clinical text: visits show only date, doctor and status.</p>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patients · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="patients">
+<main class="content">
+  <div class="heading">
+    <h1>Patients</h1>
+    <div class="actions">
+      <a class="button" href="patient-register.html">New patient</a>
+      <button class="secondary">Import from spreadsheet</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input placeholder="Name, phone or patient ID" value="rao" style="width: 320px">
+    <button>Search</button>
+    <span class="chip on">Active</span><span class="chip">Archived</span>
+    <span class="chip">Follow-up due</span><span class="chip">Balance due</span><span class="chip">Seen this month</span>
+    <span class="spacer"></span>
+    <label class="check small">Sort <select><option>Last visit, newest</option><option>Name A to Z</option><option>Registered, newest</option></select></label>
+  </div>
+
+  <section class="panel flush">
+    <table>
+      <thead><tr><th></th><th>Patient</th><th>Age · Sex</th><th>Phone</th><th>Last visit</th><th>Follow-up</th><th class="num">Balance</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><span class="avatar">AR</span></td><td><a href="patient-overview.html"><strong>Anita Rao</strong></a><div class="mono muted">PAT-W8KQ3G7DP9</div></td><td>42 · F</td><td>+00 5550 0142</td><td>06 Oct 2026</td><td><span class="badge b-amber">Due 20 Oct</span></td><td class="num">250.00</td><td class="right"><a href="patient-overview.html">Open →</a></td></tr>
+        <tr><td><span class="avatar">VR</span></td><td><a href="#"><strong>Vikram Rao</strong></a><div class="mono muted">PAT-T6N1F8KC4M</div></td><td>47 · M</td><td>+00 5550 0143</td><td>12 Sep 2026</td><td><span class="badge b-red">Overdue 4 days</span></td><td class="num">0.00</td><td class="right"><a href="#">Open →</a></td></tr>
+        <tr><td><span class="avatar">SR</span></td><td><a href="#"><strong>Sunita Rao-Mehta</strong></a><div class="mono muted">PAT-J9Q2W5XD7A</div></td><td>8 · F</td><td>+00 5550 0142 <span class="muted small">(same as Anita Rao)</span></td><td>30 Aug 2026</td><td class="muted">None</td><td class="num">0.00</td><td class="right"><a href="#">Open →</a></td></tr>
+        <tr><td><span class="avatar">PR</span></td><td><a href="#"><strong>Prakash Raorane</strong></a><div class="mono muted">PAT-C3V7B2HL9S</div></td><td>61 · M</td><td>+00 5550 0177</td><td>Never</td><td class="muted">None</td><td class="num">0.00</td><td class="right"><a href="#">Open →</a></td></tr>
+      </tbody>
+    </table>
+    <div class="pagination"><span class="muted">4 of 4 matches · 312 patients in the clinic</span><button class="secondary btn-sm" disabled>Previous</button><button class="secondary btn-sm" disabled>Next</button></div>
+  </section>
+
+  <h3>When nothing matches</h3>
+  <section class="panel empty">No patient matches "raoo". Check the spelling, try the phone number, or <a href="patient-register.html">register a new patient</a>.</section>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

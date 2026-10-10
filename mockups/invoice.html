@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="patients" data-patient-tab="billing">
+<main class="content">
+  <div id="patient-head"></div>
+
+  <div class="heading">
+    <div><h2>Invoice INV-2026-1042 <span class="badge b-amber">Partially paid</span></h2><p class="muted small">Issued 06 Oct 2026 by Reception. From the visit on 06 Oct 2026. An issued invoice cannot be edited; corrections are credit notes.</p></div>
+    <div class="actions"><button>Record payment</button><a class="button secondary" href="print-bill.html">Print</a><button class="secondary">Send on WhatsApp</button><button class="secondary">More ▾</button></div>
+  </div>
+
+  <div class="cols cols-2">
+    <section class="panel flush">
+      <table>
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Tax</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Consultation, follow-up</td><td class="num">1</td><td class="num">500.00</td><td class="num">0%</td><td class="num">500.00</td></tr>
+          <tr><td>Medicines dispensed<div class="muted small">2 items. Medicine names are not shown on invoices.</div></td><td class="num">2</td><td class="num">150.00</td><td class="num">0%</td><td class="num">300.00</td></tr>
+          <tr><td colspan="4" class="num muted">Subtotal</td><td class="num">800.00</td></tr>
+          <tr><td colspan="4" class="num muted">Discount (returning patient)</td><td class="num">−50.00</td></tr>
+          <tr><td colspan="4" class="num muted">Tax</td><td class="num">0.00</td></tr>
+          <tr><td colspan="4" class="num"><strong>Total</strong></td><td class="num"><strong>750.00</strong></td></tr>
+          <tr><td colspan="4" class="num muted">Paid</td><td class="num">500.00</td></tr>
+          <tr><td colspan="4" class="num"><strong>Balance due</strong></td><td class="num"><strong>250.00</strong></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div>
+      <section class="panel">
+        <h2>Payments</h2>
+        <div class="row"><span><strong>500.00 · Cash</strong><span class="muted">06 Oct 2026 10:02 · Reception · Receipt R-2026-0871</span></span><a href="#">Receipt</a></div>
+        <p style="margin-top: 10px"><button class="secondary">Record payment</button></p>
+      </section>
+      <section class="panel">
+        <h2>History</h2>
+        <p class="small">06 Oct 10:02 · Payment recorded · Reception<br>06 Oct 10:01 · Issued · Reception<br>06 Oct 09:58 · Draft created from visit · Dr. R. Patel</p>
+      </section>
+    </div>
+  </div>
+
+  <h2 style="margin-top: 10px">The same page while the invoice is still a draft</h2>
+  <section class="panel flush">
+    <div class="heading"><h2>Draft invoice <span class="badge b-grey">Draft</span></h2><div class="actions"><span class="muted small">Number is given when issued</span></div></div>
+    <table>
+      <thead><tr><th>Item</th><th class="num" style="width: 90px">Qty</th><th class="num" style="width: 120px">Price</th><th style="width: 110px">Tax</th><th class="num" style="width: 110px">Amount</th><th style="width: 40px"></th></tr></thead>
+      <tbody>
+        <tr><td><select><option>Consultation, follow-up</option><option>Consultation, first</option><option>Medicines dispensed</option><option>Courier charge</option></select></td><td><input class="num" value="1"></td><td><input class="num" value="500.00"></td><td><select><option>0%</option></select></td><td class="num">500.00</td><td class="x">✕</td></tr>
+        <tr><td><select><option>Medicines dispensed</option></select></td><td><input class="num" value="2"></td><td><input class="num" value="150.00"></td><td><select><option>0%</option></select></td><td class="num">300.00</td><td class="x">✕</td></tr>
+        <tr><td colspan="6"><button class="link-button">+ Add item</button> · <button class="link-button">+ Add custom line</button></td></tr>
+      </tbody>
+    </table>
+    <div style="padding: 14px 16px; border-top: 1px solid var(--border)" class="form-grid four">
+      <label>Discount <input value="50.00"></label>
+      <label>Discount reason <input value="Returning patient"></label>
+      <label>Note on invoice <input placeholder="Optional"></label>
+      <label>Total <input value="750.00" disabled style="font-weight: 650"></label>
+    </div>
+  </section>
+  <div class="save-bar"><span class="muted">Draft · not yet numbered</span><div class="actions"><button class="danger">Delete draft</button><button class="secondary">Save draft</button><button class="secondary">Issue</button><button>Issue and take payment</button></div></div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

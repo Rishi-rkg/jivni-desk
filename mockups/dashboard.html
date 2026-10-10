@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="dashboard">
+<main class="content">
+  <div class="heading">
+    <div><h1>Good morning, Dr. Patel</h1><p class="muted">Tuesday, 6 October 2026</p></div>
+    <div class="actions">
+      <a class="button" href="patient-register.html">New patient</a>
+      <button class="secondary">Scan card</button>
+      <button class="secondary">Walk-in</button>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <a href="appointments.html"><strong>8</strong><span>appointments today · 3 seen</span></a>
+    <a href="appointments.html"><strong>3</strong><span>follow-ups due this week</span></a>
+    <a href="billing.html"><strong>2</strong><span>unpaid invoices · 650.00</span></a>
+    <a href="messages.html"><strong>6</strong><span>messages waiting for approval</span></a>
+  </div>
+
+  <div class="cols cols-2">
+    <section class="panel flush">
+      <div class="heading"><h2>Today's queue</h2><a href="appointments.html">Open appointments →</a></div>
+      <table>
+        <thead><tr><th>Time</th><th>Patient</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>09:30</td><td><a href="patient-overview.html">Anita Rao</a><div class="muted small">PAT-W8KQ3G7DP9</div></td><td>Follow-up</td><td><span class="badge b-amber">Waiting 12 min</span></td><td class="right"><a class="button btn-sm" href="visit.html">Start visit</a></td></tr>
+          <tr><td>09:45</td><td><a href="#">John Smith</a><div class="muted small">PAT-K2M9X4TQ7B</div></td><td>First consultation</td><td><span class="badge">Arrived</span></td><td class="right"><button class="secondary btn-sm">Start visit</button></td></tr>
+          <tr><td>Walk-in</td><td><a href="#">Mary Jones</a><div class="muted small">PAT-R5D8C1VN3H</div></td><td>Collect medicine</td><td><span class="badge">Arrived</span></td><td class="right"><button class="secondary btn-sm">Dispense</button></td></tr>
+          <tr><td>10:15</td><td><a href="#">Farid Khan</a><div class="muted small">PAT-B7Y3L6ZW2J</div></td><td>Follow-up</td><td><span class="badge b-grey">Booked</span></td><td class="right"><button class="secondary btn-sm">Mark arrived</button></td></tr>
+          <tr><td>09:00</td><td><a href="#">Leela Nair</a><div class="muted small">PAT-H4S9P2GQ8E</div></td><td>Follow-up</td><td><span class="badge b-green">Seen · billed</span></td><td class="right"><a href="#">Open</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div>
+      <section class="panel">
+        <div class="heading"><h2>Needs attention</h2></div>
+        <div class="row"><span><strong>2 visits left as drafts</strong><span class="muted">Yesterday · finalise to lock the record</span></span><a href="#">Review</a></div>
+        <div class="row"><span><strong>Label printer offline</strong><span class="muted">Front desk · last seen 08:52</span></span><a href="printing.html">Check</a></div>
+        <div class="row"><span><strong>Backup completed</strong><span class="muted">Today 02:00 · restore last tested 28 Sep</span></span><span class="badge b-green">OK</span></div>
+      </section>
+      <section class="panel">
+        <div class="heading"><h2>Recent patients</h2><a href="patients.html">All patients →</a></div>
+        <div class="row"><span><a href="patient-overview.html"><strong>Anita Rao</strong></a><span class="muted">Last visit: today</span></span><a href="patient-overview.html">Open →</a></div>
+        <div class="row"><span><a href="#"><strong>John Smith</strong></a><span class="muted">Last visit: yesterday</span></span><a href="#">Open →</a></div>
+        <div class="row"><span><a href="#"><strong>Mary Jones</strong></a><span class="muted">Last visit: 3 Oct</span></span><a href="#">Open →</a></div>
+      </section>
+    </div>
+  </div>
+  <p class="muted small">Reception sees the queue and appointments. Billing sees unpaid invoices. Doctors see everything on this page. The backup line is for the owner only.</p>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register patient · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="patients">
+<main class="content">
+  <p><a href="patients.html">← Patient list</a></p>
+  <div class="heading"><div><h1>Register a patient</h1><p class="muted">The same form is used to edit details later. Every change is kept in the patient's history.</p></div></div>
+
+  <div class="warning"><strong>Possible duplicate.</strong> Anita Rao, born 14 Mar 1984, phone ending 0142, is already registered. <a href="patient-overview.html">Open that record</a> or continue if this is a different person.</div>
+
+  <div class="cols" style="grid-template-columns: minmax(0, 1fr) 280px">
+    <section class="panel">
+      <fieldset>
+        <legend>Identity</legend>
+        <div class="form-grid">
+          <label>First name <input value="Anita"></label>
+          <label>Middle name <input></label>
+          <label>Last name <input value="Rao"></label>
+          <label>Date of birth <input value="14 Mar 1984"></label>
+          <label>Sex <select><option>Female</option><option>Male</option><option>Other</option><option>Not stated</option></select></label>
+          <label>Age <input value="42 years" disabled></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Contact</legend>
+        <div class="form-grid">
+          <label>Phone <input value="+00 5550 0142"></label>
+          <label>WhatsApp number <input value="+00 5550 0142"></label>
+          <label>Email <input placeholder="Optional"></label>
+          <label class="check span-3"><input type="checkbox" checked> WhatsApp number is the same as phone</label>
+          <label class="span-2">Address <input value="12 Lake Road"></label>
+          <label>City <input value="Example City"></label>
+          <label>State or region <input></label>
+          <label>Postal code <input></label>
+          <label>Country <input></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Message consent</legend>
+        <div class="setting"><span class="toggle on"></span><div><strong>Care messages</strong><span class="muted">Appointment reminders, follow-up check-ins, invoices and receipts.</span></div></div>
+        <div class="setting"><span class="toggle"></span><div><strong>Greetings and clinic news</strong><span class="muted">Birthday and festival greetings, announcements, newsletters.</span></div></div>
+        <p class="small muted">Recorded with today's date, your name and consent wording version 2.</p>
+      </fieldset>
+      <fieldset style="margin-bottom: 0">
+        <legend>Other</legend>
+        <div class="form-grid">
+          <label>Referred by <input placeholder="Optional"></label>
+          <label>Family or guardian <input placeholder="Link to another patient"></label>
+          <label>Old file number <input placeholder="From paper records"></label>
+        </div>
+      </fieldset>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2>Photo</h2>
+        <div class="camera"><span>Camera preview</span></div>
+        <div class="actions" style="margin-top: 12px"><button>Take photo</button><button class="secondary">Upload file</button></div>
+        <p class="small muted" style="margin-top: 10px">After taking: crop, then Use photo or Retake.</p>
+      </section>
+      <section class="panel">
+        <h2>Patient card</h2>
+        <p class="mono">PAT-W8KQ3G7DP9</p>
+        <div class="barcode"></div>
+        <p class="small muted" style="margin-top: 10px">The code is random and holds no personal details. Created when the patient is saved.</p>
+        <label class="check"><input type="checkbox" checked> Print card after saving</label>
+      </section>
+    </aside>
+  </div>
+
+  <div class="save-bar"><span class="muted">Unsaved changes</span><div class="actions"><button class="secondary">Cancel</button><button class="secondary">Save and book appointment</button><button>Save and start visit</button></div></div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

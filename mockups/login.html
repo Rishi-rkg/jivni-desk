@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-bare>
+<main class="content">
+  <p class="muted">Three states of the same screen: first sign-in, the second step, and the quick lock that appears after a few idle minutes.</p>
+  <div class="cols" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px">
+
+    <section class="panel">
+      <p class="brand">DOCHP</p>
+      <h2>Sign in</h2>
+      <div class="form-grid" style="grid-template-columns: 1fr">
+        <label>Username <input value="rpatel"></label>
+        <label>Password <input type="password" value="xxxxxxxxxxxx"></label>
+        <label class="check"><input type="checkbox"> This is a shared computer (lock sooner)</label>
+        <button>Sign in</button>
+      </div>
+      <p class="small muted" style="margin-top: 14px">Your password also unlocks the clinic's encrypted records. <a href="#">Forgot password</a> · <a href="#">Use recovery key</a></p>
+      <div class="error">Username or password is not correct. 3 attempts left before a 15 minute wait.</div>
+    </section>
+
+    <section class="panel">
+      <p class="brand">DOCHP</p>
+      <h2>Verification code</h2>
+      <p class="muted">Enter the 6 digit code from your authenticator app. Asked of owners and doctors.</p>
+      <div class="form-grid" style="grid-template-columns: 1fr">
+        <label>Code <input value="428 913" style="font-size: 1.3rem; letter-spacing: .2em; text-align: center"></label>
+        <button>Continue</button>
+        <button class="link-button">Use a backup code</button>
+      </div>
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 18px 0">
+      <h3>Choose clinic</h3>
+      <p class="muted">Shown only to people who work at more than one clinic.</p>
+      <label class="check"><input type="radio" checked> Sunrise Clinic · Owner</label>
+      <label class="check" style="margin-top: 6px"><input type="radio"> Sunrise Clinic, East branch · Doctor</label>
+    </section>
+
+    <section class="panel" style="text-align: center">
+      <p class="brand">DOCHP</p>
+      <div class="avatar" style="width: 56px; height: 56px; font-size: 1.1rem; margin: 6px auto 10px">RP</div>
+      <h2 style="margin-bottom: 4px">Locked</h2>
+      <p class="muted">Dr. R. Patel · Sunrise Clinic<br>Locked after 5 minutes without activity. Your open work is kept.</p>
+      <div class="form-grid" style="grid-template-columns: 1fr; text-align: left">
+        <label>Password or PIN <input type="password" value="xxxx"></label>
+        <button>Unlock</button>
+        <button class="secondary">Sign in as someone else</button>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

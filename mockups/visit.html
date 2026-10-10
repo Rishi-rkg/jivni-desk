@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visit · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="patients" data-patient-tab="visits">
+<main class="content">
+  <div id="patient-head"></div>
+
+  <div class="heading">
+    <div><h2>Follow-up visit · 06 Oct 2026 <span class="badge b-amber">Draft</span></h2><p class="muted small">Draft saved 09:41. Visible only to doctors until finalised.</p></div>
+    <div class="actions">
+      <span class="segmented"><span>First consultation</span><span class="on">Follow-up</span><span>Acute</span></span>
+      <button class="secondary">Last visit ▸</button>
+      <button class="secondary">Library ▸</button>
+    </div>
+  </div>
+
+  <div class="cols cols-visit">
+    <section class="panel">
+      <nav class="sub-tabs"><a class="active" href="#">Complaint</a><a href="#">Mind</a><a href="#">Generals</a><a href="#">Particulars</a><a href="#">History</a><a href="#">Assessment</a></nav>
+      <div class="info"><strong>Last prescription, 06 Aug:</strong> Arnica montana 30C, 4 pills twice daily for 14 days.</div>
+      <div class="form-grid two">
+        <label class="span-all">Response to last prescription
+          <span class="segmented" style="align-self: flex-start"><span>Much better</span><span class="on">Better</span><span>No change</span><span>Worse</span><span>New symptoms</span></span></label>
+        <label class="span-all">Main complaint <textarea rows="3">Recurring right-sided headache, worse in sunlight. About 50% better; attacks now once a week.</textarea></label>
+        <label>Since <input value="March 2026"></label>
+        <label>Better or worse from <input value="Worse: sun, noise. Better: dark room, pressure"></label>
+        <label class="span-all">Symptoms
+          <span class="actions"><span class="chip on">Headache, right side ✕</span><span class="chip on">Worse from sunlight ✕</span><span class="chip on">Nausea ✕</span><input placeholder="Add a symptom…" style="width: 180px"></span></label>
+        <label class="span-all">Doctor-only notes <textarea rows="2" placeholder="Never printed, never shown to assistants or reception"></textarea></label>
+      </div>
+    </section>
+
+    <div>
+      <section class="panel">
+        <h2>Measurements</h2>
+        <div class="form-grid four">
+          <label>Height cm <input value="162"></label>
+          <label>Weight kg <input value="64.5"></label>
+          <label>BP <input value="118/76"></label>
+          <label>Pulse <input value="72"></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="heading"><h2>Prescription</h2><div class="actions"><button class="link-button">Repeat last</button><button class="link-button">From a set ▾</button></div></div>
+        <div class="rx-line small muted"><span>Medicine</span><span>Potency</span><span>Dose and how often</span><span>For</span><span></span></div>
+        <div class="rx-line"><input value="Arnica montana"><select><option>30C</option><option>200C</option><option>1M</option></select><input value="4 pills, twice daily"><input value="14 days"><span class="x">✕</span></div>
+        <div class="rx-line"><input value="Nux vomica"><select><option>200C</option></select><input value="1 dose at bedtime, weekly"><input value="2 doses"><span class="x">✕</span></div>
+        <div class="rx-line"><input placeholder="Type a medicine name or short code…"><select><option>Potency</option></select><input placeholder="Dose"><input placeholder="Duration"><span></span></div>
+        <div class="menu" style="max-width: 300px; margin: -4px 0 12px">
+          <div class="hover"><span><strong>Bry</strong>onia alba</span><span class="muted">Bry.</span></div>
+          <div><span><strong>Bry</strong>ophyllum</span><span class="muted">Bryoph.</span></div>
+        </div>
+        <label>Instructions for the patient <input value="Half an hour before food. Avoid coffee and mint."></label>
+        <div class="setting" style="margin-top: 10px"><span class="toggle"></span><div><strong>Hide medicine names on labels and printouts</strong><span class="muted">Prints "Medicine 1", "Medicine 2" instead.</span></div></div>
+      </section>
+
+      <section class="panel">
+        <h2>Next steps</h2>
+        <div class="form-grid two">
+          <label>Follow-up in <span class="segmented"><span>1 wk</span><span class="on">2 wk</span><span>1 mo</span><span>Date…</span></span></label>
+          <label>Follow-up date <input value="20 Oct 2026"></label>
+        </div>
+        <label class="check" style="margin-top: 10px"><input type="checkbox" checked> Book the follow-up appointment</label>
+        <label class="check"><input type="checkbox" checked> Print 2 medicine labels</label>
+        <label class="check"><input type="checkbox" checked> Create invoice (follow-up 500.00 + medicines)</label>
+      </section>
+    </div>
+  </div>
+
+  <div class="save-bar"><span class="muted">Draft saved 09:41 · finalising locks the visit; later corrections are added as amendments</span><div class="actions"><button class="danger">Discard draft</button><button class="secondary">Save draft</button><button>Finalise visit</button></div></div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>
