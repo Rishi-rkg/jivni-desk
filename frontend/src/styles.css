@@ -103,6 +103,10 @@ time { font-size: .8rem; color: var(--muted); }
 .visit-support { gap: 0; }
 .visit-support .rx-form .form-grid { grid-template-columns: 1fr 1fr; }
 .save-bar { position: sticky; bottom: 0; background: white; border: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; z-index: 3; border-radius: 4px; }
+.archive-control { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+.lock-screen .secondary { margin-top: 4px; }
+.settings-form fieldset { display: flex; flex-direction: column; gap: 18px; }
+.outcome-denied, .outcome-failed { background: #fff0ed; color: #853124; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #24343c55; padding: 20px; }
 .discard-dialog { max-width: 420px; }
 @media (max-width: 1050px) { .content { padding: 20px; } .patient-layout { grid-template-columns: 210px minmax(0, 1fr); gap: 18px; } .visit-layout { grid-template-columns: 1fr 1fr; gap: 18px; } .clinical-grid { grid-template-columns: 1fr; } .visit-support .form-grid { grid-template-columns: 1fr 1fr; } }

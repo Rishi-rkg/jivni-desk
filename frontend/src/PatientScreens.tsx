@@ -89,6 +89,12 @@ export function PatientProfile({ role }: { role: Role }) {
       setSuccess('Photo saved.');
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
+  async function setArchived(archived: boolean) {
+    if (archived && !window.confirm('Archive this patient? The record is kept and can be restored, but it leaves the patient list and no new visits can be recorded.')) return;
+    setBusy(true); setError('');
+    try { setPatient(await api<Patient>(`patients/${id}/${archived ? 'archive' : 'restore'}/`, { method: 'POST', body: '{}' })); setSuccess(archived ? 'Patient archived.' : 'Patient restored.'); }
+    catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  }
   async function older(kind: 'encounters' | 'notes') {
     setBusy(true); setError('');
     try {
@@ -113,6 +119,9 @@ export function PatientProfile({ role }: { role: Role }) {
     <nav className="patient-tabs" aria-label="Patient record">{allowedTabs.map(t => <Link key={t} to={t === 'overview' ? '?' : `?tab=${t}`} state={location.state} aria-current={tab === t ? 'page' : undefined} className={tab === t ? 'active' : ''}>{t[0].toUpperCase() + t.slice(1)}{t === 'billing' && <span className="planned-label">Planned</span>}</Link>)}</nav>
     <div className="patient-layout"><aside className="patient-sidebar panel"><h2>Patient details</h2><dl><dt>Date of birth</dt><dd>{patient.date_of_birth}</dd><dt>Phone</dt><dd>{patient.phone || 'Not recorded'}</dd><dt>Email</dt><dd>{patient.email || 'Not recorded'}</dd><dt>Address</dt><dd>{patient.address ? [patient.address.line1, patient.address.line2, patient.address.city, patient.address.region, patient.address.postal_code, patient.address.country].filter(Boolean).join(', ') : 'Not recorded'}</dd></dl>
       {canWriteDemographics(role) && <details className="photo-editor"><summary>{latestPhoto ? 'Change photo' : 'Add photo'}</summary><form className="stack" onSubmit={upload}><label>Patient photo<input name="photo" type="file" accept="image/jpeg,image/png" required/></label><button className="secondary" disabled={busy}>Upload photo</button><span className="muted">JPEG or PNG, up to 5 MiB</span></form></details>}
+      {canWriteClinical(role) && <div className="archive-control">{patient.archived_at
+        ? <><p className="muted">Archived {new Date(patient.archived_at).toLocaleDateString()}</p><button type="button" className="secondary" disabled={busy} onClick={() => setArchived(false)}>Restore patient</button></>
+        : <button type="button" className="secondary" disabled={busy} onClick={() => setArchived(true)}>Archive patient</button>}</div>}
     </aside><section className="patient-workspace" aria-label={`${tab} content`}>
       {tab === 'overview' && <><h2>Overview</h2>{readClinical ? <><div className="overview-metrics"><div><span className="muted">Last visit</span><strong>{latest ? new Date(latest.occurred_at).toLocaleDateString() : 'No visits yet'}</strong></div>{(['height','weight'] as const).map(kind => { const o = observation(kind); return <div key={kind}><span className="muted">Recent {kind}</span><strong>{o ? `${o.value} ${o.unit}` : 'No recent value'}</strong>{o?.measured_at && <time>{new Date(o.measured_at).toLocaleDateString()}</time>}</div>; })}</div>
         {moreEncounters && <p className="muted">Load older visits to check earlier measurements.</p>}<section className="panel"><div className="heading"><h2>Latest visit</h2><Link to="?tab=visits" state={location.state}>View visits →</Link></div>{latest ? <><p className="prewrap"><strong>{latest.chief_complaint}</strong></p>{latest.assessment && <p className="prewrap">{latest.assessment}</p>}{latest.follow_up_date && <p>Follow-up: {latest.follow_up_date}</p>}</> : <p className="muted">Start a new visit to record the consultation, observations and prescription.</p>}</section>
