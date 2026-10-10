@@ -1,5 +1,6 @@
 import hashlib
 import json
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -16,7 +17,8 @@ def session_data(request):
     memberships = Membership.objects.filter(user=request.user, is_active=True).select_related("clinic", "role")
     return {"user": {"id": str(request.user.id), "username": request.user.username, "name": request.user.get_full_name()},
             "clinic_id": request.session.get("clinic_id"),
-            "memberships": [{"clinic_id": str(m.clinic_id), "clinic_name": m.clinic.name, "role": m.role_id} for m in memberships],
+            "memberships": [{"clinic_id": str(m.clinic_id), "clinic_name": m.clinic.name, "role": m.role_id, "time_zone": m.clinic.time_zone} for m in memberships],
+            "idle_timeout_seconds": settings.SESSION_IDLE_SECONDS,
             "csrf_token": get_token(request)}
 
 
@@ -58,10 +60,18 @@ def sign_in(request):
     user = authenticate(request, username=username, password=data["password"])
     if not user:
         cache.set(key, failures + 1, 300)
-        record_event(request, "auth.login_failed")
+        # Record the attempt against every clinic the named account belongs to, so an owner can
+        # see it. One query whether or not the username exists.
+        known = list(Membership.objects.filter(user__username=username).select_related("clinic"))
+        for member in known or [None]:
+            record_event(request, "auth.login_failed", clinic=member.clinic if member else None, outcome="failed",
+                         resource_type="User" if member else "", resource_id=member.user_id if member else None)
         return JsonResponse({"detail": "Invalid username or password."}, status=401)
     memberships = list(Membership.objects.filter(user=user, is_active=True).select_related("clinic"))
     if not memberships:
+        former = list(Membership.objects.filter(user=user).select_related("clinic"))
+        for member in former or [None]:
+            record_event(request, "auth.login_denied", clinic=member.clinic if member else None, outcome="denied", actor=user)
         return JsonResponse({"detail": "No active clinic membership."}, status=403)
     cache.delete(key)
     login(request, user)

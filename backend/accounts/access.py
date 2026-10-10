@@ -4,6 +4,7 @@ from .models import Membership
 CLINICAL_READ = {"owner", "clinician", "assistant"}
 CLINICAL_WRITE = {"owner", "clinician"}
 DEMOGRAPHIC_WRITE = {"owner", "clinician", "assistant", "reception"}
+CLINIC_ADMIN = {"owner", "admin"}
 
 
 def membership(request):

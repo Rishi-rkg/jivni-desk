@@ -1,9 +1,11 @@
+from django.db import connection
 from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 from accounts import views as auth
+from accounts.api import ClinicSettingsView
 from records.views import PatientViewSet, NoteViewSet, EncounterViewSet, PhotoViewSet, AuditViewSet
 from modules.contracts import MODULES
 
@@ -20,13 +22,24 @@ def modules(request):
     return Response(MODULES)
 
 
+def health(request):
+    """Ready only when the database answers. Reveals nothing else."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        return JsonResponse({"status": "unavailable"}, status=503)
+    return JsonResponse({"status": "ok"})
+
+
 urlpatterns = [
-    path("health/", lambda request: JsonResponse({"status": "ok"})),
+    path("health/", health),
     path("api/v1/auth/csrf/", auth.csrf),
     path("api/v1/auth/login/", auth.sign_in),
     path("api/v1/auth/logout/", auth.sign_out),
     path("api/v1/auth/me/", auth.me),
     path("api/v1/auth/clinic/", auth.select_clinic),
+    path("api/v1/clinic/", ClinicSettingsView.as_view()),
     path("api/v1/modules/", modules),
     path("api/v1/", include(router.urls)),
 ]

@@ -3,7 +3,7 @@ import os
 from django.contrib.auth.password_validation import validate_password
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from accounts.models import Clinic, User, Role, Membership
+from accounts.models import Clinic, User, Role, Membership, valid_time_zone
 
 
 class Command(BaseCommand):
@@ -12,16 +12,18 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--clinic", required=True)
         parser.add_argument("--username", required=True)
+        parser.add_argument("--time-zone", default="UTC", help="IANA name such as Asia/Kolkata; decides what the clinic calls today.")
 
     @transaction.atomic
     def handle(self, *args, **options):
         if User.objects.filter(username=options["username"]).exists():
             raise CommandError("Username already exists; bootstrap will not modify an existing account.")
+        valid_time_zone(options["time_zone"])
         password = os.environ.get("BOOTSTRAP_PASSWORD") or getpass.getpass("Owner password: ")
         user = User(username=options["username"])
         validate_password(password, user)
         user.set_password(password)
         user.save()
-        clinic = Clinic.objects.create(name=options["clinic"])
+        clinic = Clinic.objects.create(name=options["clinic"], time_zone=options["time_zone"])
         Membership.objects.create(clinic=clinic, user=user, role=Role.objects.get(pk="owner"))
         self.stdout.write(self.style.SUCCESS(f"Created clinic {clinic.id} and owner {user.username}."))

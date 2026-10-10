@@ -38,7 +38,7 @@ class APITests(TestCase):
 
     def test_unauthenticated_access_denied(self):
         self.client.logout()
-        self.assertEqual(self.client.get("/api/v1/patients/").status_code, 403)
+        self.assertEqual(self.client.get("/api/v1/patients/").status_code, 401)
 
     def test_create_patient_nested_address_audit(self):
         response = self.client.post("/api/v1/patients/", self.patient_data(), format="json")

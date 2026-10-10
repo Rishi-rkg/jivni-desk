@@ -3,10 +3,12 @@ from django.core.exceptions import ValidationError as ModelValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.http import FileResponse
+from django.utils import timezone
 from rest_framework import mixins, serializers, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from accounts.access import membership, require_role, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE
+from accounts.access import membership, require_role, CLINIC_ADMIN, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE
 from audit.models import AuditEvent, record_event
 from .models import Patient, PatientPhoto, PatientNote, Encounter
 from .serializers import PatientSerializer, PhotoSerializer, NoteSerializer, EncounterSerializer
@@ -24,7 +26,19 @@ class ClinicViewSet(viewsets.GenericViewSet):
     def handle_exception(self, exc):
         if isinstance(exc, ModelValidationError):
             exc = serializers.ValidationError(exc.message_dict if hasattr(exc, "message_dict") else exc.messages)
+        if isinstance(exc, PermissionDenied) and self.request.user.is_authenticated:
+            self.denied()
         return super().handle_exception(exc)
+
+    def denied(self):
+        """Record a refused request: which kind of record and which ID, never its content."""
+        member = getattr(self, "member", None)
+        try:
+            resource_id = uuid.UUID(str(self.kwargs.get("pk")))
+        except ValueError:
+            resource_id = None
+        record_event(self.request, "access.denied", clinic=member.clinic if member else None, outcome="denied",
+                     resource_type=getattr(self, "basename", "") or "", resource_id=resource_id)
 
     def event(self, action_name, resource=None):
         record_event(self.request, action_name, resource, self.member.clinic)
@@ -81,7 +95,26 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         encounters = patient.encounters.select_related("clinician").prefetch_related("observations", "prescriptions__items")[:50]
         notes = patient.notes.select_related("author").order_by("-created_at", "id")[:50]
         self.event("patient.timeline", patient)
-        return Response({"encounters": EncounterSerializer(encounters, many=True).data, "notes": NoteSerializer(notes, many=True).data, "limit_per_type": 50})
+        return Response({"encounters": EncounterSerializer(encounters, many=True, context=self.get_serializer_context()).data, "notes": NoteSerializer(notes, many=True).data, "limit_per_type": 50})
+
+    @action(detail=True, methods=["post"])
+    def archive(self, request, pk=None):
+        return self.set_archived(request, True)
+
+    @action(detail=True, methods=["post"])
+    def restore(self, request, pk=None):
+        return self.set_archived(request, False)
+
+    def set_archived(self, request, archived):
+        require_role(request, CLINICAL_WRITE)
+        patient = self.get_object()
+        if bool(patient.archived_at) != archived:
+            with transaction.atomic():
+                # The server sets the time; a client can neither choose nor backdate it.
+                patient.archived_at = timezone.now() if archived else None
+                patient.save()
+                self.event("patient.archive" if archived else "patient.restore", patient)
+        return Response(self.get_serializer(patient).data)
 
     @action(detail=True, methods=["post"], url_path="photos")
     def upload_photo(self, request, pk=None):
@@ -175,9 +208,11 @@ class EncounterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
 
 
 class AuditSerializer(serializers.ModelSerializer):
+    actor_username = serializers.CharField(source="actor.username", read_only=True, default="")
+
     class Meta:
         model = AuditEvent
-        fields = ["id", "actor", "action", "resource_type", "resource_id", "occurred_at"]
+        fields = ["id", "actor", "actor_username", "action", "outcome", "resource_type", "resource_id", "source_ip", "request_id", "occurred_at"]
         read_only_fields = fields
 
 
@@ -185,8 +220,12 @@ class AuditViewSet(mixins.ListModelMixin, ClinicViewSet):
     serializer_class = AuditSerializer
 
     def get_queryset(self):
-        require_role(self.request, {"owner", "admin"})
-        return AuditEvent.objects.filter(clinic=self.member.clinic).order_by("-occurred_at", "id")
+        require_role(self.request, CLINIC_ADMIN)
+        queryset = AuditEvent.objects.filter(clinic=self.member.clinic).select_related("actor").order_by("-occurred_at", "id")
+        outcome = self.request.query_params.get("outcome")
+        if outcome in {"success", "denied", "failed"}:
+            queryset = queryset.filter(outcome=outcome)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)

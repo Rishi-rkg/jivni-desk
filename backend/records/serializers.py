@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from accounts.access import CLINICAL_WRITE
 from .models import Patient, PatientAddress, PatientPhoto, PatientNote, Encounter, Observation, Prescription, PrescriptionItem
 
 
@@ -28,7 +29,8 @@ class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
         fields = ["id", "first_name", "middle_name", "last_name", "date_of_birth", "gender", "phone", "email", "address", "photos", "archived_at", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        # archived_at changes only through the archive and restore actions.
+        read_only_fields = ["id", "archived_at", "created_at", "updated_at"]
 
     @transaction.atomic
     def create(self, validated_data):
@@ -125,6 +127,14 @@ class EncounterSerializer(serializers.ModelSerializer):
         if member:
             fields["patient"].queryset = Patient.objects.filter(clinic=member.clinic, archived_at__isnull=True)
         return fields
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        member = self.context.get("member")
+        # Internal notes are for the treating doctors only; absent unless the reader may write clinically.
+        if not member or member.role_id not in CLINICAL_WRITE:
+            data.pop("internal_notes", None)
+        return data
 
     @transaction.atomic
     def create(self, validated_data):

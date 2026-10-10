@@ -14,11 +14,13 @@ INSTALLED_APPS = [
     "accounts", "records", "audit",
 ]
 MIDDLEWARE = [
+    "config.middleware.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "config.middleware.IdleTimeoutMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "config.middleware.PrivateResponseMiddleware",
 ]
@@ -59,6 +61,8 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 8 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = False
+# Idle lock for shared clinic computers; the eight-hour limit above still applies.
+SESSION_IDLE_SECONDS = max(60, int(os.environ.get("SESSION_IDLE_SECONDS", "900")))
 SESSION_COOKIE_SECURE = os.environ.get("DJANGO_SECURE_COOKIES", "true").lower() == "true"
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -67,7 +71,7 @@ SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["config.authentication.ClinicSessionAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,

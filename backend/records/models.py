@@ -8,6 +8,7 @@ from django.utils import timezone
 
 
 def not_future(value):
+    # Kept only because migration 0001 imports it; Patient.clean now uses the clinic's date.
     if value > timezone.localdate():
         raise ValidationError("Date cannot be in the future.")
 
@@ -43,7 +44,7 @@ class Patient(StableRecord):
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
-    date_of_birth = models.DateField(validators=[not_future])
+    date_of_birth = models.DateField()
     gender = models.CharField(max_length=20, choices=Gender.choices)
     phone = models.CharField(max_length=40, blank=True)
     email = models.EmailField(blank=True)
@@ -53,6 +54,10 @@ class Patient(StableRecord):
     class Meta:
         ordering = ["last_name", "first_name", "id"]
         indexes = [models.Index(fields=["clinic", "last_name", "first_name"])]
+
+    def clean(self):
+        if self.date_of_birth and self.clinic_id and self.date_of_birth > self.clinic.today():
+            raise ValidationError({"date_of_birth": "Date cannot be in the future."})
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
@@ -140,7 +145,7 @@ class Encounter(AppendOnlyRecord):
     def clean(self):
         if self.occurred_at > timezone.now():
             raise ValidationError({"occurred_at": "An encounter cannot be in the future."})
-        if self.follow_up_date and self.follow_up_date < self.occurred_at.date():
+        if self.follow_up_date and self.follow_up_date < self.patient.clinic.local_date(self.occurred_at):
             raise ValidationError({"follow_up_date": "Follow-up must be on or after the encounter."})
 
 
