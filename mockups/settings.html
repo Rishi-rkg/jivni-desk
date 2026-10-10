@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="settings">
+<main class="content">
+  <div class="heading"><div><h1>Settings</h1><p class="muted">Owner and administrators only. Each section in the left list is its own page; three are drawn here.</p></div></div>
+  <div class="cols cols-nav">
+    <nav class="side-nav">
+      <span class="group">Clinic</span>
+      <a class="active" href="#">Clinic details</a>
+      <a href="#">Opening hours</a>
+      <a href="#">Price list and tax</a>
+      <span class="group">People</span>
+      <a href="#">Users and roles</a>
+      <a href="#">My account</a>
+      <span class="group">Features</span>
+      <a href="#">Switches</a>
+      <a href="#">Messaging</a>
+      <a href="#">Print templates</a>
+      <a href="#">Printers</a>
+      <span class="group">Safety</span>
+      <a href="#">Security</a>
+      <a href="#">Backups</a>
+      <a href="#">Activity log</a>
+      <a href="#">Import and export</a>
+    </nav>
+
+    <div>
+      <section class="panel">
+        <h2>Clinic details</h2>
+        <div class="form-grid">
+          <label>Clinic name <input value="Sunrise Clinic"></label>
+          <label>Phone <input value="+00 5550 0100"></label>
+          <label>Email <input value="hello@sunrise.example"></label>
+          <label class="span-2">Address <input value="4 Garden Street, Example City"></label>
+          <label>Tax or registration number <input placeholder="Printed on invoices"></label>
+          <label>Time zone <select><option>Choose…</option></select></label>
+          <label>Currency <select><option>Choose…</option></select></label>
+          <label>Language <select><option>English</option></select></label>
+          <label>Logo <span class="actions"><span class="photo" style="width: 40px; height: 40px; font-size: .8rem">SC</span><button class="secondary btn-sm">Change</button></span></label>
+          <label>Invoice numbers start at <input value="INV-2026-1001"></label>
+          <label>Financial year starts <select><option>Choose…</option></select></label>
+        </div>
+        <p class="right" style="margin: 14px 0 0"><button>Save changes</button></p>
+      </section>
+
+      <section class="panel flush">
+        <div class="heading"><h2>Users and roles</h2><button class="btn-sm">Invite user</button></div>
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Two-step sign-in</th><th>Last active</th><th>Active</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><strong>Dr. R. Patel</strong><div class="muted small">rpatel</div></td><td><select><option>Owner</option></select></td><td><span class="badge b-green">On</span></td><td>Now</td><td><span class="toggle on"></span></td><td class="right"><a href="#">Manage ▾</a></td></tr>
+            <tr><td><strong>Dr. S. Sharma</strong><div class="muted small">ssharma</div></td><td><select><option>Doctor</option><option>Owner</option><option>Clinical assistant</option><option>Reception</option><option>Billing</option><option>Administrator</option></select></td><td><span class="badge b-green">On</span></td><td>Yesterday</td><td><span class="toggle on"></span></td><td class="right"><a href="#">Manage ▾</a></td></tr>
+            <tr><td><strong>Priya (front desk)</strong><div class="muted small">priya</div></td><td><select><option>Reception</option></select></td><td><span class="badge b-grey">Off</span></td><td>Today 09:12</td><td><span class="toggle on"></span></td><td class="right"><a href="#">Manage ▾</a></td></tr>
+            <tr><td><strong>Arun (dispensary)</strong><div class="muted small">arun</div></td><td><select><option>Clinical assistant</option></select></td><td><span class="badge b-grey">Off</span></td><td>12 Sep</td><td><span class="toggle"></span></td><td class="right"><a href="#">Manage ▾</a></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <div class="cols cols-even">
+        <section class="panel">
+          <h2>Switches</h2>
+          <div class="setting"><span class="toggle on"></span><div><strong>Appointments</strong><span class="muted">Booking calendar and waiting queue.</span></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>Billing</strong><span class="muted">Invoices, payments and day-end report.</span></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>WhatsApp messages</strong><span class="muted">Staff-sent drafts. <a href="#">Set up automatic sending</a></span></div></div>
+          <div class="setting"><span class="toggle"></span><div><strong>Send reminders without approval</strong><span class="muted">Appointment reminders only.</span></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>Homeopathy library</strong></div></div>
+          <div class="setting"><span class="toggle"></span><div><strong>Stock control</strong><span class="muted">Batches, expiry and stock counts for dispensed medicines.</span></div></div>
+          <div class="setting"><span class="toggle"></span><div><strong>AI drafting</strong><span class="muted">Off by default. Drafts messages and summaries; a person approves every one.</span></div></div>
+          <div class="setting"><span class="toggle"></span><div><strong>Hide medicine names on printouts</strong><span class="muted">Clinic-wide default; can be changed per prescription.</span></div></div>
+        </section>
+        <section class="panel">
+          <h2>Security and backups</h2>
+          <div class="setting"><span class="toggle on"></span><div><strong>Two-step sign-in for owners and doctors</strong></div></div>
+          <div class="setting"><div><strong>Lock after no activity</strong><span class="muted">Shared computers lock sooner.</span></div><select style="width: 120px"><option>5 minutes</option><option>2 minutes</option><option>15 minutes</option></select></div>
+          <div class="setting"><div><strong>Recovery key</strong><span class="muted">Created 09 Jun 2026. Needed if every password is lost.</span></div><button class="secondary btn-sm">Make a new one</button></div>
+          <div class="setting"><div><strong>Nightly backup</strong><span class="muted">Last: today 02:00 · restore tested 28 Sep</span></div><span class="badge b-green">OK</span></div>
+          <div class="setting"><div><strong>Activity log</strong><span class="muted">Who opened or changed which record, and when.</span></div><a href="#">Open</a></div>
+          <div class="setting"><div><strong>Signed-in devices</strong><span class="muted">3 active sessions</span></div><button class="danger btn-sm">Sign out all</button></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

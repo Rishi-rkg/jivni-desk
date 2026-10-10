@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appointments · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="appointments">
+<main class="content">
+  <div class="heading">
+    <h1>Appointments</h1>
+    <div class="actions"><button>New appointment</button><button class="secondary">Add walk-in</button><button class="secondary">Print day sheet</button></div>
+  </div>
+  <div class="toolbar">
+    <button class="secondary btn-sm">‹</button><strong>Tuesday, 6 October 2026</strong><button class="secondary btn-sm">›</button><button class="secondary btn-sm">Today</button>
+    <span class="segmented"><span class="on">Day</span><span>Week</span><span>List</span></span>
+    <span class="spacer"></span>
+    <label class="check small">Doctor <select><option>All doctors</option><option>Dr. R. Patel</option><option>Dr. S. Sharma</option></select></label>
+  </div>
+
+  <div class="cols cols-2">
+    <section class="panel flush">
+      <div class="day-grid">
+        <div class="t">09:00</div><div><div class="slot done"><span><strong>Leela Nair</strong> · Follow-up</span><span class="badge b-green">Seen · billed</span></div></div>
+        <div class="t">09:30</div><div><div class="slot wait"><span><strong>Anita Rao</strong> · Follow-up</span><span><span class="badge b-amber">Waiting 12 min</span> <a class="button btn-sm" href="visit.html">Start visit</a></span></div></div>
+        <div class="t">09:45</div><div><div class="slot"><span><strong>John Smith</strong> · First consultation (45 min)</span><span class="badge">Arrived</span></div></div>
+        <div class="t">10:15</div><div><div class="slot"><span><strong>Farid Khan</strong> · Follow-up</span><span><span class="badge b-grey">Booked</span> <button class="secondary btn-sm">Mark arrived</button></span></div></div>
+        <div class="t">10:30</div><div><div class="slot free"><span>Free · click to book</span></div></div>
+        <div class="t">10:45</div><div><div class="slot"><span><strong>Rohan Das</strong> · Follow-up</span><span class="badge b-red">Cancelled by patient</span></div></div>
+        <div class="t">11:00</div><div><div class="slot"><span><strong>Grace Lee</strong> · Follow-up</span><span class="badge b-grey">Booked · reminder sent</span></div></div>
+        <div class="t">11:15</div><div><div class="slot free"><span>Free · click to book</span></div></div>
+        <div class="t">13:00</div><div class="muted">Clinic closed 13:00 to 16:00</div>
+      </div>
+    </section>
+
+    <div>
+      <section class="panel">
+        <div class="heading"><h2>Walk-ins and waiting</h2><span class="count">2</span></div>
+        <div class="row"><span><strong>1. Anita Rao</strong><span class="muted">09:30 appointment · arrived 09:29</span></span><a href="visit.html">Start visit</a></div>
+        <div class="row"><span><strong>2. Mary Jones</strong><span class="muted">Walk-in · collect medicine</span></span><a href="#">Dispense</a></div>
+      </section>
+      <section class="panel">
+        <div class="heading"><h2>Follow-ups due</h2><a href="#">See all (9)</a></div>
+        <div class="row"><span><strong>Vikram Rao</strong><span class="muted">Due 02 Oct · not booked</span></span><span class="actions small"><a href="#">Book</a><a href="#">Message</a></span></div>
+        <div class="row"><span><strong>Grace Lee</strong><span class="muted">Due today · booked 11:00</span></span><span class="badge b-green">Booked</span></div>
+        <div class="row"><span><strong>Prakash Raorane</strong><span class="muted">Due 08 Oct · not booked</span></span><span class="actions small"><a href="#">Book</a><a href="#">Message</a></span></div>
+      </section>
+    </div>
+  </div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

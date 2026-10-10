@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Messages · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="messages">
+<main class="content">
+  <div class="heading"><h1>Messages</h1><div class="actions"><button>New message</button><button class="secondary">New campaign</button></div></div>
+  <nav class="sub-tabs"><a class="active" href="#">Waiting for approval <span class="count">6</span></a><a href="#">Replies <span class="count">2</span></a><a href="#">Sent</a><a href="#">Failed <span class="count">1</span></a><a href="#">Templates</a><a href="#">Rules</a><a href="#">Campaigns</a></nav>
+
+  <div class="cols cols-even">
+    <section class="panel flush">
+      <div class="heading"><label class="check"><input type="checkbox"> Select all</label><div class="actions"><button class="secondary btn-sm">Approve selected</button><button class="secondary btn-sm">Discard selected</button></div></div>
+      <div class="row" style="background: #eef4f7"><label class="check"><input type="checkbox" checked><span><strong>Vikram Rao</strong> · 30 day check-in<span class="muted">Rule: 30 days after last visit · no follow-up booked</span></span></label><span class="badge">Selected</span></div>
+      <div class="row"><label class="check"><input type="checkbox"><span><strong>Grace Lee</strong> · Appointment reminder<span class="muted">Tomorrow 11:00</span></span></label><span class="badge b-grey">Template</span></div>
+      <div class="row"><label class="check"><input type="checkbox"><span><strong>Anita Rao</strong> · Invoice and receipt<span class="muted">INV-2026-1042</span></span></label><span class="badge b-grey">Template</span></div>
+      <div class="row"><label class="check"><input type="checkbox"><span><strong>John Smith</strong> · Birthday greeting<span class="muted">Rule: birthday · has greetings consent</span></span></label><span class="badge b-grey">Template</span></div>
+      <div class="row"><label class="check"><input type="checkbox"><span><strong>Farid Khan</strong> · Follow-up after visit<span class="muted">AI draft from the doctor's follow-up note</span></span></label><span class="badge b-amber">AI draft</span></div>
+      <div class="row"><label class="check"><input type="checkbox" disabled><span><strong>Mary Jones</strong> · 90 day follow-up<span class="muted">Not sendable: no care-message consent</span></span></label><span class="badge b-red">Blocked</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="heading"><h2>Vikram Rao · 30 day check-in</h2><a href="#">Open patient →</a></div>
+      <p class="small muted">To +00 5550 0143 on WhatsApp · Consent: care messages, recorded 12 Jun 2026 · Template "Follow-up 30 days" v3</p>
+      <div style="background: #e7f3e4; border-radius: 6px; padding: 12px 14px; max-width: 380px; margin-bottom: 14px">
+        Hello Vikram,<br><br>We hope you are doing well. It has been about one month since your visit with Dr. Patel.<br><br>Would you like to schedule a follow-up appointment?<br><br>Sunrise Clinic
+      </div>
+      <p class="small muted">Messages never contain a diagnosis, symptoms or medicine names.</p>
+      <div class="actions"><button>Approve and send</button><button class="secondary">Edit</button><button class="secondary">Send later…</button><button class="danger">Discard</button></div>
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 18px 0">
+      <h3>Earlier messages</h3>
+      <p class="small">12 Sep · Appointment reminder · <span class="badge b-green">Read</span><br>12 Jun · Welcome · <span class="badge b-green">Delivered</span></p>
+    </section>
+  </div>
+
+  <div class="cols cols-even">
+    <section class="panel">
+      <div class="heading"><h2>Rules</h2><button class="secondary btn-sm">New rule</button></div>
+      <div class="setting"><span class="toggle on"></span><div><strong>Appointment reminder</strong><span class="muted">1 day before · sends without approval</span></div><a href="#">Edit</a></div>
+      <div class="setting"><span class="toggle on"></span><div><strong>30 day check-in</strong><span class="muted">30 days after last visit, if no follow-up is booked · needs approval</span></div><a href="#">Edit</a></div>
+      <div class="setting"><span class="toggle on"></span><div><strong>Birthday greeting</strong><span class="muted">On the day · greetings consent only · needs approval</span></div><a href="#">Edit</a></div>
+      <div class="setting"><span class="toggle"></span><div><strong>90 day follow-up</strong><span class="muted">Switched off</span></div><a href="#">Edit</a></div>
+    </section>
+    <section class="panel">
+      <div class="heading"><h2>Templates</h2><button class="secondary btn-sm">New template</button></div>
+      <div class="row"><span><strong>Follow-up 30 days</strong><span class="muted">v3 · uses first name, doctor name, clinic name</span></span><span class="badge b-green">Approved</span></div>
+      <div class="row"><span><strong>Appointment reminder</strong><span class="muted">v2 · uses first name, date, time</span></span><span class="badge b-green">Approved</span></div>
+      <div class="row"><span><strong>Festival greeting</strong><span class="muted">v1 · draft</span></span><span class="badge b-grey">Draft</span></div>
+    </section>
+  </div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

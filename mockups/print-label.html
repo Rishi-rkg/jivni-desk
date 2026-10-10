@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medicine label, 2 × 2 in · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+<style>
+  /* The label itself: 2 in square, pure black on white, no greys (thermal printers cannot print them). */
+  @page { size: 2in 2in; margin: 0; }
+  .label { width: 2in; height: 2in; padding: .08in .09in; background: #fff; color: #000; font-family: Arial, "Segoe UI", sans-serif; line-height: 1.18; display: flex; flex-direction: column; overflow: hidden; }
+  .label * { color: #000; }
+  .l-clinic { display: flex; justify-content: space-between; font-size: 6.5pt; font-weight: 700; letter-spacing: .03em; border-bottom: 1.5pt solid #000; padding-bottom: 1.5pt; margin-bottom: 2.5pt; white-space: nowrap; }
+  .l-patient { font-size: 10pt; font-weight: 700; white-space: nowrap; overflow: hidden; }
+  .l-id { font-size: 6.5pt; font-family: Consolas, "Courier New", monospace; border-bottom: .75pt solid #000; padding-bottom: 2pt; margin-bottom: 3pt; }
+  .l-med { display: flex; justify-content: space-between; align-items: baseline; gap: 4pt; font-size: 10.5pt; font-weight: 700; text-transform: uppercase; }
+  .l-med b { border: 1pt solid #000; padding: 0 2.5pt; font-size: 9.5pt; white-space: nowrap; }
+  .l-form { font-size: 6.5pt; margin-bottom: 3pt; }
+  .l-dose { font-size: 9pt; font-weight: 700; }
+  .l-note { font-size: 6.5pt; margin-top: 2pt; }
+  .l-foot { margin-top: auto; display: flex; justify-content: space-between; font-size: 6.5pt; border-top: .75pt solid #000; padding-top: 1.5pt; white-space: nowrap; }
+  .l-code { margin-top: auto; height: .2in; background: repeating-linear-gradient(90deg, #000 0 1.5pt, #fff 1.5pt 2.5pt, #000 2.5pt 3pt, #fff 3pt 5pt, #000 5pt 7pt, #fff 7pt 8pt, #000 8pt 8.5pt, #fff 8.5pt 10pt); }
+  .l-code + .l-foot { margin-top: 1.5pt; border-top: 0; }
+
+  /* Page around the labels (screen only) */
+  .variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .actual, .zoomed { background: #cfd8dc; border-radius: 5px; display: grid; place-items: center; }
+  .actual { padding: 18px; margin-bottom: 10px; }
+  .zoomed { padding: 18px; overflow: hidden; }
+  .zoomed .label { zoom: 1.9; }
+  .label { box-shadow: 0 1px 4px #0004; }
+  @media print {
+    body { background: #fff; }
+    .screen-only, .zoomed, .mock-bar, h1, h2, h3, p, .panel { display: none !important; }
+    .content { padding: 0; max-width: none; }
+    .variants { display: block; }
+    .actual { display: block; padding: 0; margin: 0; background: none; }
+    .label { box-shadow: none; break-after: page; }
+  }
+</style>
+</head>
+<body data-bare>
+<main class="content">
+  <div class="heading screen-only"><div><h1>Medicine label · 2 × 2 inch thermal</h1><p class="muted">Black and white only, sized for a 203 dpi label printer. Top row is actual size on a normal screen; below it the same label enlarged.</p></div>
+    <div class="actions"><button onclick="window.print()">Print at actual size</button><a class="button secondary" href="printing.html">Label settings</a></div></div>
+
+  <div class="variants">
+    <div><h3>A. Text only</h3><p class="muted small">Largest type. The recommended default.</p>
+      <div class="actual"><div class="label">
+        <div class="l-clinic"><span>SUNRISE CLINIC</span><span>+00 5550 0100</span></div>
+        <div class="l-patient">Anita Rao</div>
+        <div class="l-id">PAT-W8KQ3G7DP9</div>
+        <div class="l-med"><span>Arnica montana</span><b>30C</b></div>
+        <div class="l-form">Pills · 1 bottle</div>
+        <div class="l-dose">4 pills, twice daily<br>for 14 days</div>
+        <div class="l-note">Half an hour before food. Avoid coffee and mint.</div>
+        <div class="l-foot"><span>06 Oct 2026 · Dr. R. Patel</span><span>1 of 2</span></div>
+      </div></div><div class="zoomed"></div></div>
+
+    <div><h3>B. With patient barcode</h3><p class="muted small">Scanning the bottle opens the patient's record. Less room for instructions.</p>
+      <div class="actual"><div class="label">
+        <div class="l-clinic"><span>SUNRISE CLINIC</span><span>+00 5550 0100</span></div>
+        <div class="l-patient">Anita Rao</div>
+        <div class="l-id" style="border: 0; margin: 0; padding: 0 0 2pt">&nbsp;</div>
+        <div class="l-med"><span>Nux vomica</span><b>200C</b></div>
+        <div class="l-form">Powder doses · 2</div>
+        <div class="l-dose">1 dose at bedtime,<br>once a week</div>
+        <div class="l-code"></div>
+        <div class="l-foot"><span>PAT-W8KQ3G7DP9</span><span>06 Oct 2026 · 2 of 2</span></div>
+      </div></div><div class="zoomed"></div></div>
+
+    <div><h3>C. Medicine name hidden</h3><p class="muted small">For clinics that number their medicines instead of naming them.</p>
+      <div class="actual"><div class="label">
+        <div class="l-clinic"><span>SUNRISE CLINIC</span><span>+00 5550 0100</span></div>
+        <div class="l-patient">Anita Rao</div>
+        <div class="l-id">PAT-W8KQ3G7DP9</div>
+        <div class="l-med"><span>Medicine 1</span><b>Pills</b></div>
+        <div class="l-form">1 bottle</div>
+        <div class="l-dose">4 pills, twice daily<br>for 14 days</div>
+        <div class="l-note">Half an hour before food. Avoid coffee and mint.</div>
+        <div class="l-foot"><span>06 Oct 2026 · Dr. R. Patel</span><span>1 of 2</span></div>
+      </div></div><div class="zoomed"></div></div>
+  </div>
+
+  <section class="panel screen-only" style="margin-top: 20px">
+    <h2>What is on the label</h2>
+    <table class="small">
+      <tr><th>Line</th><th>Comes from</th><th>Can be switched off</th></tr>
+      <tr><td>Clinic name and phone</td><td>Clinic details, as they were when the label was printed</td><td>Phone: yes</td></tr>
+      <tr><td>Patient name</td><td>Patient record</td><td>No</td></tr>
+      <tr><td>Patient ID, as text or barcode</td><td>Patient card code. Holds no personal details</td><td>Yes</td></tr>
+      <tr><td>Medicine and potency</td><td>Prescription, exactly as the doctor wrote it</td><td>Name can be replaced by "Medicine 1"</td></tr>
+      <tr><td>Form and quantity</td><td>Prescription</td><td>Yes</td></tr>
+      <tr><td>Dose, how often, how long</td><td>Prescription</td><td>No</td></tr>
+      <tr><td>Extra instructions (two lines at most)</td><td>Prescription</td><td>Dropped in layout B</td></tr>
+      <tr><td>Date, doctor, "1 of 2"</td><td>Visit</td><td>Counter: yes</td></tr>
+    </table>
+    <p class="small muted" style="margin: 10px 0 0">Long medicine names wrap to a second line; very long instructions are cut with "…" and the full text stays on the printed prescription.</p>
+  </section>
+</main>
+<script src="shell.js"></script>
+<script>
+  // Show an enlarged copy of each label under the actual-size one.
+  document.querySelectorAll(".actual").forEach(function (a) {
+    a.nextElementSibling.appendChild(a.firstElementChild.cloneNode(true));
+  });
+</script>
+</body>
+</html>

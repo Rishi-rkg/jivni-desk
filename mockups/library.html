@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Library · DocHP mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="library">
+<main class="content">
+  <div class="heading"><h1>Homeopathy library</h1><div class="actions"><button class="secondary">Add medicine</button><button class="secondary">Import texts</button></div></div>
+  <nav class="sub-tabs"><a class="active" href="#">Search by symptoms</a><a href="#">Medicines A to Z</a><a href="#">Rubrics</a><a href="#">Sources</a><a href="#">My notes</a></nav>
+
+  <section class="panel">
+    <label>Symptoms
+      <span class="actions"><span class="chip on">Headache ✕</span><span class="chip on">Worse from sunlight ✕</span><span class="chip on">Nausea ✕</span><input placeholder="Add a symptom or rubric…" style="width: 240px"><button>Search</button></span></label>
+    <p class="small muted" style="margin: 10px 0 0">Sources: <span class="chip on">All</span> <span class="chip">Source A</span> <span class="chip">Source B</span> <span class="chip">Clinic notes</span> · A reference only. The doctor decides the prescription.</p>
+  </section>
+
+  <div class="cols cols-2">
+    <section class="panel flush">
+      <table>
+        <thead><tr><th>Medicine</th><th>Headache</th><th>Worse from sunlight</th><th>Nausea</th><th>Matched</th><th>Sources</th></tr></thead>
+        <tbody>
+          <tr style="background: #eef4f7"><td><strong>Medicine A</strong><div class="muted small">Med-a.</div></td><td>✓ A, B</td><td>✓ A</td><td>✓ B</td><td><strong>3 of 3</strong></td><td>2</td></tr>
+          <tr><td><strong>Medicine B</strong><div class="muted small">Med-b.</div></td><td>✓ A, B</td><td>✓ A, B</td><td class="muted">○</td><td>2 of 3</td><td>2</td></tr>
+          <tr><td><strong>Medicine C</strong><div class="muted small">Med-c.</div></td><td>✓ A</td><td class="muted">○</td><td>✓ A</td><td>2 of 3</td><td>1</td></tr>
+          <tr><td><strong>Medicine D</strong><div class="muted small">Med-d.</div></td><td>✓ B</td><td class="muted">○</td><td class="muted">○</td><td>1 of 3</td><td>1</td></tr>
+        </tbody>
+      </table>
+      <div class="pagination"><span class="muted">4 medicines · ordered by number of matched symptoms, no percentage score</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="heading"><h2>Medicine A</h2><div class="actions"><button class="secondary btn-sm">Add my note</button><button class="secondary btn-sm">History</button></div></div>
+      <p class="small muted">Also known as: Med-a., Alternative name</p>
+      <nav class="sub-tabs"><a class="active" href="#">Symptoms</a><a href="#">Description</a><a href="#">Relationships</a><a href="#">Notes</a></nav>
+      <div class="row"><span>Headache, right side, worse from sunlight<span class="muted">Source A, 3rd edition, p. 214</span></span></div>
+      <div class="row"><span>Nausea with headache<span class="muted">Source B, section 12</span></span></div>
+      <div class="warning"><strong>Sources differ.</strong> Source A lists "worse from sunlight"; Source B does not mention it. Both are shown; nothing is merged.</div>
+      <h3>Relationships</h3>
+      <p class="small">Complementary: Medicine B · Antidote: Medicine F · Similar: Medicine C</p>
+      <h3>My notes</h3>
+      <p class="small">"Works well in school-age children in my practice." Dr. R. Patel, Feb 2027 · <a href="#">version 2 of 2</a></p>
+      <button class="secondary">Mark as consulted in the open visit</button>
+    </section>
+  </div>
+  <p class="muted small">Medicine names are placeholders until the library's sources are chosen.</p>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

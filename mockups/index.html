@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DocHP UI mockups</title>
+<link rel="stylesheet" href="mockup.css">
+<style>
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 26px; }
+  .cards a { display: block; background: white; border: 1px solid var(--border); border-radius: 5px; padding: 14px 16px; text-decoration: none; color: inherit; }
+  .cards a:hover { border-color: var(--accent); }
+  .cards strong { display: block; color: var(--accent); margin-bottom: 3px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="content" style="max-width: 1100px">
+  <p class="brand">DOCHP</p>
+  <h1>UI mockups</h1>
+  <p class="muted">Static pictures of the planned screens, for agreeing the design before anything is built. Buttons and forms do nothing; all names and numbers are invented. Best viewed at laptop width (1366 pixels).</p>
+  <p>The full list of every page, floating window, menu and switch is in <a href="ui-inventory.md">ui-inventory.md</a>.</p>
+
+  <h2 style="margin-top: 24px">Printed items</h2>
+  <div class="cards">
+    <a href="print-bill.html"><strong>Bill (A4 invoice)</strong><span class="muted">The printed invoice with payments and balance.</span></a>
+    <a href="print-label.html"><strong>Medicine label (2 × 2 in)</strong><span class="muted">Black and white thermal label, three layouts, actual size and enlarged.</span></a>
+  </div>
+
+  <h2>Everyday screens</h2>
+  <div class="cards">
+    <a href="login.html"><strong>Sign in, second step and lock</strong><span class="muted">How people get in and how an idle computer locks.</span></a>
+    <a href="dashboard.html"><strong>Dashboard</strong><span class="muted">Today's queue, counts and things needing attention.</span></a>
+    <a href="patients.html"><strong>Patients</strong><span class="muted">Search, filters and the patient list.</span></a>
+    <a href="patient-register.html"><strong>Register or edit a patient</strong><span class="muted">Details, photo, card code, message consent, duplicate warning.</span></a>
+    <a href="patient-overview.html"><strong>Patient record</strong><span class="muted">Banner, tabs and the timeline of everything about one patient.</span></a>
+    <a href="visit.html"><strong>Visit</strong><span class="muted">Case-taking, measurements, prescription and next steps.</span></a>
+    <a href="appointments.html"><strong>Appointments</strong><span class="muted">Day calendar, waiting list and follow-ups due.</span></a>
+  </div>
+
+  <h2>Money, messages and reference</h2>
+  <div class="cards">
+    <a href="invoice.html"><strong>Invoice</strong><span class="muted">An issued invoice and the same page as a draft.</span></a>
+    <a href="billing.html"><strong>Billing</strong><span class="muted">Invoice list, day-end report and price list.</span></a>
+    <a href="messages.html"><strong>Messages</strong><span class="muted">WhatsApp approval queue, rules and templates.</span></a>
+    <a href="library.html"><strong>Homeopathy library</strong><span class="muted">Search by symptoms and a medicine page with sources.</span></a>
+    <a href="printing.html"><strong>Documents and printing</strong><span class="muted">Print queue, printers and label settings.</span></a>
+    <a href="settings.html"><strong>Settings</strong><span class="muted">Clinic details, users and roles, feature switches, security.</span></a>
+  </div>
+
+  <h2>Floating windows, menus and small parts</h2>
+  <div class="cards">
+    <a href="overlays.html"><strong>All 26 on one page</strong><span class="muted">Dialogs, confirmations, menus, side panel, notices, buttons, switches and status labels.</span></a>
+  </div>
+</main>
+</body>
+</html>
