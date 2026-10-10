@@ -10,7 +10,10 @@ A new, independent repository for a browser-based clinic record system. Django 5
 - Clinic, custom UUID user, seeded roles, memberships and immutable patient UUIDs.
 - Patient demographics, address, protected photo upload/storage metadata, append-only notes and amendments.
 - Encounters with symptoms, history, assessment, internal notes, follow-up date, time-stamped height/weight observations, prescriptions and structured medicine snapshots.
-- Versioned REST API, pagination, name/phone/UUID search, audit events for successful access and writes.
+- Versioned REST API, pagination, name/phone/UUID search, audit events for access, writes, refused access and failed sign-ins, each with outcome, source address and request ID.
+- Clinic settings (time zone, address, tax identifier, currency). Dates of birth and follow-ups are judged by the clinic's local date.
+- Idle lock after 15 minutes without activity (`SESSION_IDLE_SECONDS`); the lock screen keeps unsaved work, and active typing keeps the session alive.
+- Clinic settings and audit log screens; archive and restore actions for patients.
 - Login, searchable patient list, registration, patient profile/timeline, photo upload, notes and encounter/prescription entry.
 - Separate, inactive interfaces for billing, WhatsApp correspondence, knowledge, printing, barcode lookup and AI drafting.
 - Committed migrations, model/API tests, frontend workflow tests and PostgreSQL-backed CI configuration.
@@ -33,7 +36,7 @@ The configuration generator creates ignored `.env` secrets without printing them
 In another terminal, create the first clinic and its owner:
 
 ```sh
-docker compose exec backend python manage.py bootstrap_clinic --clinic "Synthetic Demo Clinic" --username owner
+docker compose exec backend python manage.py bootstrap_clinic --clinic "Synthetic Demo Clinic" --username owner --time-zone Asia/Kolkata
 ```
 
 Enter a password at the prompt (12 characters minimum). Open **http://localhost:5173** and sign in. The API runs at **http://localhost:8000/api/v1/**. Both host ports bind to loopback; the database has no published host port. Use `localhost` consistently for the browser session.
@@ -109,18 +112,20 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | `/api/v1/auth/me/` | GET | Current user, memberships and refreshed CSRF token |
 | `/api/v1/auth/clinic/` | POST | Select an active authorized clinic |
 | `/api/v1/patients/` | GET, POST | Paginated registry; `search`, `page`, `archived=true` |
-| `/api/v1/patients/{id}/` | GET, PATCH | Demographics; `archived_at` for archive |
+| `/api/v1/patients/{id}/` | GET, PATCH | Demographics; `archived_at` is read-only |
+| `/api/v1/patients/{id}/archive/`, `/restore/` | POST | Archive or restore; owner and clinician only; time set by the server |
 | `/api/v1/patients/{id}/timeline/` | GET | Latest 50 encounters and 50 notes; clinical roles only |
 | `/api/v1/patients/{id}/photos/` | POST | Multipart field `photo` |
 | `/api/v1/photos/{id}/` | GET | Protected image stream |
 | `/api/v1/notes/` | GET, POST | Append notes/amendments; `patient`, `page` filters |
 | `/api/v1/encounters/` | GET, POST | Nested encounter entry; `patient`, `page` filters |
 | `/api/v1/encounters/{id}/` | GET | Encounter with observations/prescriptions |
-| `/api/v1/audit-events/` | GET | Clinic-scoped audit; owner/admin only |
+| `/api/v1/audit-events/` | GET | Clinic-scoped audit; owner/admin only; `outcome`, `page` filters |
+| `/api/v1/clinic/` | GET, PATCH | Clinic settings; any member reads, owner/admin change |
 | `/api/v1/modules/` | GET | Planned module metadata |
-| `/health/` | GET | Process liveness only |
+| `/health/` | GET | 200 when the database answers, otherwise 503 |
 
-Unsafe requests require `X-CSRFToken` and the session cookie. Login is protected by Django CSRF middleware even for anonymous requests. Django rotates CSRF/session identifiers at login, and the frontend adopts the returned token. Session cookies are HttpOnly and never stored in browser local storage; API responses use `Cache-Control: no-store`. Authentication endpoints return JSON; DRF unauthenticated record access uses HTTP 403 for session authentication. These APIs intentionally do not expose deletion of clinical records.
+Unsafe requests require `X-CSRFToken` and the session cookie. Login is protected by Django CSRF middleware even for anonymous requests. Django rotates CSRF/session identifiers at login, and the frontend adopts the returned token. Session cookies are HttpOnly and never stored in browser local storage; API responses use `Cache-Control: no-store`. Authentication endpoints return JSON. Requests without a signed-in session return HTTP 401, which the browser treats as "locked"; a signed-in user without permission gets 403. Encounter `internal_notes` is returned only to owner and clinician. These APIs intentionally do not expose deletion of clinical records.
 
 ## Before real patient data
 

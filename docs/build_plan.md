@@ -8,13 +8,13 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-Two code commits exist, both from 2026-10-06. The fast backend suite was re-run on 2026-10-10: 32 tests, 30 passed and 2 PostgreSQL-only trigger tests skipped as designed.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks: 53 backend tests (51 pass on SQLite, 2 PostgreSQL-only trigger tests skipped because this PC has no PostgreSQL) and 13 frontend tests.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
 | Original phase | Built | Missing |
 | --- | --- | --- |
-| 1 Foundation | Login, sessions, six roles, clinic membership, audit events, PostgreSQL schema with append-only triggers | Encryption and key handling, recovery key, backup, restore, clinic settings, user management screen |
+| 1 Foundation | Login, sessions, six roles, clinic membership, audit events with outcome and source, PostgreSQL schema with append-only triggers, clinic settings, idle lock, audit log screen | Encryption and key handling, recovery key, backup, restore, second factor, password reset, user management screen |
 | 2 Patient MVP | Registration, search, profile, photo upload, notes, timeline | Webcam capture, barcode generation and lookup, `PatientIdentifier`, `whatsapp_number`, a screen to edit demographics |
 | 3 Clinical records | Visits with complaint, symptoms, history, assessment, internal notes, follow-up date, height and weight, prescriptions with snapshots, prescription history | Structured symptoms, `medicine_id` link and `doctor_notes` on prescription items, attachments, prescription PDF, any way to correct a saved visit |
 | 4 Billing and printing | Interface stubs only | Everything |
@@ -34,30 +34,30 @@ These come from reading the code. Each is small now and expensive later.
 
 **Correctness**
 
-2. **Dates are judged in UTC.** `TIME_ZONE = "UTC"` in `backend/config/settings.py` and `not_future` in `backend/records/models.py` use the UTC date. A clinic east of UTC cannot enter today's date as a date of birth during its early morning, and follow-up dates are compared against the UTC date of the visit. Add a clinic time zone to clinic settings and use it for every "today" decision.
-3. **`archived_at` is a client-writable field.** `PatientSerializer` accepts any timestamp from any role that can edit demographics, including reception, and the same request can un-archive. Replace it with explicit archive and restore actions limited to owner and clinician, stamped by the server and audited under their own action names.
+2. **Dates are judged in UTC.** `TIME_ZONE = "UTC"` in `backend/config/settings.py` and `not_future` in `backend/records/models.py` use the UTC date. A clinic east of UTC cannot enter today's date as a date of birth during its early morning, and follow-up dates are compared against the UTC date of the visit. Add a clinic time zone to clinic settings and use it for every "today" decision. *Fixed 2026-10-10.* `Clinic.time_zone`, `Clinic.today()`.
+3. **`archived_at` is a client-writable field.** `PatientSerializer` accepts any timestamp from any role that can edit demographics, including reception, and the same request can un-archive. Replace it with explicit archive and restore actions limited to owner and clinician, stamped by the server and audited under their own action names. *Fixed 2026-10-10.*
 4. **Demographic history is lost.** A PATCH overwrites fields, and sending `address: null` hard-deletes the address row. The audit log records that a change happened but not what changed. This breaks the original principle that historical records stay historical.
 5. **A saved visit can never be corrected.** Visits are append-only from the first save, there is no draft state, and only notes support amendments. One typo in a potency is permanent.
-6. **`internal_notes` is shown to every clinical reader**, including assistants. The original plan calls these doctor-only notes.
+6. **`internal_notes` is shown to every clinical reader**, including assistants. The original plan calls these doctor-only notes. *Fixed 2026-10-10.* Returned only to owner and clinician.
 
 **Security and audit**
 
-7. **Failed logins are invisible to the clinic.** They are stored with `clinic = NULL`, and the audit endpoint filters by clinic, so no owner can ever see them. A valid password with no active membership is not recorded at all.
+7. **Failed logins are invisible to the clinic.** They are stored with `clinic = NULL`, and the audit endpoint filters by clinic, so no owner can ever see them. A valid password with no active membership is not recorded at all. *Fixed 2026-10-10.* Both are recorded against the account's clinics and shown in the audit log screen.
 8. **Login throttling is per process and not atomic.** It uses the default in-memory cache with a read-then-write counter, keyed on `REMOTE_ADDR`, which will be the proxy address once deployed.
-9. **Audit events carry no outcome, source address or request ID, and denied access is not recorded.** Every list call writes a row, so the table grows quickly; plan retention and off-host export.
-10. **Sessions last eight hours with no idle lock.** A shared reception PC needs a short idle lock with quick re-entry.
+9. **Audit events carry no outcome, source address or request ID, and denied access is not recorded.** Every list call writes a row, so the table grows quickly; plan retention and off-host export. *Partly fixed 2026-10-10:* outcome, source address, request ID and denied access are recorded. Retention and export remain.
+10. **Sessions last eight hours with no idle lock.** A shared reception PC needs a short idle lock with quick re-entry. *Fixed 2026-10-10.* 15 minutes by default (`SESSION_IDLE_SECONDS`); the lock screen keeps unsaved work.
 
 **Design gaps that block later phases**
 
 11. **Search will not survive encryption.** Patient search is `icontains` over plaintext columns. The search design must be settled before any field is encrypted.
 12. **No short patient identifier.** The UI shows a 36-character UUID. The original plan's `PatientIdentifier` (for example `PAT-W8KQ3G7DP9`) is not built, and barcodes depend on it.
 13. **No duplicate-patient check** at registration.
-14. **`/health/` does not check the database**, so it cannot be used for deployment health checks.
+14. **`/health/` does not check the database**, so it cannot be used for deployment health checks. *Fixed 2026-10-10.*
 
 **Tooling**
 
 15. **No linting, formatting or type checking** for either side, and no browser end-to-end tests. Frontend components are written as very long single lines, which makes diffs hard to review.
-16. **Python versions differ**: the local virtual environment is 3.11, Docker and CI use 3.12.
+16. **Python versions differ**: the local virtual environment is 3.11, Docker and CI use 3.12. *Addressed 2026-10-10:* CI now tests both.
 17. **CI has never run** because nothing has been pushed.
 
 ## 3. Decisions the owner needs to make
@@ -107,7 +107,7 @@ The seven phases keep the original's numbering and intent. Each lists the remain
 Step 1, housekeeping, about a week of small changes:
 
 - Push to a private remote, get CI green, run Docker Compose once on a machine that has Docker.
-- Fix findings 2, 3, 6, 7, 14 and 16.
+- ~~Fix findings 2, 3, 6, 7, 14 and 16.~~ Done 2026-10-10, together with finding 10 and most of finding 9.
 - Add Ruff for the backend, ESLint and Prettier for the frontend; reformat the frontend once in a single commit.
 - Add one Playwright smoke test: sign in, register a patient, record a visit, sign out.
 
@@ -121,7 +121,7 @@ Step 2, the missing foundation:
 - **Backups**: nightly encrypted backup of database and files together, kept off the machine, with a restore drill that is performed and timed.
 - **Accounts**: second factor for owner and clinicians, password reset that respects key grants, idle lock, session revocation, shared-cache login throttling (finding 8), and a user-management screen for the owner.
 - **Audit**: outcome, source address and request ID on every event, denied access recorded, scheduled off-host export, retention policy (finding 9).
-- **Clinic settings**: name, address, tax identifier, time zone, currency, logo. Later snapshots on invoices and labels read from here.
+- **Clinic settings**: name, address, tax identifier, time zone, currency, logo. Later snapshots on invoices and labels read from here. *Built 2026-10-10 except the logo.*
 - **Deployment**: HTTPS reverse proxy, Gunicorn, separate database identities for migrations and runtime, a deliberate migration release step, error reporting without request bodies.
 - **Independent review** of the encryption and key handling by someone who did not write it.
 
@@ -167,7 +167,7 @@ Exit: the doctor completes a full day of synthetic consultations without leaving
 - **Payments** are recorded, not processed: cash, card, bank transfer or local instant payment, including part payments.
 - **Templates separate from data**: invoice, prescription and label templates are versioned, and each issued document records which version rendered it.
 - **A4 printing** through the browser from the rendered PDF.
-- **Label printing through the print agent**, with one change from the original design. The original has the browser call the agent on `localhost`. Browsers increasingly block a secure page from calling a local address, and any other website open on that PC could call the same port. Instead, the agent connects outward to the server, is paired to the clinic with a revocable device token, pulls finished print files rather than patient data, and reports each job's result once. Start with 50 × 25 mm and 58 mm formats.
+- **Label printing through the print agent**, with one change from the original design. The original has the browser call the agent on `localhost`. Browsers increasingly block a secure page from calling a local address, and any other website open on that PC could call the same port. Instead, the agent connects outward to the server, is paired to the clinic with a revocable device token, pulls finished print files rather than patient data, and reports each job's result once. The clinic's printer is a 2 × 2 inch (about 51 × 51 mm) black-and-white thermal label printer, so that is the first and required label format; design labels in pure black and white with no greys.
 - **Reports**: day-end collections, outstanding balances, export for the accountant.
 - The billing role sees invoices and demographics but no clinical text.
 

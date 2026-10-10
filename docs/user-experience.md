@@ -4,7 +4,7 @@ The interface is designed first for a clinic laptop at 1366 × 768, with wider l
 
 ## Two navigation levels
 
-Clinic tabs: **Dashboard → Patients → Billing → More tools**. The dashboard begins with patient search and real directory data. It does not invent appointments, unpaid balances or daily activity figures for modules that have not been built.
+Clinic tabs: **Dashboard → Patients → Billing → More tools → Clinic settings → Audit log**. Clinic settings is read-only unless the user is the owner or an administrator; the audit log is shown only to those two roles. The dashboard begins with patient search and real directory data. It does not invent appointments, unpaid balances or daily activity figures for modules that have not been built.
 
 Patient tabs: **Overview → Visits → Prescriptions → Notes → Billing**. Clinical tabs are available only to clinical roles. The patient banner and details sidebar persist while tabs change; a billing tab identifies which patient it belongs to. Tabs have bookmarkable URLs and use normal browser navigation. They are page-navigation links rather than a keyboard-trapping tab widget.
 
@@ -24,6 +24,14 @@ The Overview summarizes the latest loaded visit, recent measurements and the lat
 Successful registration, note entry, photo upload and visit saves show explicit feedback. A successful visit save opens the Visits tab so the clinician can check what was recorded. Failed saves retain the form and display the server's validation message.
 
 Unsaved registration, visit and note changes warn before internal navigation away from the form/record or browser unloading. Notes may switch patient tabs without losing their draft. Signing out or switching clinics checks for unsaved changes before changing the session. Drafts are never stored in browser local storage; a refresh discards them after the browser warning. There is no autosave claim.
+
+## Lock screen
+
+After 15 minutes without keyboard or pointer activity, or when the server reports that the session has ended, the workspace is covered by a lock screen that asks for the same user's password. The screen underneath stays loaded, so an unsaved visit or note is still there after unlocking. While someone is typing, the session is kept alive in the background, so a long case is not interrupted. "Sign in as a different user" discards the locked screen after a warning if there is unsaved work. The locked page is hidden, not erased: it protects against someone walking past, not against someone with developer tools.
+
+## Archiving
+
+Owners and clinicians can archive a patient from the details panel after a confirmation, and restore them later. Archived patients leave the patient list and cannot receive new visits; nothing is deleted.
 
 ## Visual choices
 

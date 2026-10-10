@@ -30,3 +30,18 @@ The subsequent laptop interface revision passed the frontend build and seven fro
 ![Laptop patient workspace](screenshots/laptop-patient.jpg)
 
 See [the UX decisions and flows](user-experience.md). Billing remains an inactive placeholder. Temporary preview servers and fixtures were removed after verification.
+
+## Phase 1 step 1 (2026-10-10)
+
+| Check | Result |
+| --- | --- |
+| Fast SQLite backend suite | 53 tests: 51 passed, 2 PostgreSQL-only trigger checks skipped |
+| Backend suite on PostgreSQL | **Not run.** This PC has neither PostgreSQL nor Docker. The three new migrations only add columns and relax one validator; they do not touch triggers |
+| Migration drift, Django system checks | No changes detected; no issues |
+| TypeScript build | Passed |
+| Frontend tests | 13 passed across 3 files |
+| Browser check | Throwaway SQLite database with a synthetic clinic set to Asia/Kolkata, at a moment when the clinic's date was one day ahead of UTC |
+
+The browser check confirmed: a date of birth of the clinic's today was accepted and tomorrow refused; `archived_at` sent in a PATCH was ignored; archive and restore worked and were audited; a session ended on the server produced the lock screen on the next save, a wrong password was refused, the right one unlocked, and the unsaved note was still in the field; the failed unlock appeared in the owner's audit log as a failed sign-in; clinic settings loaded and the audit log listed events with outcome, record and source address. The throwaway database and servers were removed afterwards.
+
+CI has still never run because the repository has no remote.
