@@ -34,10 +34,15 @@ function mount(path: string) {
   render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />);
 }
 
-/** A scanner: every key within the same instant, then Enter. */
+/** A scanner: a key every 5 ms, then Enter. The clock is set by hand so a busy test machine cannot slow it. */
 function scan(code: string, target: Element | Window = window) {
-  for (const key of code) fireEvent.keyDown(target, { key });
-  fireEvent.keyDown(target, { key: 'Enter' });
+  const clock = vi.spyOn(performance, 'now');
+  let time = 10_000;
+  for (const key of [...code, 'Enter']) {
+    clock.mockReturnValue((time += 5));
+    fireEvent.keyDown(target, { key });
+  }
+  clock.mockRestore();
 }
 
 function mockServer(scanStatus = 200) {
