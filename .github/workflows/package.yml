@@ -47,6 +47,13 @@ jobs:
         working-directory: frontend
         env:
           JIVNI_APP: ../${{ matrix.program }}
+      # What the browser saw when a test failed: open a trace.zip at trace.playwright.dev. Synthetic data only.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-traces-${{ matrix.name }}
+          path: frontend/test-results
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: Jivni-${{ matrix.name }}
