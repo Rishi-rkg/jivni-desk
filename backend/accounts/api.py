@@ -4,7 +4,9 @@ from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from audit.models import record_event
+
 from .access import CLINIC_ADMIN, membership
 from .models import Clinic
 

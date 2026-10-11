@@ -1,4 +1,5 @@
 from rest_framework.exceptions import PermissionDenied
+
 from .models import Membership
 
 CLINICAL_READ = {"owner", "clinician", "assistant"}

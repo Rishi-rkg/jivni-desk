@@ -1,15 +1,18 @@
 import hashlib
 import json
+
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_GET, require_POST
-from django.db import transaction
+
 from audit.models import record_event
+
 from .models import Membership
 
 

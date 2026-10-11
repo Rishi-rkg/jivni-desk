@@ -1,14 +1,16 @@
 import io
 from datetime import timedelta
-from PIL import Image
-from django.core.files.uploadedfile import SimpleUploadedFile
+
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
+from PIL import Image
 from rest_framework.test import APIClient
-from accounts.models import Clinic, User, Membership
+
+from accounts.models import Clinic, Membership, User
 from audit.models import AuditEvent
-from records.models import Patient, Encounter, Observation, Prescription, PrescriptionItem
+from records.models import Encounter, Observation, Patient, Prescription, PrescriptionItem
 
 
 class APITests(TestCase):

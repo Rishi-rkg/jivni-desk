@@ -1,4 +1,5 @@
 import uuid
+
 from django.core.exceptions import ValidationError as ModelValidationError
 from django.db import transaction
 from django.db.models import Prefetch, Q
@@ -8,10 +9,19 @@ from rest_framework import mixins, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from accounts.access import membership, require_role, CLINIC_ADMIN, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE
+
+from accounts.access import CLINIC_ADMIN, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE, membership, require_role
 from audit.models import AuditEvent, record_event
-from .models import Patient, PatientIdentifier, PatientPhoto, PatientNote, Encounter, normalize_patient_code
-from .serializers import PatientSerializer, PhotoSerializer, NoteSerializer, EncounterSerializer, RevisionSerializer, DuplicateCheckSerializer
+
+from .models import Encounter, Patient, PatientIdentifier, PatientNote, PatientPhoto, normalize_patient_code
+from .serializers import (
+    DuplicateCheckSerializer,
+    EncounterSerializer,
+    NoteSerializer,
+    PatientSerializer,
+    PhotoSerializer,
+    RevisionSerializer,
+)
 from .storage import photo_store
 
 
@@ -227,7 +237,7 @@ class NoteViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, ClinicViewSet)
             try:
                 patient_id = uuid.UUID(self.request.query_params["patient"])
             except ValueError:
-                raise serializers.ValidationError({"patient": "Invalid patient ID."})
+                raise serializers.ValidationError({"patient": "Invalid patient ID."}) from None
             queryset = queryset.filter(patient_id=patient_id)
         return queryset
 
@@ -255,7 +265,7 @@ class EncounterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
             try:
                 patient_id = uuid.UUID(self.request.query_params["patient"])
             except ValueError:
-                raise serializers.ValidationError({"patient": "Invalid patient ID."})
+                raise serializers.ValidationError({"patient": "Invalid patient ID."}) from None
             queryset = queryset.filter(patient_id=patient_id)
         return queryset
 

@@ -4,9 +4,10 @@ import io
 import uuid
 import warnings
 from dataclasses import dataclass
-from PIL import Image, UnidentifiedImageError
+
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from PIL import Image, UnidentifiedImageError
 from rest_framework.exceptions import ValidationError
 
 
@@ -37,7 +38,7 @@ class PatientPhotoStore:
                 buffer = io.BytesIO()
                 image.save(buffer, "JPEG", quality=85)
         except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
-            raise ValidationError({"photo": "Invalid image."})
+            raise ValidationError({"photo": "Invalid image."}) from None
         data = buffer.getvalue()
         key = default_storage.save(f"clinics/{clinic_id}/photos/{uuid.uuid4()}.jpg", ContentFile(data))
         return StoredPhoto(key, "image/jpeg", len(data), hashlib.sha256(data).hexdigest())

@@ -1,7 +1,10 @@
+from unittest import mock
+
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
-from unittest import mock
+
 from accounts.models import Clinic, Membership
 
 
@@ -17,7 +20,7 @@ class BootstrapClinicTests(TestCase):
         self.assertEqual(Membership.objects.get().role_id, "owner")
 
     def test_overrides_and_validation(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.run_command("--time-zone", "Mars/Olympus")
         self.assertEqual(Clinic.objects.count(), 0)
         self.run_command("--time-zone", "Europe/London", "--currency", "gbp")

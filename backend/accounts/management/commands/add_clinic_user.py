@@ -1,8 +1,10 @@
 import getpass
+
 from django.contrib.auth.password_validation import validate_password
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from accounts.models import Clinic, User, Role, Membership
+
+from accounts.models import Clinic, Membership, Role, User
 
 
 class Command(BaseCommand):

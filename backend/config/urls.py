@@ -4,10 +4,11 @@ from django.urls import include, path
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
+
 from accounts import views as auth
 from accounts.api import ClinicSettingsView
-from records.views import PatientViewSet, NoteViewSet, EncounterViewSet, PhotoViewSet, AuditViewSet
 from modules.contracts import MODULES
+from records.views import AuditViewSet, EncounterViewSet, NoteViewSet, PatientViewSet, PhotoViewSet
 
 router = DefaultRouter()
 router.register("patients", PatientViewSet, basename="patient")

@@ -1,19 +1,21 @@
 """Phase 1 close-out: clinic-local dates, archive actions, doctor-only notes, audit visibility, idle lock."""
 import time
 import uuid
-from datetime import date, datetime, timezone as dt_timezone
+from datetime import UTC, date, datetime
 from unittest import mock
+
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from rest_framework.test import APIClient
-from accounts.models import Clinic, User, Membership
+
+from accounts.models import Clinic, Membership, User
 from audit.models import AuditEvent
-from records.models import Patient, Encounter
+from records.models import Encounter, Patient
 
 
 def at(text):
-    return datetime.fromisoformat(text).replace(tzinfo=dt_timezone.utc)
+    return datetime.fromisoformat(text).replace(tzinfo=UTC)
 
 
 class ClinicLocalDateTests(TestCase):

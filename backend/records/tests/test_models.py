@@ -1,13 +1,15 @@
 import uuid
 from datetime import timedelta
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
-from django.db import connection, transaction, DatabaseError
+from django.db import DatabaseError, connection, transaction
 from django.test import TestCase
 from django.utils import timezone
-from accounts.models import Clinic, User, Role, Membership
+
+from accounts.models import Clinic, Membership, Role, User
 from audit.models import AuditEvent
-from records.models import Patient, Encounter, Observation, PatientNote, Prescription, PrescriptionItem
+from records.models import Encounter, Observation, Patient, PatientNote, Prescription, PrescriptionItem
 from records.security import UnconfiguredEnvelopeEncryption
 
 

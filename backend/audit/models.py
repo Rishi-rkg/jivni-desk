@@ -1,8 +1,9 @@
 import ipaddress
 import uuid
+
 from django.conf import settings
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
 
 
 class AppendOnlyQuerySet(models.QuerySet):

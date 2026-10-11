@@ -1,5 +1,6 @@
 import uuid
 import zoneinfo
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,7 +11,7 @@ def valid_time_zone(value):
     try:
         zoneinfo.ZoneInfo(value)
     except (KeyError, ValueError, OSError):
-        raise ValidationError("Use an IANA time zone name such as Asia/Kolkata.")
+        raise ValidationError("Use an IANA time zone name such as Asia/Kolkata.") from None
 
 
 def valid_currency(value):

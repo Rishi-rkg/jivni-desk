@@ -1,5 +1,6 @@
 import os
 import tempfile
+
 os.environ.setdefault("DJANGO_SECRET_KEY", "synthetic-test-secret-never-use-outside-tests-123456")
 os.environ.setdefault("DJANGO_DEBUG", "true")
 os.environ.setdefault("DATA_PROTECTION_MODE", "development-only")

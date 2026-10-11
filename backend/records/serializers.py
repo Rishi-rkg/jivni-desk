@@ -1,7 +1,20 @@
 from django.db import transaction
 from rest_framework import serializers
+
 from accounts.access import CLINICAL_WRITE
-from .models import Patient, PatientAddress, PatientIdentifier, PatientPhoto, PatientNote, PatientRevision, Encounter, Observation, Prescription, PrescriptionItem
+
+from .models import (
+    Encounter,
+    Observation,
+    Patient,
+    PatientAddress,
+    PatientIdentifier,
+    PatientNote,
+    PatientPhoto,
+    PatientRevision,
+    Prescription,
+    PrescriptionItem,
+)
 
 
 class AddressSerializer(serializers.ModelSerializer):

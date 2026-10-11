@@ -1,0 +1,19 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 140
+extend-exclude = ["*/migrations/0001_initial.py"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, likely bugs, modern syntax, and the security checks from bandit.
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+ignore = [
+    "E501",  # line length is the formatter's job
+    "S101",  # assert is how tests are written
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*" = ["S105", "S106"]  # synthetic passwords in tests
+"config/test_settings.py" = ["S105", "S324"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["accounts", "audit", "config", "modules", "records"]

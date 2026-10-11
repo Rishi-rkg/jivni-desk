@@ -1,10 +1,11 @@
 """Phase 2 groundwork: patient codes and scan lookup, WhatsApp number, duplicate check, demographic history."""
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import connection, transaction, DatabaseError
+from django.db import DatabaseError, connection, transaction
 from django.test import TestCase
 from rest_framework.test import APIClient
-from accounts.models import Clinic, User, Membership
+
+from accounts.models import Clinic, Membership, User
 from audit.models import AuditEvent
 from records.models import CODE_ALPHABET, Patient, PatientIdentifier, PatientRevision, new_patient_code, normalize_patient_code
 
