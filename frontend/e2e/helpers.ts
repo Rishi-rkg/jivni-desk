@@ -24,8 +24,11 @@ export async function signOut(page: Page) {
 
 /** A barcode scanner types very fast and ends with Enter. */
 export async function scan(page: Page, code: string) {
-  await page.keyboard.type(code, { delay: 5 });
-  await page.keyboard.press('Enter');
+  // The keys are sent from inside the page in one go. Typing them through the test driver leaves gaps that
+  // depend on how busy the machine is, and on a slow build machine they stopped looking like a scanner.
+  await page.evaluate((text) => {
+    for (const key of [...text, 'Enter']) window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  }, code);
 }
 
 /** Keeps a picture of the screen when JIVNI_SHOTS is set, for looking at the screens after a run. */

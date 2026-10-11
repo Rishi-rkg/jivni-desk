@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { shot } from './helpers';
+import { scan, shot } from './helpers';
 
 // Written by scripts/e2e_server.py for this run only. Synthetic clinic, synthetic patient.
 function signIn(): { username: string; password: string } {
@@ -83,13 +83,11 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
   const code = (await page.getByText(/^PAT-[2-9A-Z]{10}$/).textContent()) ?? '';
   await page.getByRole('link', { name: 'Printing', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Documents and printing' })).toBeVisible();
-  await page.keyboard.type(code, { delay: 5 });
-  await page.keyboard.press('Enter');
+  await scan(page, code);
   await expect(page.getByRole('heading', { name: 'Synthetic Smoke-Test' })).toBeVisible();
 
   // A code nobody knows opens nothing and says so.
-  await page.keyboard.type('8900000000000', { delay: 5 });
-  await page.keyboard.press('Enter');
+  await scan(page, '8900000000000');
   const unknown = page.getByRole('dialog', { name: 'Barcode not recognised' });
   await expect(unknown).toBeVisible();
   await shot(page, '01-scan-unknown');
