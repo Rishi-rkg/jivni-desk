@@ -13,7 +13,7 @@
   .dose-preview strong { font-size: 1.05rem; }
 </style>
 </head>
-<body data-page="patients" data-patient-tab="visits">
+<body data-page="patients" data-patient-tab="visits" data-visit-active>
 <main class="content">
   <div id="patient-head"></div>
 
@@ -87,8 +87,8 @@
 
       <section class="panel">
         <div class="heading"><h2>Products and supplements</h2><button class="link-button">+ Add product</button></div>
-        <div class="row"><span>Vitamin D3 capsules, 60<span class="muted">1 capsule daily after breakfast</span></span><span>× 1 · ₹450</span></div>
-        <p class="small muted" style="margin: 6px 0 0">Not labelled. They go on the bill as their own lines.</p>
+        <div id="visit-products"><div class="row"><span>Calendula cream 30 g<span class="muted">Apply at night</span></span><span>× 1 · ₹120</span></div></div>
+        <p class="small muted" style="margin: 6px 0 0">Scan a pack to add it. Not labelled; they go on the bill as their own lines.</p>
       </section>
 
       <section class="panel">
@@ -99,7 +99,7 @@
         </div>
         <label class="check" style="margin-top: 10px"><input type="checkbox" checked> Book the appointment</label>
         <label class="check"><input type="checkbox" checked> Print envelope label</label>
-        <label class="check"><input type="checkbox" checked> Create the bill (consultation ₹500 + prescribed medicines ₹300 + products ₹450)</label>
+        <label class="check"><input type="checkbox" checked> Create the bill (consultation + prescribed medicines + products)</label>
       </section>
     </div>
   </div>

@@ -16,8 +16,11 @@
     <div class="specimen"><h3>1. Find a patient (Ctrl K or the search box)</h3><p class="muted small">Opens from anywhere. Try it: press Ctrl K on any screen.</p>
       <div class="stage" data-dialog="finder"></div></div>
 
-    <div class="specimen"><h3>2. Card or envelope label scanned</h3><p class="muted small">Shown when a barcode is scanned while other work is open.</p>
-      <div class="stage" data-dialog="scan"></div></div>
+    <div class="specimen"><h3>2. Product scanned during a visit</h3><p class="muted small">Only when a visit is open. Otherwise a product scan goes straight to a new bill.</p>
+      <div class="stage" data-dialog="productScan"></div></div>
+
+    <div class="specimen"><h3>2b. Barcode not recognised</h3><p class="muted small">Any code that is not a patient ID or a product.</p>
+      <div class="stage" data-dialog="scanUnknown"></div></div>
 
     <div class="specimen"><h3>3. Record payment</h3><p class="muted small">From an invoice, the billing list or the patient banner.</p>
       <div class="stage" data-dialog="payment"></div></div>
@@ -32,15 +35,15 @@
           <div class="setting"><span class="toggle"></span><div><strong>Hide medicine names</strong></div><a href="print-label.html">Preview</a></div></div>
         <footer><button class="secondary">Skip</button><button>Print 2 labels</button></footer></div></div></div>
 
-    <div class="specimen"><h3>5. Book appointment</h3><p class="muted small">From a free slot, a patient record or a finished visit.</p>
+    <div class="specimen"><h3>5. New appointment</h3><p class="muted small">Phone number first: it finds everyone on that number or adds a new patient. Then tap a day and a time.</p>
       <div class="stage" data-dialog="book"></div></div>
 
-    <div class="specimen"><h3>6. Take patient photo</h3><p class="muted small">From registration or the patient details panel.</p>
+    <div class="specimen"><h3>6. Take patient photo</h3><p class="muted small">The face is found and the photo cropped to it automatically.</p>
       <div class="stage"><div class="dialog">
         <header>Patient photo <span class="x">✕</span></header>
-        <div class="body"><div class="camera"><span>Camera preview · drag the frame to crop</span></div>
-          <p class="small muted" style="margin: 10px 0 0">Camera: <select style="width: auto"><option>Built-in camera</option></select> · Other state: "Allow camera access in the browser to take a photo."</p></div>
-        <footer><button class="secondary">Upload a file instead</button><button class="secondary">Retake</button><button>Use photo</button></footer></div></div></div>
+        <div class="body"><div class="camera"><span>Camera preview</span><i class="face-box"></i></div>
+          <p class="small muted" style="margin: 10px 0 0">Cropped to the face automatically, on this computer. Other states: "No face found, move closer" · "More than one face, only the patient please" · "Allow camera access in the browser".</p></div>
+        <footer><button class="secondary">Upload a file instead</button><button class="secondary">Adjust crop</button><button class="secondary">Retake</button><button>Use photo</button></footer></div></div></div>
 
     <div class="specimen"><h3>7. Amend a finalised visit</h3><p class="muted small">The original stays; the amendment is added beside it.</p>
       <div class="stage"><div class="dialog">

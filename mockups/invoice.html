@@ -72,31 +72,5 @@
   <div class="save-bar"><span class="muted">Draft · not yet numbered</span><div class="actions"><button class="danger">Delete draft</button><button class="secondary">Save draft</button><button class="secondary">Issue</button><button>Issue and take payment</button></div></div>
 </main>
 <script src="shell.js"></script>
-<script>
-  // Prototype only: keep the draft totals in step, add and remove product lines.
-  (function () {
-    var t = document.getElementById("draft");
-    function fmt(n) { return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-    function recalc() {
-      var sum = 0;
-      t.querySelectorAll("tr.line").forEach(function (r) {
-        var a = (parseFloat(r.querySelector(".q").value) || 0) * (parseFloat(r.querySelector(".r").value) || 0);
-        r.querySelector(".a").textContent = fmt(a); sum += a;
-      });
-      document.getElementById("total").value = fmt(Math.max(0, sum - (parseFloat(document.getElementById("disc").value) || 0)));
-    }
-    t.addEventListener("input", recalc);
-    document.getElementById("disc").addEventListener("input", recalc);
-    t.addEventListener("click", function (e) { if (e.target.classList.contains("x")) { e.target.closest("tr").remove(); recalc(); } });
-    PROTO.onAddProduct = function (name, rate) {
-      var d = [name, rate], tr = document.createElement("tr");
-      tr.className = "line";
-      tr.innerHTML = "<td>" + d[0] + "</td><td><input class='num q' value='1'></td><td><input class='num r' value='" + d[1] + "'></td><td>18%</td><td class='num a'></td><td class='x'>✕</td>";
-      document.getElementById("add-row").before(tr);
-      recalc();
-    };
-    recalc();
-  })();
-</script>
 </body>
 </html>
