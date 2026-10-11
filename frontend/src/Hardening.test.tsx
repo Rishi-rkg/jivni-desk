@@ -162,7 +162,7 @@ describe('clinic administration', () => {
       String(url).endsWith('me/') ? response(sessionFor('clinician')) : response(empty),
     );
     mount('/settings');
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Clinic name')).not.toBeInTheDocument();
   });

@@ -304,7 +304,7 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         for first, last, born, phone in Patient.objects.filter(clinic=clinic).values_list(
             "first_name", "last_name", "date_of_birth", "phone"
         ):
-            known.add((first.lower(), last.lower(), born.isoformat()))
+            known.add((first.lower(), last.lower(), born.isoformat() if born else ""))
             if phone:
                 known.add(("phone", phone))
         ready, duplicates, errors, created = [], 0, [], 0
@@ -704,6 +704,10 @@ class EncounterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
     def perform_create(self, serializer):
         encounter = serializer.save(clinician=self.request.user)
         self.event("encounter.create", encounter)
+        # Whoever was waiting for this visit has now been seen.
+        from scheduling.views import mark_seen
+
+        mark_seen(self.member.clinic, encounter.patient, self.request.user)
 
     @action(detail=True, methods=["post"])
     def amendments(self, request, pk=None):

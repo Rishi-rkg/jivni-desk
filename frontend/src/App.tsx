@@ -19,6 +19,7 @@ import { PatientList } from './PatientList';
 import { NewEncounter } from './VisitScreen';
 import { Brand, ErrorMessage } from './components';
 import { Dashboard } from './WorkspaceScreens';
+import { AppointmentsScreen } from './AppointmentsScreen';
 import { BillingScreen } from './BillingScreen';
 import { InvoiceScreen, NewBill } from './InvoiceScreen';
 import { PrintRoutes } from './PrintScreens';
@@ -340,7 +341,10 @@ export default function App() {
             <p role="status">Switching clinic…</p>
           ) : (
             <Routes key={session.clinic_id}>
-              <Route path="/dashboard" element={<Dashboard role={role} />} />
+              <Route
+                path="/dashboard"
+                element={<Dashboard role={role} userName={userName} onFind={() => setFinder(true)} />}
+              />
               <Route path="/patients" element={<PatientList role={role} billingOn={allowed('/billing')} />} />
               <Route
                 path="/patients/new"
@@ -350,12 +354,24 @@ export default function App() {
                 path="/patients/:id/edit"
                 element={canWriteDemographics(role) ? <PatientForm role={role} /> : <Navigate to="/patients" replace />}
               />
-              <Route path="/patients/:id" element={<PatientProfile role={role} billingOn={allowed('/billing')} />} />
+              <Route
+                path="/patients/:id"
+                element={
+                  <PatientProfile role={role} billingOn={allowed('/billing')} diaryOn={allowed('/appointments')} />
+                }
+              />
               <Route
                 path="/patients/:id/encounters/new"
-                element={<NewEncounter role={role} billingOn={allowed('/billing')} libraryOn={allowed('/library')} />}
+                element={
+                  <NewEncounter
+                    role={role}
+                    billingOn={allowed('/billing')}
+                    libraryOn={allowed('/library')}
+                    diaryOn={allowed('/appointments')}
+                  />
+                }
               />
-              <Route path="/appointments" element={guarded('/appointments', <ComingSoon title="Appointments" />)} />
+              <Route path="/appointments" element={guarded('/appointments', <AppointmentsScreen role={role} />)} />
               <Route path="/messages" element={guarded('/messages', <ComingSoon title="Messages" />)} />
               <Route path="/billing/new" element={guarded('/billing', <NewBill features={member.features} />)} />
               <Route

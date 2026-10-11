@@ -13,7 +13,7 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
   await page.getByLabel('Username').fill(credentials.username);
   await page.getByLabel('Password').fill(credentials.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeVisible();
 
   await page.getByRole('link', { name: 'Patients', exact: true }).click();
   await page.getByRole('link', { name: 'New patient' }).click();

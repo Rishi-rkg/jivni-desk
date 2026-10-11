@@ -174,7 +174,7 @@ describe('the reference library', () => {
   it('is not offered to reception', async () => {
     serve(sessionFor('reception'));
     mount('/library');
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
   });
 });

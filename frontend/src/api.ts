@@ -60,6 +60,9 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     unauthorizedHandler?.();
     throw new ApiError(401, LOCKED_MESSAGE);
   }
+  // The server slows down anything that asks far faster than a person at a desk would.
+  if (response.status === 429 && !path.startsWith('auth/'))
+    throw new ApiError(429, 'Too much at once for the clinic computer. Wait a few seconds, then try again.', data);
   if (!response.ok) throw new ApiError(response.status, describe(data), data);
   lastContact = Date.now();
   return data as T;

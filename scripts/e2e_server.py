@@ -34,6 +34,8 @@ def main():
         "DJANGO_SECURE_COOKIES": "false",
         "DJANGO_ALLOWED_HOSTS": "127.0.0.1,localhost",
         "DJANGO_CSRF_TRUSTED_ORIGINS": ORIGIN,
+        # The tests click through the screens far faster than a person does.
+        "API_REQUESTS_PER_MINUTE": "3000",
     })
     env.setdefault("DJANGO_SECRET_KEY", secrets.token_urlsafe(64))
     if len(env["DJANGO_SECRET_KEY"]) < 32:

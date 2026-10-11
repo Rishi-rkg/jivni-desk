@@ -47,7 +47,8 @@ class Patient(StableRecord):
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
-    date_of_birth = models.DateField()
+    # Empty only for a patient added in a hurry while booking by phone; the full form asks for it.
+    date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=20, choices=Gender.choices)
     phone = models.CharField(max_length=40, blank=True)
     whatsapp_number = models.CharField(max_length=40, blank=True)

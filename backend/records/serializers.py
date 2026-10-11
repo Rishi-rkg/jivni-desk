@@ -67,6 +67,8 @@ def demographic_snapshot(patient):
 
 
 class PatientSerializer(serializers.ModelSerializer):
+    # Registration asks for the date of birth; only the quick add while booking by phone may leave it out.
+    date_of_birth = serializers.DateField()
     address = AddressSerializer(required=False, allow_null=True)
     photos = PhotoSerializer(many=True, read_only=True)
     identifier = serializers.SerializerMethodField()

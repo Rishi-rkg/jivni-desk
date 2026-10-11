@@ -114,7 +114,7 @@ const SEX_WORD: Record<string, string> = { female: 'Female', male: 'Male', other
 export const sexWord = (gender: string) => SEX_WORD[gender] ?? gender;
 
 /** "42 F" for a list row. */
-export function ageSex(person: { date_of_birth: string; gender: string }) {
+export function ageSex(person: { date_of_birth: string | null; gender: string }) {
   return [age(person.date_of_birth), SEX[person.gender]]
     .filter((part) => part !== null && part !== undefined)
     .join(' ');

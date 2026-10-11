@@ -24,7 +24,7 @@ from PyInstaller.utils.hooks import collect_all
 
 root = Path(SPECPATH).parent
 backend = root / "backend"
-OWN = ["accounts", "audit", "billing", "config", "knowledge", "modules", "printing", "records", "vault"]
+OWN = ["accounts", "audit", "billing", "config", "knowledge", "modules", "printing", "records", "scheduling", "vault"]
 THIRD_PARTY = ["django", "rest_framework", "whitenoise", "waitress", "argon2", "cryptography", "PIL", "tzdata", "pystray"]
 
 if not (root / "frontend" / "dist" / "index.html").is_file():

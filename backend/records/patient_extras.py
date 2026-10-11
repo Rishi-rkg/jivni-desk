@@ -197,7 +197,7 @@ def export_csv(patients):
             [
                 codes[0] if codes else "",
                 *[spreadsheet_safe(value) for value in [patient.first_name, patient.middle_name, patient.last_name]],
-                patient.date_of_birth.isoformat(),
+                patient.date_of_birth.isoformat() if patient.date_of_birth else "",
                 patient.gender,
                 spreadsheet_safe(patient.phone),
                 spreadsheet_safe(patient.whatsapp_number),

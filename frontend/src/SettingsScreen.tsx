@@ -4,6 +4,7 @@ import { api, setCSRF } from './api';
 import { ActivityLog, ClinicDetails } from './AdminScreens';
 import { BackupScreen } from './BackupScreen';
 import { ErrorMessage } from './components';
+import { WorkWeek } from './WorkWeek';
 import { ClinicSettings, FeatureName, Membership, ROLE_LABELS, Role, Session, canManageBackups } from './types';
 import { SettingRow, Switch, notify, useLoad } from './ui';
 
@@ -18,6 +19,7 @@ const OWNER: Role[] = ['owner'];
 const KEEPERS: Role[] = ['owner', 'admin'];
 const SECTIONS: Section[] = [
   { key: 'clinic', label: 'Clinic details', group: 'Clinic', roles: KEEPERS },
+  { key: 'work-week', label: 'Work week', group: 'Clinic', roles: KEEPERS },
   { key: 'account', label: 'My account', group: 'People', roles: KEEPERS },
   { key: 'switches', label: 'Switches', group: 'Features', roles: OWNER },
   { key: 'backups', label: 'Backups', group: 'Safety', roles: OWNER },
@@ -58,6 +60,7 @@ export function SettingsScreen({
         </nav>
         <div>
           {current.key === 'clinic' && <ClinicDetails role={member.role} onSaved={onSaved} />}
+          {current.key === 'work-week' && <WorkWeek role={member.role} />}
           {current.key === 'account' && <MyAccount session={session} onSaved={onSaved} />}
           {current.key === 'switches' && <Switches onSaved={onSaved} />}
           {current.key === 'backups' && canManageBackups(member.role) && <BackupScreen />}

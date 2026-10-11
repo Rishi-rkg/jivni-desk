@@ -517,7 +517,7 @@ class BillingReportViewSet(BillingViewSet):
                 "billed_today": str(sum((invoice.total for invoice in issued), ZERO)),
                 "invoices_today": issued.count(),
                 "collected_today": str(sum(collected(clinic, start, end).values(), ZERO)),
-                "outstanding": str(sum((invoice.owed for invoice in owing), ZERO)),
+                "outstanding": str(sum((invoice.owed for invoice in owing), ZERO).quantize(ZERO)),
                 "outstanding_count": owing.count(),
                 "drafts": Invoice.objects.filter(clinic=clinic, status=Invoice.Status.DRAFT).count(),
             }

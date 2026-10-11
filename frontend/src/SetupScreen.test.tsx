@@ -59,7 +59,7 @@ describe('first-time setup', () => {
     await userEvent.click(screen.getByLabelText(/I have written the recovery key down/));
     await userEvent.click(proceed);
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeInTheDocument();
     expect(screen.queryByText(KEY)).not.toBeInTheDocument();
   });
 

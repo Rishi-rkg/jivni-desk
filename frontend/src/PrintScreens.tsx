@@ -812,6 +812,100 @@ export function PrintPrescription() {
   );
 }
 
+interface SheetRow {
+  id: string;
+  time: string | null;
+  duration_minutes: number;
+  visit_type: string;
+  reason: string;
+  status: string;
+  patient: { name: string; code: string; phone: string };
+  doctor: { name: string } | null;
+}
+const SHEET_TYPES: Record<string, string> = {
+  first: 'First consultation',
+  follow_up: 'Follow-up',
+  medicine_only: 'Collect medicine',
+};
+
+export function PrintDaySheet() {
+  const { day } = useParams();
+  usePaper('A4');
+  const { data, error } = useLoad(
+    (signal) => api<{ results: SheetRow[] }>(`appointments/?day=${day}`, { signal }),
+    [day],
+  );
+  const { data: clinic } = useLoad((signal) => api<{ name: string }>('clinic/', { signal }), []);
+  const note = usePrintRecord(data ? { kind: 'day_sheet' } : null);
+  useAutoPrint(!!data && !!clinic, note);
+  if (error) return <ErrorMessage message={error} />;
+  if (!data || !clinic) return <p role="status">Preparing the day sheet…</p>;
+  const rows = data.results.filter((row) => row.status !== 'cancelled');
+  return (
+    <PrintPage
+      title="Day sheet"
+      hint="The day's appointments on one A4 page, for the front desk."
+      back={`/appointments?day=${day}`}
+      backLabel="Back to appointments"
+      onPrint={note}
+    >
+      <div className="sheet" aria-label="Day sheet">
+        <div className="b-head">
+          <div className="b-clinic">
+            <div>
+              <h1>{clinic.name}</h1>
+            </div>
+          </div>
+          <div className="b-title">
+            <h2>DAY SHEET</h2>
+            <strong>{shortDate(day)}</strong>
+          </div>
+        </div>
+        <table style={{ marginTop: '6mm' }}>
+          <thead>
+            <tr>
+              <th style={{ width: '16mm' }}>Time</th>
+              <th>Patient</th>
+              <th>Phone</th>
+              <th>For</th>
+              <th style={{ width: '32mm' }}>Arrived · seen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>{row.time ?? 'Walk-in'}</td>
+                <td>
+                  {row.patient.name}
+                  <br />
+                  <span className="b-codetext">{row.patient.code}</span>
+                </td>
+                <td>{row.patient.phone}</td>
+                <td>
+                  {row.reason || SHEET_TYPES[row.visit_type]}
+                  {row.doctor && ` · ${row.doctor.name}`}
+                </td>
+                <td></td>
+              </tr>
+            ))}
+            {!rows.length && (
+              <tr>
+                <td colSpan={5}>Nothing is booked for this day.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <div className="b-small" style={{ marginTop: 'auto' }}>
+          <span>
+            {rows.length} appointment{rows.length === 1 ? '' : 's'}
+          </span>
+          <span>Printed {printedNow()}</span>
+        </div>
+      </div>
+    </PrintPage>
+  );
+}
+
 /** Every print page. Shown without the tabs and header, so the paper holds only the document. */
 export function PrintRoutes() {
   return (
@@ -819,6 +913,7 @@ export function PrintRoutes() {
       <Route path="/print/invoice/:id" element={<PrintInvoice />} />
       <Route path="/print/receipt/:id/:paymentId" element={<PrintReceipt />} />
       <Route path="/print/day-end/:day" element={<PrintDayEnd />} />
+      <Route path="/print/day-sheet/:day" element={<PrintDaySheet />} />
       <Route path="/print/labels/:encounterId" element={<PrintLabels />} />
       <Route path="/print/test-label" element={<PrintTestLabel />} />
       <Route path="/print/card/:patientId" element={<PrintCard />} />

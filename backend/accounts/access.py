@@ -14,6 +14,8 @@ BILLING_CORRECT = {"owner", "billing"}
 PRICE_LIST_READ = BILLING_READ | {"admin"}
 PRICE_LIST_WRITE = {"owner", "admin"}
 DAY_END = {"owner", "billing"}
+# The diary: everyone who books patients or sees them.
+APPOINTMENTS = {"owner", "clinician", "assistant", "reception"}
 
 
 def membership(request):

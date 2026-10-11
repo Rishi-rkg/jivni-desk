@@ -25,7 +25,7 @@ test('a new installation is set up with encryption on and a recovery key', async
   await page.getByLabel(/I have written the recovery key down/).check();
   await page.getByRole('button', { name: 'Continue to the clinic' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeVisible();
   await expect(page.getByText('Synthetic E2E Clinic')).toBeVisible();
 
   mkdirSync('../.tools', { recursive: true });

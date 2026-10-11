@@ -22,6 +22,7 @@ from records.views import (
     ScanViewSet,
     VisitDraftViewSet,
 )
+from scheduling.views import AppointmentViewSet, DashboardViewSet, WorkWeekViewSet
 from vault import api as backups
 
 router = DefaultRouter()
@@ -41,6 +42,9 @@ router.register("billing", BillingReportViewSet, basename="billing")
 router.register("print-templates", PrintTemplateViewSet, basename="print-template")
 router.register("print-jobs", PrintJobViewSet, basename="print-job")
 router.register("print-data", PrintDataViewSet, basename="print-data")
+router.register("work-days", WorkWeekViewSet, basename="work-day")
+router.register("appointments", AppointmentViewSet, basename="appointment")
+router.register("dashboard", DashboardViewSet, basename="dashboard")
 
 
 @api_view(["GET"])

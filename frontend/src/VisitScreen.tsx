@@ -83,6 +83,7 @@ interface VisitForm {
   next_visit: string;
   print_labels: boolean;
   create_bill: boolean;
+  book_next: boolean;
 }
 interface Draft {
   id: string;
@@ -125,6 +126,7 @@ const blankForm = (visitType: VisitType): VisitForm => ({
   next_visit: '',
   print_labels: true,
   create_bill: true,
+  book_next: false,
 });
 
 /** The two halves of the label wording: "4 tabs, twice daily" and "before meals · 14 days". */
@@ -333,10 +335,12 @@ export function NewEncounter({
   role,
   billingOn = false,
   libraryOn = true,
+  diaryOn = false,
 }: {
   role: Role;
   billingOn?: boolean;
   libraryOn?: boolean;
+  diaryOn?: boolean;
 }) {
   const { id } = useParams();
   const location = useLocation();
@@ -594,6 +598,7 @@ export function NewEncounter({
           ...location.state,
           message: billed ? 'Visit finalised. A draft bill is waiting in Billing.' : 'Visit finalised.',
           labels: current.print_labels && current.envelopes.length ? visit.id : undefined,
+          book: current.book_next && diaryOn ? current.next_visit || isoDay() : undefined,
         },
       });
     } catch (e) {
@@ -1019,6 +1024,16 @@ export function NewEncounter({
                   onChange={(e) => change({ create_bill: e.target.checked })}
                 />
                 Create the bill (consultation + prescribed medicines + products)
+              </label>
+            )}
+            {diaryOn && (
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={form.book_next}
+                  onChange={(e) => change({ book_next: e.target.checked })}
+                />
+                Book the next appointment
               </label>
             )}
           </section>

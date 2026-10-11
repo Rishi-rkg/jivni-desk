@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "vault",
     "billing",
     "printing",
+    "scheduling",
 ]
 MIDDLEWARE = [
     "config.middleware.RequestIdMiddleware",
@@ -114,7 +115,8 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 25,
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"user": "300/min"},
+    # Far more than a person at a desk makes. Browser tests drive the screens much faster and raise it.
+    "DEFAULT_THROTTLE_RATES": {"user": f"{max(60, int(os.environ.get('API_REQUESTS_PER_MINUTE', '300')))}/min"},
 }
 # Argon2id cost for sealing a clinic key under a password (RFC 9106, second recommended setting).
 VAULT_KDF = {"time_cost": 3, "memory_cost": 64 * 1024, "parallelism": 4}

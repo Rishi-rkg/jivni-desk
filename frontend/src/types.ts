@@ -48,7 +48,8 @@ export interface Patient {
   first_name: string;
   middle_name: string;
   last_name: string;
-  date_of_birth: string;
+  /** Empty only for someone added in a hurry while booking by phone. */
+  date_of_birth: string | null;
   gender: string;
   phone: string;
   email: string;
@@ -116,6 +117,7 @@ export type TimelineItem =
       at: string;
       status: string;
       visit_type: string;
+      walk_in?: boolean;
       doctor_name: string;
     }
   | { kind: 'message'; id: string; at: string; title: string; status: string; body: string };

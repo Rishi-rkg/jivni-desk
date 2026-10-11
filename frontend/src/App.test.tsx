@@ -205,7 +205,7 @@ describe('signing in', () => {
     await userEvent.type(await screen.findByLabelText('Username'), 'doctor');
     await userEvent.type(screen.getByLabelText('Password'), 'synthetic-password');
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: 'Patients' }));
     expect(await screen.findByText(/No patients found\./)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalled();

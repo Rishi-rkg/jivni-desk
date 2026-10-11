@@ -86,7 +86,7 @@ export function PatientForm({ role }: { role: Role }) {
     api<Patient>(`patients/${id}/`, { signal: controller.signal })
       .then((loaded) => {
         setPatient(loaded);
-        setBorn(loaded.date_of_birth);
+        setBorn(loaded.date_of_birth ?? '');
         setPhone(loaded.phone);
         setWhatsapp(loaded.whatsapp_number ?? '');
         setSame(!loaded.whatsapp_number || loaded.whatsapp_number === loaded.phone);
@@ -214,7 +214,8 @@ export function PatientForm({ role }: { role: Role }) {
       </div>
       {matches.map((match) => (
         <div className="warning" key={match.id}>
-          <strong>Possible duplicate.</strong> {displayName(match)}, born {shortDate(match.date_of_birth)}
+          <strong>Possible duplicate.</strong> {displayName(match)}
+          {match.date_of_birth && `, born ${shortDate(match.date_of_birth)}`}
           {match.phone && `, phone ending ${phoneTail(match.phone).slice(1)}`}, is already registered (
           {match.reasons.join(', ')}). <Link to={`/patients/${match.id}`}>Open that record</Link> or continue if this is
           a different person.

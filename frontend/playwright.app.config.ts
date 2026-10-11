@@ -26,6 +26,8 @@ export default defineConfig({
   webServer: {
     command: `${program} --no-browser --no-tray --port ${PORT} --data-dir "${dataDir}"`,
     url: `${APP}/health/`,
+    // The tests click through the screens far faster than a person does.
+    env: { API_REQUESTS_PER_MINUTE: '3000' },
     timeout: 120_000,
     reuseExistingServer: false,
   },

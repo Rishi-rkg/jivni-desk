@@ -37,6 +37,7 @@ import {
 } from './types';
 import { Avatar, Chip, Menu, MenuItem, StatusLabel, notify } from './ui';
 import { AmendVisit } from './VisitScreen';
+import { BookingWindow } from './WorkspaceScreens';
 
 const VISIT_TITLES: Record<string, string> = {
   first: 'First consultation',
@@ -387,9 +388,11 @@ function Timeline({
       return (
         <>
           <strong>
-            {VISIT_TITLES[item.visit_type]
-              ? `${VISIT_TITLES[item.visit_type].replace(' visit', '')} appointment`
-              : 'Appointment'}
+            {item.walk_in
+              ? 'Walk-in'
+              : VISIT_TITLES[item.visit_type]
+                ? `${VISIT_TITLES[item.visit_type].replace(' visit', '')} appointment`
+                : 'Appointment'}
           </strong>{' '}
           · {dateTime(item.at).slice(-5)}
           {item.doctor_name && ` with ${item.doctor_name}`}{' '}
@@ -548,9 +551,17 @@ function RememberPanel({ patient }: { patient: Patient }) {
 }
 
 type Window_ =
-  '' | 'archive' | 'card' | 'consent' | 'family' | 'alert' | 'history' | 'measurements' | 'note' | 'document';
+  '' | 'archive' | 'card' | 'consent' | 'family' | 'alert' | 'history' | 'measurements' | 'note' | 'document' | 'book';
 
-export function PatientProfile({ role, billingOn = true }: { role: Role; billingOn?: boolean }) {
+export function PatientProfile({
+  role,
+  billingOn = true,
+  diaryOn = false,
+}: {
+  role: Role;
+  billingOn?: boolean;
+  diaryOn?: boolean;
+}) {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -569,6 +580,8 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
   const [turn, setTurn] = useState(0);
   // A visit that was just finalised with "Print envelope label" ticked opens the label window once.
   const [labelsFor, setLabelsFor] = useState<string>(location.state?.labels ?? '');
+  // ...and with "Book the next appointment" ticked, the booking window follows, on the advised day.
+  const [bookDay, setBookDay] = useState<string>(location.state?.book ?? '');
   const [success, setSuccess] = useState<string>(location.state?.message ?? '');
   const clinical = canReadClinical(role);
   const doctor = canWriteClinical(role);
@@ -646,6 +659,7 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
     ...(canWriteDemographics(role)
       ? [
           { label: 'Edit details', to: `/patients/${patient.id}/edit` },
+          ...(diaryOn && !patient.archived_at ? [{ label: 'Book appointment', onSelect: () => setOpen('book') }] : []),
           ...(patient.identifier ? [{ label: 'Print patient card', to: `/print/card/${patient.id}` }] : []),
           { label: 'Replace lost card', onSelect: () => setOpen('card') },
           { label: 'Message consent…', onSelect: () => setOpen('consent') },
@@ -754,7 +768,7 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
             </div>
             <dl>
               <dt>Date of birth</dt>
-              <dd>{shortDate(patient.date_of_birth)}</dd>
+              <dd>{shortDate(patient.date_of_birth) || 'Not recorded'}</dd>
               <dt>Phone · WhatsApp</dt>
               <dd>
                 {patient.phone || <span className="muted">Not recorded</span>}
@@ -1019,6 +1033,22 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
         />
       )}
       {open === 'history' && <ChangeHistory patient={patient} onClose={() => setOpen('')} />}
+      {(open === 'book' || (!!bookDay && !labelsFor && diaryOn)) && (
+        <BookingWindow
+          role={role}
+          patient={{ id: patient.id, name }}
+          day={bookDay || undefined}
+          onClose={() => {
+            setOpen('');
+            setBookDay('');
+          }}
+          onBooked={() => {
+            setOpen('');
+            setBookDay('');
+            refresh();
+          }}
+        />
+      )}
       {open === 'measurements' && <MeasurementHistory patient={patient} onClose={() => setOpen('')} />}
       {open === 'note' && (
         <AddNote

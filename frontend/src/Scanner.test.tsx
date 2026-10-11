@@ -123,10 +123,11 @@ describe('barcode scanning', () => {
     expect(requested.some((path) => path.includes('/scan/'))).toBe(false);
   });
 
-  it('opens the patient when a card code is entered in the dashboard search', async () => {
+  it('opens the patient when a card code is typed after "Find or scan card" on the dashboard', async () => {
     const requested = mockServer();
     mount('/dashboard');
-    await userEvent.type(await screen.findByLabelText('Name, phone, or patient ID'), 'pat-w8kq3g7dp9{Enter}');
+    await userEvent.click(await screen.findByRole('button', { name: 'Find or scan card' }));
+    await userEvent.type(await screen.findByRole('combobox', { name: 'Find a patient' }), 'pat-w8kq3g7dp9{Enter}');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
     expect(requested).toContain('/api/v1/scan/pat-w8kq3g7dp9/');
   });
