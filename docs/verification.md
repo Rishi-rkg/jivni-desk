@@ -23,6 +23,16 @@ Only synthetic data was used. The screenshot below records the verified timeline
 
 Envelope encryption remains unimplemented. The production startup guard and the documented deployment gates remain in force. Test success does not establish production readiness or regulatory compliance.
 
+## Reference library (2026-10-11)
+
+172 backend tests pass on SQLite and on PostgreSQL 16 (21 of them new, in `backend/knowledge/tests/`); Ruff clean; no migration drift (the library adds no tables). 29 frontend tests pass (4 new); ESLint, Prettier and the build are clean. 5 browser end-to-end tests pass on the development servers and on the one-program app; the new one searches the shipped library, reads the antidotes of Arnica, and chooses a remedy on the visit page and sees it remembered.
+
+The new tests cover: files reading back exactly as written; the clinic layer adding, hiding and creating entries while the shipped files stay byte for byte unchanged; an unreadable file reported and skipped; edits seen without a restart; every part of a query explained with its lines and sources; spelling variants, synonyms and unfinished words; the `anti+`, `comp+` shortcuts; a choice moving a remedy up for its clinic only; typed text that is not a library word never reaching the preferences file; an unreadable preferences file left untouched; roles (reception and billing refused and the refusal audited, assistants read-only); one clinic never seeing another's layer, learning or export; search refused in the address; the export's contents and its audit entry.
+
+**Compared with the source page:** Arnica only (antidote Camphora; complementary Aconite and Ipecacuanha; modalities). **Not compared:** the other 34 remedies. The importer splits the book's sentences and reads its Relationship paragraphs by rule; the parsed output of about ten more remedies was read for plausibility and showed one stray note (Aconite's Quebracho entry). The full Relationship paragraph is kept verbatim in each file's notes so nothing is lost.
+
+The PostgreSQL run used a separately named test database because `test_clinic` already existed. The full suite passed there but could not drop its test database afterwards ("2 other sessions using the database"); the library tests alone, and the accounts, records, audit and vault tests alone, pass and tear down cleanly. The cause was not found.
+
 ## Laptop UX revision
 
 The subsequent laptop interface revision passed the frontend build and seven frontend tests. Browser verification at 1366 × 768 used synthetic fixtures in a temporary local database and covered the dashboard, patient tabs, preserving a note draft across tabs, the unsaved-navigation warning, saving a note, creating a visit and returning to Visits with confirmation. No backend schema or permission changes were made in this revision.

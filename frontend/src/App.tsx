@@ -9,6 +9,7 @@ import {
   Session,
   canAdministerClinic,
   canManageBackups,
+  canReadClinical,
   canWriteDemographics,
   displayName,
 } from './types';
@@ -21,6 +22,7 @@ import { BackupScreen } from './BackupScreen';
 import { SetupScreen } from './SetupScreen';
 import { LockScreen, useIdleLock } from './LockScreen';
 import { resolveScan, useScanner } from './Scanner';
+import { LibraryScreen } from './Library';
 
 function Login({ onLogin }: { onLogin: (s: Session) => void }) {
   const [error, setError] = useState('');
@@ -174,14 +176,7 @@ function PatientList({ role }: { role: Role }) {
 }
 
 function PlannedModules() {
-  const modules = [
-    'Billing',
-    'WhatsApp correspondence',
-    'Medicine knowledge library',
-    'Printing',
-    'Barcode scanning',
-    'AI drafting',
-  ];
+  const modules = ['Billing', 'WhatsApp correspondence', 'Printing', 'Barcode scanning', 'AI drafting'];
   return (
     <>
       <h1>More clinic tools</h1>
@@ -386,6 +381,7 @@ export default function App() {
           <NavLink to="/billing">
             Billing <span className="planned-label">Planned</span>
           </NavLink>
+          {canReadClinical(member.role) && <NavLink to="/library">Library</NavLink>}
           <NavLink to="/modules">More tools</NavLink>
           <NavLink to="/settings">Clinic settings</NavLink>
           {canAdministerClinic(member.role) && <NavLink to="/audit">Audit log</NavLink>}
@@ -415,6 +411,16 @@ export default function App() {
               />
               <Route path="/patients/:id" element={<PatientProfile role={member.role} />} />
               <Route path="/patients/:id/encounters/new" element={<NewEncounter role={member.role} />} />
+              <Route
+                path="/library"
+                element={
+                  canReadClinical(member.role) ? (
+                    <LibraryScreen role={member.role} />
+                  ) : (
+                    <Navigate to="/dashboard" replace />
+                  )
+                }
+              />
               <Route path="/modules" element={<PlannedModules />} />
               <Route path="/settings" element={<ClinicSettingsScreen role={member.role} onSaved={refreshSession} />} />
               <Route

@@ -711,3 +711,94 @@ time {
     justify-content: flex-end;
   }
 }
+
+/* Reference library */
+button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.remedy-search label {
+  max-width: 640px;
+}
+.remedy-search code {
+  background: #eef4f7;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.remedy-name {
+  position: relative;
+  display: inline-block;
+}
+.remedy-tip {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: 100%;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  max-width: 340px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgb(36 52 60 / 15%);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.remedy-result {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+}
+.remedy-result h3 {
+  margin: 0;
+}
+.remedy-result .heading {
+  margin-bottom: 6px;
+}
+.reasons,
+.reasons ul,
+.related {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.reasons ul {
+  padding-left: 18px;
+  margin-bottom: 6px;
+}
+.reasons .matched {
+  font-weight: 600;
+}
+.related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-bottom: 10px;
+}
+.graded {
+  font-weight: 600;
+}
+.remedy-entry {
+  margin-top: 16px;
+}
+.remedy-entry summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.remedy-lookup {
+  margin-bottom: 16px;
+}
+.remedy-lookup > summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin-bottom: 10px;
+}

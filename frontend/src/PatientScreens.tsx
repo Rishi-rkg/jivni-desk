@@ -17,6 +17,7 @@ import {
 } from './types';
 import { BillingPlaceholder } from './WorkspaceScreens';
 import { useUnsavedChanges } from './useUnsavedChanges';
+import { RemedySearch } from './Library';
 
 export function NewPatient() {
   const [error, setError] = useState('');
@@ -796,6 +797,15 @@ export function NewEncounter({ role }: { role: Role }) {
               <fieldset>
                 <legend>Prescription</legend>
                 <p className="muted">Add the medicines prescribed during this visit.</p>
+                <details className="remedy-lookup">
+                  <summary>Look up a remedy in the library</summary>
+                  <RemedySearch
+                    chooseLabel="Add to prescription"
+                    onChoose={(remedy) =>
+                      setItems((old) => [...old, { ...blankItem(), medicine_name_snapshot: remedy.name }])
+                    }
+                  />
+                </details>
                 {items.map((item, i) => (
                   <div className="rx-form" key={i}>
                     <div className="heading">
