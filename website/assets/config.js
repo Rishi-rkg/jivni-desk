@@ -66,9 +66,9 @@ window.JIVNI = {
     {
       id: "remedies",
       src: "assets/media/remedies.jpg",
-      generated: "Z-Image Turbo",
-      alt: "Glass vials of homeopathic globules on a shelf",
-      brief: "Glass vials of globules on a shelf, close up",
+      generated: "Z-Image Turbo and Qwen Image Edit",
+      alt: "Glass vials of homeopathic globules beside a labelled paper envelope",
+      brief: "Vials of globules beside a labelled envelope",
       author: null,
       source: null,
       license: null,
@@ -125,6 +125,13 @@ window.JIVNI = {
       generated: "Z-Image Turbo",
       alt: "A laptop with an external drive and a padlock on a desk",
       brief: "Laptop, backup drive and padlock",
+    },
+    {
+      id: "envelope",
+      src: "assets/media/envelope.jpg",
+      generated: "Z-Image Turbo and Qwen Image Edit",
+      alt: "A small paper envelope with a printed dosage label beside glass vials of globules",
+      brief: "Labelled envelope beside vials of globules",
     },
   ],
 };
