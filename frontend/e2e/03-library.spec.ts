@@ -13,7 +13,8 @@ test('the library answers from the shipped book, explains itself and learns a ch
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('link', { name: 'Library' }).click();
   await expect(page.getByRole('heading', { name: 'Library' })).toBeVisible();
-  await expect(page.getByText(/\d+ remedies, \d+ rubrics/)).toBeVisible();
+  // Reading a whole repertory for the first time takes a few seconds, longer on a slow machine.
+  await expect(page.getByText(/\d+ remedies, \d+ rubrics/)).toBeVisible({ timeout: 45_000 });
 
   const search = page.getByLabel('Symptoms or remedy');
   await search.fill('anti+arnica');

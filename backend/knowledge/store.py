@@ -171,3 +171,20 @@ def library(clinic_id):
         index.learn(preferences)
         cached["learned"] = learned
     return index
+
+
+def warm(clinic_id):
+    """Read the library in the background, so it is ready by the time someone opens it.
+
+    A full repertory takes a few seconds to read the first time. Called at sign-in; never raises.
+    """
+    if not getattr(settings, "KNOWLEDGE_WARM_ON_SIGN_IN", True):
+        return
+
+    def work():
+        try:
+            library(clinic_id)
+        except Exception:  # noqa: BLE001, S110 - a convenience; the library reports its own problems when opened
+            pass
+
+    threading.Thread(target=work, daemon=True, name="library-warm").start()

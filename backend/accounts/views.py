@@ -15,6 +15,7 @@ from django.views.decorators.debug import sensitive_variables
 from django.views.decorators.http import require_GET, require_POST
 
 from audit.models import record_event
+from knowledge import store as library_store
 from vault import backup as vault_backup
 from vault import services as vault
 from vault import session as vault_session
@@ -114,6 +115,7 @@ def sign_in(request):
     vault_backup.ensure_backup_keys(unlocked)
     response = JsonResponse(session_data(request, unlocked))
     vault_session.start(request, response, unlocked)
+    library_store.warm(memberships[0].clinic_id)
     return response
 
 
@@ -245,4 +247,5 @@ def setup(request):
     # The recovery key is returned exactly once, here. It is not stored and cannot be shown again.
     response = JsonResponse({**session_data(request, unlocked), "recovery_key": recovery}, status=201)
     vault_session.start(request, response, unlocked)
+    library_store.warm(clinic.pk)
     return response

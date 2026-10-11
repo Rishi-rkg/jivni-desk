@@ -69,6 +69,12 @@ def frontend_dist():
     return packaged if packaged.is_dir() else Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
+def knowledge_base():
+    """The reference library shipped with the application."""
+    packaged = bundle_dir() / "knowledge_base"
+    return packaged if packaged.is_dir() else Path(__file__).resolve().parent.parent / "knowledge"
+
+
 def icon_path():
     packaged = bundle_dir() / "icons" / "jivni-tray.png"
     return packaged if packaged.is_file() else Path(__file__).resolve().parent.parent / "packaging" / "icons" / "jivni-tray.png"
@@ -105,6 +111,9 @@ def configure(data_dir, port):
             "PATIENT_STORAGE_ROOT": str(data_dir / "files"),
             "SERVE_FRONTEND": "true",
             "FRONTEND_DIST": str(frontend_dist()),
+            "KNOWLEDGE_BASE_DIR": str(knowledge_base()),
+            # What the clinic adds to the library, and what it has learned, stay with the clinic's data.
+            "KNOWLEDGE_CLINIC_DIR": str(data_dir / "library"),
         }
     )
     handler = RotatingFileHandler(data_dir / "logs" / "app.log", maxBytes=1_000_000, backupCount=3, encoding="utf-8")

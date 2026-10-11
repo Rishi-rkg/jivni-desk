@@ -24,7 +24,7 @@ from PyInstaller.utils.hooks import collect_all
 
 root = Path(SPECPATH).parent
 backend = root / "backend"
-OWN = ["accounts", "audit", "config", "modules", "records", "vault"]
+OWN = ["accounts", "audit", "config", "knowledge", "modules", "records", "vault"]
 THIRD_PARTY = ["django", "rest_framework", "whitenoise", "waitress", "argon2", "cryptography", "PIL", "tzdata", "pystray"]
 
 if not (root / "frontend" / "dist" / "index.html").is_file():
@@ -32,6 +32,10 @@ if not (root / "frontend" / "dist" / "index.html").is_file():
 
 icons = root / "packaging" / "icons"
 datas = [(str(root / "frontend" / "dist"), "frontend_dist"), (str(icons / "jivni-tray.png"), "icons")]
+# The reference library that ships with the application: plain text files, read at run time.
+for source in (root / "knowledge").rglob("*"):
+    if source.is_file():
+        datas.append((str(source), str(Path("knowledge_base") / source.relative_to(root / "knowledge").parent)))
 imported = set()
 for package in OWN:
     for source in (backend / package).rglob("*.py"):

@@ -112,7 +112,8 @@ def django_env(env):
 
 def test(env, extra):
     start(env)
-    command = [sys.executable, "manage.py", "test", "--settings=config.test_settings", *extra]
+    # --noinput: a test database left behind by an interrupted run is replaced without asking.
+    command = [sys.executable, "manage.py", "test", "--settings=config.test_settings", "--noinput", *extra]
     raise SystemExit(subprocess.run(command, cwd=ROOT / "backend", env=django_env(env)).returncode)
 
 

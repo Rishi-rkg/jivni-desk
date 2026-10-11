@@ -15,3 +15,5 @@ CSRF_COOKIE_SECURE = False
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # Tests need speed, not resistance to guessing.
 VAULT_KDF = {"time_cost": 1, "memory_cost": 64, "parallelism": 1}
+# No background reading of the whole library on every test sign-in.
+KNOWLEDGE_WARM_ON_SIGN_IN = False
