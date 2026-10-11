@@ -20,3 +20,6 @@ test-results/
 *.tsbuildinfo
 build/
 backend/library/
+# Working notes for coding agents: kept on the development computer, never published.
+AGENTS.md
+CLAUDE.md

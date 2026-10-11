@@ -24,7 +24,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 | 6 Knowledge library | Built in another work stream: Boericke and Kent as text files with a clinic layer and search | See `knowledge/README.md` |
 | 7 AI features | Interface stub only; the switch stays off | Everything |
 
-Also not built from the screen list: a PIN for unlocking (P56), a separate Dispense page (P28) and the Stock page (P63). The repository is private on GitHub and its checks run on every push. Docker Compose is written but has never been run.
+Also not built from the screen list: a PIN for unlocking (P56), a separate Dispense page (P28) and the Stock page (P63). The repository is on GitHub and its checks run on every push. Docker Compose is written but has never been run.
 
 ## 2. Review findings to fix before building more
 
@@ -60,7 +60,7 @@ These come from reading the code. Each is small now and expensive later.
 
 15. **No linting, formatting or type checking** for either side, and no browser end-to-end tests. *Fixed 2026-10-11:* Ruff, ESLint, Prettier and a Playwright smoke test are in place and both sides were reformatted once. Frontend components are written as very long single lines, which makes diffs hard to review.
 16. **Python versions differ**: the local virtual environment is 3.11, Docker and CI use 3.12. *Addressed 2026-10-10:* CI now tests both.
-17. **CI has never run** because nothing has been pushed. *Fixed 2026-10-11:* the repository is private on GitHub and the checks run on every push.
+17. **CI has never run** because nothing has been pushed. *Fixed 2026-10-11:* the repository is on GitHub and the checks run on every push.
 
 ## 3. Decisions
 
@@ -283,7 +283,7 @@ The original section 30 asks for five documents before development. Their state:
 - Every change ships with tests. Permission and clinic-isolation tests are required for every new endpoint.
 - Both backend suites run in CI: fast SQLite and full PostgreSQL. Migration drift is checked on every push.
 - Each phase adds browser end-to-end tests for its main flows.
-- A phase is finished when its exit checks pass and `README.md`, `AGENTS.md`, this plan and `docs/verification.md` describe the result.
+- A phase is finished when its exit checks pass and `README.md`, `CHANGELOG.md`, this plan and `docs/verification.md` describe the result.
 - Commit small and often, push after every working session.
 
 ## 8. Main risks
