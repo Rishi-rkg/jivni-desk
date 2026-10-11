@@ -2,6 +2,7 @@
 
 import re
 import unicodedata
+from functools import lru_cache
 
 LIGATURES = str.maketrans({"æ": "ae", "œ": "oe", "Æ": "Ae", "Œ": "Oe", "’": "'"})
 WORD = re.compile(r"[a-z0-9]+")
@@ -21,6 +22,7 @@ def slug(value):
     return "-".join(WORD.findall(fold(value)))
 
 
+@lru_cache(maxsize=65536)
 def stem(word):
     """A deliberately crude stem: enough to match bruise, bruised and bruising, or diarrhoea and diarrhea."""
     if len(word) > 5:

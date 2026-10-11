@@ -1,0 +1,11 @@
+# A remedy named in Kent's Repertory. The library has no materia medica entry for it yet.
+
+id = "citricum-acidum"
+name = "Citricum acidum"
+abbreviation = "Cit-ac."
+
+[import]
+source = "kent-repertory"
+locator = "http://www.homeoint.org/books/kentrep/kentreme.htm"
+imported_on = "2026-10-11"
+imported_by = "knowledge.importers.kent"

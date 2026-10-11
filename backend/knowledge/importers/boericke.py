@@ -228,7 +228,8 @@ def parse(page, code, resolver, imported):
     body = re.split(r"Copyright\s", body)[0]
     titles = [plain(part) for part in re.split(r"<br\s*/?>", heading.group(0), flags=re.I)] if heading else []
     titles = [title.strip("() ") for title in titles if title.strip("() ")]
-    name = sentence_case(titles[0]) if titles else entry["name"]
+    # A few headings carry a gloss after the name ("GLONOINUM : gl = glycerin; ...").
+    name = sentence_case(titles[0].split(" : ")[0]) if titles else entry["name"]
     aliases = []
     for alias in titles[1:]:
         alias = sentence_case(alias) if alias.isupper() else alias

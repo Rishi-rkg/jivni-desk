@@ -38,6 +38,12 @@ SAME_REMEDY = {
     "natrum": "natrium",
     "kali": "kalium",
 }
+# Abbreviations the rubrics use that Kent's own list writes differently or leaves out.
+EXTRA_NAMES = {
+    "bism": "Bismuthum",
+    "ir-f": "Iris foetidissima",
+    "cocaine": "Cocainum muriaticum",
+}
 
 
 def fetch(page, cache):
@@ -145,7 +151,7 @@ def parse(page_markup, state, rubrics, unknown):
                 else:
                     unknown[written.strip()] += 1
         name = re.sub(r"\s+", " ", SEE.sub("", name))
-        name = sentence_case(re.sub(r"\s+([,;])", r"", name).strip(" ,;:"))
+        name = sentence_case(re.sub(r"\s+([,;])", lambda found: found.group(1), name).strip(" ,;:"))
         if not name:
             continue
         del state["path"][depth:]
@@ -184,17 +190,25 @@ def main():
     library = {}
     for path in sorted((out / "medicines").glob("*.toml")):
         medicine = tomllib.loads(path.read_text(encoding="utf-8"))
+        if medicine.get("import", {}).get("imported_by") == "knowledge.importers.kent":
+            # A name-only file from an earlier run of this importer; it is made again below if still needed.
+            path.unlink()
+            continue
         library[fold(medicine.get("abbreviation", "")).strip(".")] = medicine["id"]
         library.setdefault("name:" + medicine["id"], medicine["id"])
     used = Counter(remedy for rubric in rubrics.values() for remedies in rubric["grades"].values() for remedy in remedies)
     abbreviations, created, unnamed = {}, 0, []
     for remedy in sorted(used):
-        name = names.get(remedy)
+        name = names.get(remedy) or EXTRA_NAMES.get(remedy)
         candidates = [library.get(remedy)]
         if name:
             identifier = slug(name)
             respelt = "-".join(SAME_REMEDY.get(part, part) for part in identifier.split("-"))
             candidates += [library.get("name:" + identifier), library.get("name:" + respelt)]
+            # "Borax" is the library's "Borax veneta" when no other remedy's name starts the same way.
+            longer = [key for key in library if key.startswith(f"name:{respelt}-")]
+            if len(longer) == 1:
+                candidates.append(library[longer[0]])
         match = next((candidate for candidate in candidates if candidate), None)
         if not match and name:
             match = slug(name)

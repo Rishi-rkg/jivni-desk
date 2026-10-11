@@ -1,0 +1,44 @@
+# Kent's Repertory, chapter: Urinary Organs. One rubric to a line; see knowledge/README.md.
+# g3 = bold in the book, g2 = italics, g1 = plain. Remedies are Kent's abbreviations (knowledge/abbreviations.toml).
+# Imported from a public-domain book; do not edit by hand. A clinic's own rubrics go in its own layer.
+
+source = "kent-repertory"
+chapter = "Urinary Organs"
+imported_on = "2026-10-11"
+
+rubrics = [
+  { name = "Apprehension in region of", page = 645, g1 = ["merc-c"] },
+  { name = "Ball in, sensation of", page = 645, g2 = ["lach"], g1 = ["crot-h", "naja"] },
+  { name = "Ball in, sensation of, forced from behind neck of, sensation of", page = 645, g1 = ["kali-br"] },
+  { name = "Calculi", page = 645, g3 = ["benz-ac", "berb", "calc", "canth", "lyc", "sars", "sep"], g2 = ["chin", "coc-c", "eup-per", "lach", "lith", "mill", "nit-ac", "nux-m", "nux-v", "pareir", "petr", "phos", "puls", "raph", "ruta", "sil"], g1 = ["ant-c", "arg-n", "cact", "card-m", "colch", "mez", "naja", "nat-m", "nat-s", "tarent", "thuj", "zinc"] },
+  { name = "Calculi, after operation for", page = 645, g3 = ["staph"], g2 = ["arn", "calen"], g1 = ["cham", "chin", "cupr", "nux-v", "verat"] },
+  { name = "Cartilaginous induration", page = 645, g1 = ["pareir"] },
+  { name = "Catarrh muco-pus", page = 645, g3 = ["benz-ac", "coloc", "dulc", "lyc", "nux-v", "puls", "sulph", "uva"], g2 = ["ant-c", "apis", "calc", "canth", "carb-s", "carb-v", "caust", "chim", "con", "cop", "equis", "eup-pur", "ferr", "gels", "hydr", "kali-chl", "lach", "petr", "ph-ac", "phos", "sars", "senec", "seneg", "sil", "ter"], g1 = ["alumn", "aspar", "calc-s", "cann-s", "carb-ac", "chin-s", "coff", "coll", "cub", "erig", "eucal", "ham", "indg", "kali-c", "kali-p", "kali-s", "med", "mill", "nat-m", "pareir", "plb", "pop-t", "rhod", "rhus-t"] },
+  { name = "Catarrh muco-pus, gonorrhœa, from suppressed", page = 645, g2 = ["med", "puls", "thuj"], g1 = ["benz-ac", "cub", "sil"] },
+  { name = "Catarrh muco-pus, hæmorrhoidal subjects, in", page = 645, g1 = ["coll"] },
+  { name = "Catarrh muco-pus, old people, in", page = 645, g2 = ["alumn", "carb-v", "ter"], g1 = ["sulph"] },
+  { name = "Chills spread from the neck of the bladder, after urinating", page = 645, g2 = ["sars"] },
+  { name = "Cold sensation in", page = 645, g1 = ["lyss"] },
+  { name = "Cold sensation in, alternating with heat", page = 645, g1 = ["coc-c"] },
+  { name = "Constriction", page = 645, g2 = ["berb", "cact", "puls", "sars"], g1 = ["alum", "caps", "caust", "chel", "cocc", "cub", "dig", "hydrc", "lyc", "petr", "ph-ac", "thuj", "verat"] },
+  { name = "Constriction, afternoon", page = 645, g2 = ["chel"] },
+  { name = "Constriction, urination, before", page = 645, g2 = ["chel"] },
+  { name = "Constriction, urination, before, during", page = 645, g1 = ["berb", "bry", "dig", "petr", "thuj"] },
+  { name = "Constriction, urination, before, after", page = 645, g2 = ["nat-m"], g1 = ["cub"] },
+  { name = "Constriction, neck", page = 645, g2 = ["cact", "op", "ruta"], g1 = ["ant-c", "canth", "caps", "colch", "con", "elaps", "kali-i", "mag-p", "paeon", "petr", "phos", "plb", "sulph"] },
+  { name = "Constriction, neck, morning", page = 645, g1 = ["caps"] },
+  { name = "Constriction, neck, urination, during", page = 645, g1 = ["colch", "kali-i", "petr", "polyg-h"] },
+  { name = "Constriction, neck, urination, during, after", page = 645, g2 = ["cann-s"], g1 = ["bry", "cub", "sulph"] },
+  { name = "Contraction, sensation of", page = 645, g2 = ["berb", "lyc", "mez"], g1 = ["ant-c", "carb-s", "coc-c", "hyos", "kali-i", "op", "petr", "ruta", "verat"] },
+  { name = "Cramp in", page = 645, g2 = ["berb", "caps", "carb-v", "nux-v", "sars"], g1 = ["carb-s", "coc-c", "mag-p", "ph-ac", "plb", "prun-s", "ruta", "sep", "zinc"] },
+  { name = "Cramp in, night", page = 645, g1 = ["prun-s"] },
+  { name = "Cramp in, causing him to bend double", page = 645, g1 = ["prun-s"] },
+  { name = "Cramp in, urination, during", page = 645, g1 = ["carb-s"] },
+  { name = "Cramp in, urination, during, after", page = 645, g2 = ["nat-m"], g1 = ["caust"] },
+  { name = "Crawling, urination, after", page = 645, g2 = ["lyc"] },
+  { name = "Drops came out of, sensation as if, rest agg.", page = 645, g1 = ["sep"] },
+  { name = "Emptiness, sensation of", page = 645, g2 = ["stram"], g1 = ["colch", "dig", "sumb"] },
+  { name = "Falls to side lain on, sensation as if", page = 645, g2 = ["sep"], g1 = ["puls"] },
+  { name = "Fullness, sensation of", page = 645, g3 = ["dig", "equis"], g2 = ["apis", "arg-n", "arn", "ars", "calad", "chim", "hell", "kali-i", "nux-v", "op", "puls", "ruta", "sep", "staph", "stram", "sulph", "zinc"], g1 = ["abrot", "all-c", "bell", "coc-c", "conv", "cub", "eup-pur", "gels", "guai", "hep", "lact-ac", "lyc", "lycps", "med", "merc-c", "merc", "ox-ac", "pall", "petr", "phys", "plb", "thuj"] },
+  { name = "Fullness, sensation of, urination, after", page = 645, g3 = ["dig"], g2 = ["eup-pur", "lycps", "ruta"], g1 = ["alumn", "calc", "con", "conv", "gnaph", "lac-c", "merc", "sars", "staph", "sulph"] },
+]

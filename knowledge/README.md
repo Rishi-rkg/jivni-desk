@@ -68,14 +68,14 @@ medicines = [
 ### A chapter of a repertory: `rubrics/<book>/<chapter>.toml`
 
 A whole repertory has tens of thousands of rubrics, so an imported one is kept a chapter to a file, one rubric
-to a line, with the remedies in the book's own abbreviations under the grade the book gives them:
+to a line, with the remedies in the book's own abbreviations under the grade the book gives them (`g3` strongest):
 
 ```toml
 source = "kent-repertory"
 chapter = "Head"
 
 rubrics = [
-  { name = "Pain, sun, from exposure to", page = 149, g3 = ["glon", "nat-c"], g2 = ["bell", "bry"], g1 = ["acon"] },
+  { name = "Pain, headache in general, sun, from exposure to, amel.", page = 149, g1 = ["graph", "stront"] },
 ]
 ```
 

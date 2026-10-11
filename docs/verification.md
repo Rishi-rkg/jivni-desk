@@ -23,6 +23,18 @@ Only synthetic data was used. The screenshot below records the verified timeline
 
 Envelope encryption remains unimplemented. The production startup guard and the documented deployment gates remain in force. Test success does not establish production readiness or regulatory compliance.
 
+## Reference library: full Boericke and Kent's Repertory (2026-10-11)
+
+174 backend tests pass on SQLite and PostgreSQL 16 (24 in `backend/knowledge/tests/`); Ruff clean; no migration drift. 29 frontend tests, ESLint, Prettier and the build are clean. 5 browser end-to-end tests pass on both setups. The SQLite suite now takes about 13 seconds instead of one, because three tests read the whole shipped library.
+
+Imported from homeoint.org: all 687 remedies of Boericke's Materia Medica, and 67,178 rubrics of Kent's Repertory with 462,993 graded remedy entries across 38 chapters. Every abbreviation used in a rubric is placed on a remedy except three, which are left out: `gent` (16 uses; Kent lists two Gentianas), and two stray words. 141 remedies that Kent names and Boericke has no entry for have a name-only file.
+
+Measured on the development PC: reading and indexing the library takes about 4 seconds once; after that a one-word search over everything ("pain", 692 remedies) takes about 60 ms and typical three-symptom searches under 15 ms. Not measured on the clinic's laptop.
+
+**Compared with the source page:** Arnica in Boericke, and in Kent the rubric "Head, pain, sun, from exposure to" and page 130 to 131 of the Head chapter (names, nesting and grades). **Not compared:** everything else. Matching Kent's remedy names to Boericke's entries is by rule (same abbreviation, same name, natrum/natrium and kali/kalium spellings, or the only entry whose name starts the same way, such as Borax for Borax veneta); those matches were not reviewed one by one. Cross-references ("See ...") in the repertory are not imported.
+
+Ranking favours remedies with many entries when several match equally: "bruised" alone lists Sulphur before Arnica. Results still show every reason, and a clinic's own choices move its remedies up.
+
 ## Reference library (2026-10-11)
 
 172 backend tests pass on SQLite and on PostgreSQL 16 (21 of them new, in `backend/knowledge/tests/`); Ruff clean; no migration drift (the library adds no tables). 29 frontend tests pass (4 new); ESLint, Prettier and the build are clean. 5 browser end-to-end tests pass on the development servers and on the one-program app; the new one searches the shipped library, reads the antidotes of Arnica, and chooses a remedy on the visit page and sees it remembered.

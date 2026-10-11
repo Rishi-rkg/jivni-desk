@@ -8,6 +8,7 @@ import re
 from array import array
 from bisect import bisect_left
 from collections import defaultdict
+from functools import lru_cache
 
 from .store import RELATIONSHIP_KINDS
 from .text import fold, stem, stems, words
@@ -33,6 +34,7 @@ def brief(medicine):
     return {"id": medicine["id"], "name": medicine["name"], "abbreviation": medicine.get("abbreviation", "")}
 
 
+@lru_cache(maxsize=8192)
 def short(abbreviation):
     return fold(abbreviation).strip().strip(".").replace(" ", "")
 

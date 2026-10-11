@@ -394,16 +394,17 @@ class ApiTests(LibraryFiles, TestCase):
         self.assertEqual(AuditEvent.objects.filter(clinic=self.clinic).count(), 1)
 
 
-@override_settings()
 class ShippedLibraryTests(SimpleTestCase):
-    """The library that ships with Jivni, as it is in the repository."""
+    """The library that ships with Jivni, as it is in the repository. Read once for the whole class: it is large."""
 
-    def setUp(self):
-        self.empty = Path(tempfile.mkdtemp(prefix="library-tests-"))
-        self.addCleanup(shutil.rmtree, self.empty, True)
-        overridden = override_settings(KNOWLEDGE_CLINIC_DIR=self.empty)
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        empty = Path(tempfile.mkdtemp(prefix="library-tests-"))
+        cls.addClassCleanup(shutil.rmtree, empty, True)
+        overridden = override_settings(KNOWLEDGE_CLINIC_DIR=empty)
         overridden.enable()
-        self.addCleanup(overridden.disable)
+        cls.addClassCleanup(overridden.disable)
 
     def test_every_file_is_readable_named_for_its_id_and_cites_a_listed_source(self):
         index = library("shipped-check")
@@ -427,6 +428,16 @@ class ShippedLibraryTests(SimpleTestCase):
         complementary = {item["name"] for item in index.detail("arnica-montana")["relationships"] if item["kind"] == "complementary"}
         self.assertEqual(complementary, {"Aconitum napellus", "Ipecacuanha"})
         found = index.search("bruised + bed feels too hard")
-        self.assertEqual(found["results"][0]["id"], "arnica-montana")
-        self.assertEqual(found["results"][0]["missing"], [])
+        arnica = next(result for result in found["results"][:3] if result["id"] == "arnica-montana")
+        self.assertEqual(arnica["missing"], [])
         self.assertEqual(found["sources"]["boericke-mm-9"]["author"], "William Boericke")
+
+    def test_the_repertory_is_whole_and_every_abbreviation_is_placed(self):
+        index = library("shipped-check")
+        self.assertGreater(len(index.rubric_names), 60000)
+        self.assertEqual(index.unknown_remedies, 0)
+        found = index.search("head pain sun exposure")
+        first = found["results"][0]["matched"][0]["lines"][0]
+        self.assertEqual((first["kind"], first["section"], first["grade"], first["source"]), ("rubric", "Head", 3, "kent-repertory"))
+        self.assertIn("glonoinum", [result["id"] for result in found["results"][:8]])
+        self.assertEqual(found["sources"]["kent-repertory"]["author"], "James Tyler Kent")

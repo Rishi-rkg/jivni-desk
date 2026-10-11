@@ -24,11 +24,14 @@ test('the library answers from the shipped book, explains itself and learns a ch
   await expect(page.getByRole('tooltip')).toContainText('Complementary: Aconitum napellus, Ipecacuanha');
 
   await search.fill('bruised + bed feels too hard + zzzz');
-  const first = page.getByRole('region', { name: 'Remedies by symptom' }).getByRole('article').first();
+  const first = page
+    .getByRole('region', { name: 'Remedies by symptom' })
+    .getByRole('article')
+    .filter({ has: page.getByRole('button', { name: 'Arnica montana' }) });
   await expect(first.getByRole('button', { name: 'Arnica montana' })).toBeVisible();
   await expect(first.getByText('2 of 3 symptoms')).toBeVisible();
   await expect(first.getByText('○ zzzz')).toBeVisible();
-  await expect(first.getByText(/William Boericke/).first()).toBeVisible();
+  await expect(first.getByText(/William Boericke|James Tyler Kent/).first()).toBeVisible();
   // The search never appears in the address bar.
   expect(page.url()).not.toContain('bruised');
 
