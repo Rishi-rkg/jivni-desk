@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
@@ -45,6 +45,17 @@ function scan(code: string, target: Element | Window = window) {
   clock.mockRestore();
 }
 
+/**
+ * The workspace is on screen AND React has attached the scanner's key listener. The listener is attached
+ * in an effect, which runs just after the screen appears; without this wait a scan can arrive first.
+ */
+async function workspaceReady() {
+  await screen.findByRole('heading', { name: 'More clinic tools' });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 function mockServer(scanStatus = 200) {
   const requested: string[] = [];
   vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
@@ -69,7 +80,7 @@ describe('barcode scanning', () => {
   it('opens the patient when a card is scanned with no field in use', async () => {
     const requested = mockServer();
     mount('/modules');
-    await screen.findByRole('heading', { name: 'More clinic tools' });
+    await workspaceReady();
     scan('PAT-W8KQ3G7DP9');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
     expect(requested).toContain('/api/v1/scan/PAT-W8KQ3G7DP9/');
@@ -78,7 +89,7 @@ describe('barcode scanning', () => {
   it('says so when the code matches nothing, and stays on the page', async () => {
     mockServer(404);
     mount('/modules');
-    await screen.findByRole('heading', { name: 'More clinic tools' });
+    await workspaceReady();
     scan('8901234567890');
     expect(await screen.findByRole('alert')).toHaveTextContent('That code does not match a patient in this clinic.');
     expect(screen.getByRole('heading', { name: 'More clinic tools' })).toBeInTheDocument();
@@ -96,7 +107,7 @@ describe('barcode scanning', () => {
   it('ignores ordinary slow typing and short bursts', async () => {
     const requested = mockServer();
     mount('/modules');
-    await screen.findByRole('heading', { name: 'More clinic tools' });
+    await workspaceReady();
     scan('abc');
     const clock = vi.spyOn(performance, 'now');
     let time = 1000;

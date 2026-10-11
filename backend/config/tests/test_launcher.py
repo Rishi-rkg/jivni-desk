@@ -64,7 +64,14 @@ def free_port():
 
 @override_settings(ALLOWED_HOSTS=["127.0.0.1"])
 class ServerStartStopTests(SimpleTestCase):
-    databases = {"default"}
+    def setUp(self):
+        # The health check normally asks the database. Here the web server's worker threads would each open
+        # their own database connection and keep it after the server stops, which stops PostgreSQL from
+        # dropping the test database at the end of the run. These tests are about starting and stopping,
+        # so the health check answers without a database.
+        patcher = mock.patch("config.urls.connection")
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_the_application_can_be_started_stopped_and_started_again(self):
         server = launcher.Server(free_port())

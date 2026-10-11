@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
@@ -46,7 +46,7 @@ jobs:
       - run: python manage.py check
       - run: python manage.py test --settings=config.test_settings --verbosity=2
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -64,7 +64,7 @@ jobs:
       - run: npm test
       - run: npm audit --audit-level=high
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16-bookworm

@@ -20,7 +20,7 @@ jobs:
           - { os: windows-latest, name: windows-x64, program: dist/Jivni/Jivni.exe }
           - { os: windows-11-arm, name: windows-arm64, program: dist/Jivni/Jivni.exe }
           - { os: macos-latest, name: macos-arm64, program: dist/Jivni.app/Contents/MacOS/Jivni }
-          - { os: macos-13, name: macos-x64, program: dist/Jivni.app/Contents/MacOS/Jivni }
+          - { os: macos-15-intel, name: macos-x64, program: dist/Jivni.app/Contents/MacOS/Jivni }
           - { os: ubuntu-22.04, name: linux-x64, program: dist/Jivni/Jivni }
           - { os: ubuntu-22.04-arm, name: linux-arm64, program: dist/Jivni/Jivni }
     runs-on: ${{ matrix.os }}
