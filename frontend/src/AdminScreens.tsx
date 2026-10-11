@@ -433,7 +433,10 @@ export function ActivityLog() {
     api<Page<AuditEvent>>(`audit-events/?page=${page}${filters ? `&${filters}` : ''}`, {
       signal: controller.signal,
     })
-      .then(setData)
+      // An answer to a question that has since changed (a filter was picked meanwhile) is not shown.
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((e) => {
         if (e.name !== 'AbortError') setError(e.message);
       });

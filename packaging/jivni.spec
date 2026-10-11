@@ -84,5 +84,5 @@ if sys.platform == "darwin":
         icon=str(icons / "jivni.icns"),
         bundle_identifier="app.jivni.clinic",
         # LSUIElement: a menu-bar application with no Dock icon.
-        info_plist={"LSUIElement": True, "CFBundleShortVersionString": "0.2.1", "NSHighResolutionCapable": True},
+        info_plist={"LSUIElement": True, "CFBundleShortVersionString": "0.2.2", "NSHighResolutionCapable": True},
     )
