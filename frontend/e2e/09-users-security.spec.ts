@@ -194,7 +194,7 @@ test('users and security: an invitation, a first sign-in, two-step sign-in, a re
   await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await sections.getByRole('link', { name: 'Activity log' }).click();
   await page.getByLabel('About').selectOption('team');
-  await expect(page.getByRole('cell', { name: 'Invited a user' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Switched a user off' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Reset a user’s password' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Signed in' })).toBeHidden();
   await expect(page.getByRole('link', { name: 'Export', exact: true })).toHaveAttribute(

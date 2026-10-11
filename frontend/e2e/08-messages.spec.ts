@@ -85,7 +85,12 @@ test('messages: write from a template, send through WhatsApp by hand, fail and r
   await template.getByLabel('Approved for use').check();
   await template.getByRole('button', { name: 'Save template' }).click();
   await expect(page.getByText('Template added.')).toBeVisible();
-  await expect(page.getByText('v1 · greeting or clinic news · uses first name')).toBeVisible();
+  await expect(
+    page
+      .locator('.row')
+      .filter({ hasText: 'Festival greeting' })
+      .getByText('v1 · greeting or clinic news · uses first name', { exact: true }),
+  ).toBeVisible();
 
   // Rules: the 90 day follow-up is off until someone switches it on.
   await page.getByRole('navigation', { name: 'Message sections' }).getByRole('link', { name: 'Rules' }).click();

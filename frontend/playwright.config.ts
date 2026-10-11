@@ -14,6 +14,8 @@ export default defineConfig({
   testDir: './e2e',
   workers: 1,
   timeout: 60_000,
+  // GitHub's build machines are several times slower than a desk computer; five seconds was not always enough.
+  expect: { timeout: 15_000 },
   reporter: [['list']],
   use: { baseURL: FRONTEND, viewport: { width: 1366, height: 768 }, trace: 'retain-on-failure' },
   webServer: [
