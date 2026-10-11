@@ -100,3 +100,10 @@ jobs:
         working-directory: frontend
       - run: npm run e2e
         working-directory: frontend
+      # What the browser saw when a test failed: open a trace.zip at trace.playwright.dev. Synthetic data only.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-traces
+          path: frontend/test-results
+          retention-days: 7

@@ -66,7 +66,8 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
     .getByRole('alertdialog', { name: 'Finalise this visit?' })
     .getByRole('button', { name: 'Finalise' })
     .click();
-  await expect(page.getByText('Visit finalised.')).toBeVisible();
+  // Saving the visit and opening the record can take several seconds on a small shared test machine.
+  await expect(page.getByText('Visit finalised.')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText('Synthetic complaint for the smoke test').first()).toBeVisible();
   await expect(page.getByText('Envelope: 4 tabs, twice daily before meals · 14 days')).toBeVisible();
   // A finalised visit is corrected by adding beside it.
