@@ -36,7 +36,7 @@
     return "<option value='" + k + "'" + (k === role ? " selected" : "") + ">" + ROLES[k][0] + "</option>";
   }).join("");
   var ORDER = ["login", "dashboard", "patients", "patient-register", "patient-overview", "visit", "print-label", "invoice", "print-bill",
-    "bill-new", "billing", "appointments", "messages", "library", "printing", "settings", "work-week", "overlays"];
+    "bill-new", "billing", "appointments", "messages", "library", "printing", "settings", "work-week", "backups", "overlays"];
   var here = ORDER.indexOf((location.pathname.split("/").pop() || "").replace(".html", ""));
   var prev = ORDER[(here + ORDER.length - 1) % ORDER.length] + ".html", next = ORDER[(here + 1) % ORDER.length] + ".html";
   var flip = here < 0 ? "" : "<a id='flip-prev' href='" + prev + "'>&lsaquo; Previous</a><span>" + (here + 1) + " of " + ORDER.length +

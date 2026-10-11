@@ -123,7 +123,7 @@ The original plan's navigation (section 29) groups Visits, Prescriptions and Lib
 | P57 | Switches | Turn modules and features on or off | Owner | all | [settings](settings.html) |
 | P58 | Messaging setup | WhatsApp connection, sender number, consent wording | Owner | 5 | Listed |
 | P59 | Security | Lock time, two-step rule, recovery key, sessions | Owner | 1 | [settings](settings.html) |
-| P60 | Backups | Last backup, restore test, download | Owner | 1 | [settings](settings.html), summary only |
+| P60 | Backups | Places to save to (local folder, NAS, mounted cloud folder), schedule, kept backups, restore test, restore; always encrypted with the clinic key | Owner | 1 | [backups](backups.html) |
 | P61 | Activity log | Who opened or changed what; filters; export | Owner | 1, basic version built | Listed |
 | P62 | Import and export | Patient import, full export | Owner | 2 | Listed |
 | P63 | Stock | Batches, expiry, counts. Only if stock control is switched on | Assistant, Owner | later, optional | Listed |
@@ -275,6 +275,12 @@ Drawn at the bottom of [overlays.html](overlays.html): main, secondary, destruct
 16. The patient photo is cropped automatically around the detected face, using the lightest method that works, on the clinic's own computer.
 17. Recognising patients by face is a possible future plugin and is out of scope now.
 
+**Added on 11 Oct 2026 (fourth round)**
+
+18. The owner reviewed the UI, pages and prints and found them fine for now.
+19. A product scanned while a bill is already open is added to that bill.
+20. Backups are built in: saved to a local folder, a NAS or a mounted cloud folder, and encrypted with the same clinic key.
+
 **Still open**
 
 1. GST rates per kind of item, for the accountant to confirm.
@@ -283,4 +289,4 @@ Drawn at the bottom of [overlays.html](overlays.html): main, secondary, destruct
 
 ## 9. Viewing the prototype
 
-Run `node mockups/serve.js` from the repository folder and open http://localhost:4173. Previous and Next at the top of each screen, or the left and right arrow keys, flip through all 18 screens.
+Run `node mockups/serve.js` from the repository folder and open http://localhost:4173. Previous and Next at the top of each screen, or the left and right arrow keys, flip through all 19 screens.

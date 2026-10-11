@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backups · DocHP prototype</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="settings">
+<main class="content">
+  <p><a href="settings.html">← Settings</a></p>
+  <div class="heading">
+    <div><h1>Backups</h1><p class="muted">Owner only. A backup is one encrypted file holding the database, photos and documents.</p></div>
+    <div class="actions"><button data-toast="Backup started. It will appear in the list when finished.">Back up now</button><button class="secondary">Restore from a backup…</button></div>
+  </div>
+
+  <div class="metrics">
+    <div><strong>Today 02:00</strong><span>last backup · 48 MB · took 40 seconds</span></div>
+    <div><strong>2 of 2</strong><span>places up to date</span></div>
+    <div><strong>28 Sep</strong><span>last restore test · passed</span></div>
+    <div><strong>Encrypted</strong><span>with the clinic key, same as the records</span></div>
+  </div>
+
+  <div class="cols cols-2">
+    <div>
+      <section class="panel flush">
+        <div class="heading"><h2>Where backups are saved</h2><button class="btn-sm">Add a place</button></div>
+        <div class="row"><span><strong>This computer</strong> <span class="badge">Local folder</span><span class="muted mono">D:\DocHP-Backups</span></span><span class="actions"><span class="badge b-green">OK · 212 GB free</span><span class="toggle on"></span></span></div>
+        <div class="row"><span><strong>Clinic NAS</strong> <span class="badge">Network storage</span><span class="muted mono">\\clinic-nas\backups\dochp</span></span><span class="actions"><span class="badge b-green">OK · today 02:01</span><span class="toggle on"></span></span></div>
+        <div class="row"><span><strong>Cloud drive folder</strong> <span class="badge">Mounted cloud storage</span><span class="muted mono">G:\My Drive\DocHP</span></span><span class="actions"><span class="badge b-red">Not reachable since 3 Oct</span><span class="toggle"></span></span></div>
+        <p class="small muted" style="padding: 0 16px 14px; margin: 0">Any folder this computer can open works: a local or USB drive, a NAS share, or a cloud drive that appears as a folder. Keep at least one place that is not this computer.</p>
+      </section>
+
+      <section class="panel flush">
+        <div class="heading"><h2>Backups kept</h2><span class="muted small">14 files · 610 MB</span></div>
+        <table>
+          <thead><tr><th>When</th><th>Kind</th><th>Size</th><th>Saved to</th><th>Check</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>11 Oct 2026 02:00</td><td>Automatic</td><td>48 MB</td><td>This computer, Clinic NAS</td><td><span class="badge b-green">Verified</span></td><td class="right"><a href="#">Restore</a></td></tr>
+            <tr><td>10 Oct 2026 18:42</td><td>Before update</td><td>48 MB</td><td>This computer</td><td><span class="badge b-green">Verified</span></td><td class="right"><a href="#">Restore</a></td></tr>
+            <tr><td>10 Oct 2026 02:00</td><td>Automatic</td><td>47 MB</td><td>This computer, Clinic NAS</td><td><span class="badge b-green">Verified</span></td><td class="right"><a href="#">Restore</a></td></tr>
+            <tr><td>09 Oct 2026 02:00</td><td>Automatic</td><td>47 MB</td><td>This computer</td><td><span class="badge b-amber">NAS copy missed</span></td><td class="right"><a href="#">Restore</a></td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <h2>Schedule</h2>
+        <div class="setting"><span class="toggle on"></span><div><strong>Back up automatically</strong></div></div>
+        <div class="form-grid two" style="margin-top: 6px">
+          <label>How often <select><option>Every day</option><option>Twice a day</option><option>Every week</option></select></label>
+          <label>At <input type="time" value="02:00"></label>
+          <label>Keep daily backups for <select><option>14 days</option><option>30 days</option><option>90 days</option></select></label>
+          <label>Keep monthly backups for <select><option>12 months</option><option>Forever</option></select></label>
+        </div>
+        <div class="setting" style="margin-top: 8px"><span class="toggle on"></span><div><strong>Also back up when the app closes</strong><span class="muted">If the computer was off at the scheduled time.</span></div></div>
+        <div class="setting"><span class="toggle on"></span><div><strong>Warn on the dashboard</strong><span class="muted">When no backup has succeeded for 2 days.</span></div></div>
+      </section>
+
+      <section class="panel">
+        <h2>Encryption</h2>
+        <p>Backups are always encrypted with the clinic key. There is no switch to turn this off.</p>
+        <div class="warning" style="margin-bottom: 0">To restore on a new computer you need the backup file <strong>and</strong> an owner password or the recovery key. Without one of those the backup cannot be opened by anyone.</div>
+      </section>
+
+      <section class="panel">
+        <div class="heading"><h2>Restore test</h2><button class="secondary btn-sm" data-toast="Restore test started. Your live data is not touched.">Test now</button></div>
+        <p class="small muted" style="margin: 0">Opens the latest backup in a scratch copy and checks that every record and file reads back. Last passed 28 Sep 2026.</p>
+      </section>
+    </div>
+  </div>
+
+  <h2 style="margin-top: 10px">Restoring</h2>
+  <div class="gallery">
+    <div class="specimen"><h3>Restore from a backup</h3><p class="muted small">Three steps; nothing is replaced until the last one.</p>
+      <div class="stage"><div class="dialog wide">
+        <header>Restore · step 2 of 3 <span class="x">✕</span></header>
+        <div class="body"><p><strong>11 Oct 2026 02:00</strong> · 48 MB · from Clinic NAS</p>
+          <p class="success">Opened with your password. 312 patients, 1,840 visits, 1,102 bills, 298 photos.</p>
+          <div class="error" style="margin-bottom: 0">Everything entered after 11 Oct 02:00 will be replaced. A safety backup of the current data is made first.</div></div>
+        <footer><button class="secondary">Back</button><button class="danger">Replace current data with this backup</button></footer></div></div></div>
+    <div class="specimen"><h3>Add a place</h3><p class="muted small">Same window for a local folder, NAS share or cloud drive folder.</p>
+      <div class="stage"><div class="dialog">
+        <header>Add a backup place <span class="x">✕</span></header>
+        <div class="body"><div class="form-grid" style="grid-template-columns: 1fr">
+          <label>Kind <span class="segmented"><span>Local or USB folder</span><span class="on">NAS</span><span>Cloud drive folder</span></span></label>
+          <label>Name <input value="Clinic NAS"></label>
+          <label>Folder <span class="actions"><input value="\\clinic-nas\backups\dochp" style="flex: 1"><button class="secondary btn-sm">Browse…</button></span></label>
+        </div><p class="success" style="margin-bottom: 0">Test file written and read back.</p></div>
+        <footer><button class="secondary">Cancel</button><button>Add</button></footer></div></div></div>
+  </div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>
