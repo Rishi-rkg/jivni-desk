@@ -1,6 +1,6 @@
 # Security architecture
 
-How DocHP protects patient records, what is built today, and what is not. Written to be read by the clinic owner as well as by developers. It complements [encryption.md](encryption.md), which lists the conditions for removing the startup guard.
+How Jivni protects patient records, what is built today, and what is not. Written to be read by the clinic owner as well as by developers. It complements [encryption.md](encryption.md), which lists the conditions for removing the startup guard.
 
 **Status, 2026-10-11.** The key system is built and tested: clinic keys, password and recovery-key access, session unlock, password change, recovery, and encrypted backups. **No patient field or file is encrypted yet.** That is the next step, and until it and the checks in section 8 are complete the application still refuses to run outside development mode. Use synthetic data only.
 

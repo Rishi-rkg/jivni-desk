@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { api, initializeCSRF, msSinceServerContact, setCSRF } from './api';
-import { ErrorMessage } from './components';
+import { Brand, ErrorMessage } from './components';
 import { Session } from './types';
 
 const CHECK_EVERY_MS = 15_000;
@@ -77,7 +77,9 @@ export function LockScreen({
 
   return (
     <main className="login lock-screen">
-      <div className="brand">CLINIC RECORDS</div>
+      <div className="brand">
+        <Brand />
+      </div>
       <h1>Workspace locked</h1>
       <p>
         Signed in as <strong>{session.user.name || session.user.username}</strong>. Enter your password to continue

@@ -605,6 +605,21 @@ time {
     display: none;
   }
 }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+.brand-logo {
+  width: 28px;
+  height: 28px;
+}
+.login .brand-logo {
+  width: 40px;
+  height: 40px;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

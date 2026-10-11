@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { api, initializeCSRF, setCSRF } from './api';
-import { ErrorMessage } from './components';
+import { Brand, ErrorMessage } from './components';
 import { Session } from './types';
 
 type SetupResult = Session & { recovery_key: string };
@@ -59,7 +59,9 @@ export function SetupScreen({ onDone }: { onDone: (session: Session) => void }) 
     const { recovery_key: recoveryKey, ...session } = result;
     return (
       <main className="login setup">
-        <div className="brand">CLINIC RECORDS</div>
+        <div className="brand">
+          <Brand />
+        </div>
         <h1>Write down your recovery key</h1>
         <p>
           Your clinic&apos;s records are now encrypted. They open with a staff password. If every password is ever lost,
@@ -90,7 +92,9 @@ export function SetupScreen({ onDone }: { onDone: (session: Session) => void }) 
 
   return (
     <main className="login setup">
-      <div className="brand">CLINIC RECORDS</div>
+      <div className="brand">
+        <Brand />
+      </div>
       <h1>Set up your clinic</h1>
       <p>This is a new installation. Create the clinic and its owner account. Records are encrypted from the start.</p>
       <form onSubmit={submit} className="panel stack">

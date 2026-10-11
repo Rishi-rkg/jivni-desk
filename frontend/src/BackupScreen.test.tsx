@@ -26,7 +26,7 @@ const run: BackupRun = {
   kind: 'manual',
   started_at: '2026-10-11T02:00:00Z',
   finished_at: '2026-10-11T02:00:05Z',
-  file_name: 'dochp-backup-20261011-020000.dhpb',
+  file_name: 'jivni-backup-20261011-020000.jivni',
   byte_size: 3 * 1024 ** 2,
   places: [{ place: 'place-id', name: 'Clinic NAS', ok: true }],
   ok: true,

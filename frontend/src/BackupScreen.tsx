@@ -194,7 +194,7 @@ export function BackupScreen() {
             </label>
             <label>
               Folder
-              <input name="folder" required maxLength={500} placeholder="D:\DocHP-Backups" />
+              <input name="folder" required maxLength={500} placeholder="D:\Jivni-Backups" />
             </label>
           </div>
           <div className="actions">

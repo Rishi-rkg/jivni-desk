@@ -47,7 +47,7 @@ def synthetic_records(clinic, owner):
 class BackupTestCase(TestCase):
     def setUp(self):
         cache.clear()
-        self.folder = Path(tempfile.mkdtemp(prefix="dochp-backup-test-"))
+        self.folder = Path(tempfile.mkdtemp(prefix="jivni-backup-test-"))
         self.addCleanup(shutil.rmtree, self.folder, ignore_errors=True)
 
     def place(self, clinic, name="This computer", folder=None):
@@ -140,7 +140,7 @@ class BackupRoundTripTests(BackupTestCase):
         path = self.folder / backup.run_backup(clinic).file_name
         original = path.read_bytes()
         master = services.unlock(owner, PASSWORD)[clinic.pk]
-        damaged = self.folder / "damaged.dhpb"
+        damaged = self.folder / "damaged.jivni"
         for position in [3, 40, len(original) // 2, len(original) - 5]:
             changed = bytearray(original)
             changed[position] ^= 1
@@ -190,7 +190,7 @@ class BackupRoundTripTests(BackupTestCase):
 class PlacesAndScheduleTests(BackupTestCase):
     def test_a_backup_is_copied_to_every_place_and_failures_are_reported_per_place(self):
         clinic, _, _ = bootstrap()
-        second = Path(tempfile.mkdtemp(prefix="dochp-backup-test-"))
+        second = Path(tempfile.mkdtemp(prefix="jivni-backup-test-"))
         self.addCleanup(shutil.rmtree, second, ignore_errors=True)
         self.place(clinic)
         nas = self.place(clinic, "Clinic NAS", second)
@@ -271,13 +271,13 @@ class PlacesAndScheduleTests(BackupTestCase):
         }.items():
             names[label] = f"{backup.PREFIX}{when.strftime(backup.STAMP)}{backup.EXTENSION}"
             (self.folder / names[label]).write_bytes(b"x")
-        (self.folder / "holiday-photos.dhpb").write_bytes(b"not ours")
-        (self.folder / "dochp-backup-notes.txt").write_bytes(b"not ours")
+        (self.folder / "holiday-photos.jivni").write_bytes(b"not ours")
+        (self.folder / "jivni-backup-notes.txt").write_bytes(b"not ours")
         removed = backup.prune(self.folder, policy, now)
         self.assertEqual(sorted(removed), sorted([names["sep_later"], names["two_years"]]))
         remaining = {path.name for path in self.folder.iterdir()}
         self.assertEqual(
-            remaining, {names["today"], names["last_week"], names["sep_first"], "holiday-photos.dhpb", "dochp-backup-notes.txt"}
+            remaining, {names["today"], names["last_week"], names["sep_first"], "holiday-photos.jivni", "jivni-backup-notes.txt"}
         )
         policy.keep_daily_days = 1
         (self.folder / names["sep_first"]).unlink()
@@ -396,7 +396,7 @@ class BackupCommandTests(BackupTestCase):
         with mock.patch.dict("os.environ", {"BACKUP_PASSWORD": PASSWORD}), self.assertRaises(CommandError):
             call_command("restore_backup", path, stdout=out)  # this installation is not empty
         with mock.patch.dict("os.environ", {"BACKUP_PASSWORD": PASSWORD}), self.assertRaises(CommandError):
-            call_command("restore_backup", str(self.folder / "missing.dhpb"), "--check", stdout=out)
+            call_command("restore_backup", str(self.folder / "missing.jivni"), "--check", stdout=out)
 
 
 class StreamTests(SimpleTestCase):
@@ -435,4 +435,4 @@ class StreamTests(SimpleTestCase):
 
     def test_a_backup_time_is_part_of_its_name(self):
         name = f"{backup.PREFIX}{timezone.now().strftime(backup.STAMP)}{backup.EXTENSION}"
-        self.assertRegex(name, r"^dochp-backup-\d{8}-\d{6}\.dhpb$")
+        self.assertRegex(name, r"^jivni-backup-\d{8}-\d{6}\.jivni$")

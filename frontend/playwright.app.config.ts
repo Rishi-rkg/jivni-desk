@@ -11,10 +11,10 @@ const venvPython = ['../.venv/Scripts/python.exe', '../.venv/bin/python']
   .map((path) => resolve(path))
   .find((path) => existsSync(path));
 const python = venvPython ? `"${venvPython}"` : 'python';
-const dataDir = mkdtempSync(join(tmpdir(), 'dochp-e2e-app-'));
-// Set DOCHP_APP to a packaged program (for example ../dist/DocHP/DocHP.exe) to test the real installed application.
-const program = process.env.DOCHP_APP
-  ? `"${resolve(process.env.DOCHP_APP)}"`
+const dataDir = mkdtempSync(join(tmpdir(), 'jivni-e2e-app-'));
+// Set JIVNI_APP to a packaged program (for example ../dist/Jivni/Jivni.exe) to test the real installed application.
+const program = process.env.JIVNI_APP
+  ? `"${resolve(process.env.JIVNI_APP)}"`
   : `${python} "${resolve('../backend/launcher.py')}"`;
 
 export default defineConfig({

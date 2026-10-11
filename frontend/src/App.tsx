@@ -13,7 +13,7 @@ import {
   displayName,
 } from './types';
 import { NewPatient, PatientProfile, NewEncounter } from './PatientScreens';
-import { ErrorMessage } from './components';
+import { Brand, ErrorMessage } from './components';
 import { Dashboard, BillingPlaceholder } from './WorkspaceScreens';
 import { DraftStateContext } from './useUnsavedChanges';
 import { AuditLogScreen, ClinicSettingsScreen } from './AdminScreens';
@@ -46,7 +46,9 @@ function Login({ onLogin }: { onLogin: (s: Session) => void }) {
   }
   return (
     <main className="login">
-      <div className="brand">CLINIC RECORDS</div>
+      <div className="brand">
+        <Brand />
+      </div>
       <h1>Sign in to your clinic</h1>
       <p>Patient records and clinical history in one place.</p>
       <form onSubmit={submit} className="panel stack">
@@ -348,7 +350,7 @@ export default function App() {
       <div hidden={locked}>
         <header className="workspace-header">
           <Link className="brand" to="/dashboard">
-            CLINIC RECORDS
+            <Brand />
           </Link>
           <div className="account">
             {session.memberships.length > 1 ? (

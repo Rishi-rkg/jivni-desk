@@ -1,4 +1,4 @@
-# DocHP build plan
+# Jivni build plan
 
 A browser-based clinic operating system for a homeopathy practice, from a solo practitioner to a team of five. Patient records are the stable core; billing, messaging, printing, barcode lookup and the homeopathy knowledge library are separate modules around it.
 
@@ -90,7 +90,7 @@ What follows from this, as a packaging track inside Phase 1:
 
 1. ~~**A first-time setup screen** that creates the clinic and owner, turns on encryption and shows the recovery key once.~~ *Built 2026-10-11:* a new installation opens on "Set up your clinic"; the recovery key is shown once and must be acknowledged before the workspace opens; setup can never run a second time.
 2. ~~**A database that needs no separate installation.**~~ *Decided by the owner and built 2026-10-11:* SQLite inside the installed app, PostgreSQL for Docker. SQLite has the same append-only and identity safeguards as database triggers, re-created after every migration, and the same tests run on both. A backup made on either restores into either.
-3. **One program to start.** *Built 2026-10-11:* `backend/launcher.py` runs the application, its screens and the scheduled backups as one program on this computer only (127.0.0.1), keeping everything in one data folder. `packaging/dochp.spec` turns it into a Windows program folder (`dist/DocHP`, about 88 MB), which passes the full browser test. *Remaining:* a proper installer with a Start-menu entry and no console window; the Mac, Linux and arm64 builds (the same recipe, run on those systems by the packaging workflow, which has never run because the repository is not on GitHub yet); and the Docker image for both processor types.
+3. **One program to start.** *Built 2026-10-11:* `backend/launcher.py` runs the application, its screens and the scheduled backups as one program on this computer only (127.0.0.1), keeping everything in one data folder. `packaging/jivni.spec` turns it into a Windows program folder (`dist/Jivni`, about 88 MB), which passes the full browser test. *Remaining:* a proper installer with a Start-menu entry and no console window; the Mac, Linux and arm64 builds (the same recipe, run on those systems by the packaging workflow, which has never run because the repository is not on GitHub yet); and the Docker image for both processor types.
 4. **More than one computer in the clinic.** The app runs on one computer and the others use a browser. That needs an encrypted connection inside the clinic's network, which is not designed yet.
 5. **One clinic per installation** is now fixed (it was D4's default); backups refuse to run otherwise.
 

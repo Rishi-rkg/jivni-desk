@@ -29,7 +29,7 @@ NONCE_BYTES = 12
 TAG_BYTES = 16
 SALT_BYTES = 16
 SEALED_KEY_BYTES = NONCE_BYTES + KEY_BYTES + TAG_BYTES
-MAGIC = b"DHP1"  # envelope format 1
+MAGIC = b"JVN1"  # envelope format 1
 FORMAT = 1
 MAX_TIME_COST = 10
 MAX_MEMORY_KIB = 1024 * 1024
@@ -49,7 +49,7 @@ def random_salt():
 
 def associated_data(label, *parts):
     """Unambiguous byte string for a fixed sequence of values: each part is length-prefixed."""
-    out = [b"dochp"]
+    out = [b"jivni"]
     for part in (label, *parts):
         if isinstance(part, uuid.UUID):
             raw = part.bytes
@@ -186,7 +186,7 @@ def new_keypair():
 
 
 def _shared_key(shared, ephemeral_public, recipient_public):
-    info = b"dochp-seal-to-public" + ephemeral_public + recipient_public
+    info = b"jivni-seal-to-public" + ephemeral_public + recipient_public
     return HKDF(algorithm=hashes.SHA256(), length=KEY_BYTES, salt=None, info=info).derive(shared)
 
 

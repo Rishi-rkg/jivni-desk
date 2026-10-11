@@ -8,7 +8,7 @@ function signIn(): { username: string; password: string } {
 }
 
 test('the owner adds a backup folder, backs up, and checks that the backup reads back', async ({ page }) => {
-  const folder = mkdtempSync(join(tmpdir(), 'dochp-e2e-backup-'));
+  const folder = mkdtempSync(join(tmpdir(), 'jivni-e2e-backup-'));
   const credentials = signIn();
   await page.goto('/');
   await page.getByLabel('Username').fill(credentials.username);
@@ -26,7 +26,7 @@ test('the owner adds a backup folder, backs up, and checks that the backup reads
   await expect(page.getByText('Backup saved to 1 of 1 place.')).toBeVisible();
   const files = readdirSync(folder);
   expect(files).toHaveLength(1);
-  expect(files[0]).toMatch(/^dochp-backup-\d{8}-\d{6}\.dhpb$/);
+  expect(files[0]).toMatch(/^jivni-backup-\d{8}-\d{6}\.jivni$/);
   const content = readFileSync(join(folder, files[0]));
   expect(statSync(join(folder, files[0])).size).toBeGreaterThan(1000);
   // Nothing readable about the clinic or its people is in the file.

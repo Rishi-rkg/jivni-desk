@@ -1,9 +1,9 @@
-# PyInstaller recipe for the installed DocHP application. Build from the repository root:
+# PyInstaller recipe for the installed Jivni application. Build from the repository root:
 #
 #     cd frontend && npm run build
-#     pyinstaller packaging/dochp.spec --noconfirm
+#     pyinstaller packaging/jivni.spec --noconfirm
 #
-# The result is the folder dist/DocHP with a DocHP program inside. PyInstaller builds for the system it
+# The result is the folder dist/Jivni with a Jivni program inside. PyInstaller builds for the system it
 # runs on, so the Mac, Linux and arm64 versions are built by running this same recipe on those systems.
 #
 # The application's own code is shipped as plain source and imported from the bundle folder at run time,
@@ -60,5 +60,5 @@ analysis = Analysis(
     excludes=OWN + ["psycopg", "psycopg_binary", "tkinter", "pytest"],
 )
 pyz = PYZ(analysis.pure)
-exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name="DocHP", console=True)
-COLLECT(exe, analysis.binaries, analysis.datas, name="DocHP")
+exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name="Jivni", console=True)
+COLLECT(exe, analysis.binaries, analysis.datas, name="Jivni")

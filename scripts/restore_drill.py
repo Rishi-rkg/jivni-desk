@@ -47,7 +47,7 @@ def main():
         raise SystemExit(__doc__)
     use_sqlite = "--sqlite" in sys.argv
     backup_file = str(Path(arguments[0]).resolve())
-    scratch = Path(tempfile.mkdtemp(prefix="dochp-restore-drill-"))
+    scratch = Path(tempfile.mkdtemp(prefix="jivni-restore-drill-"))
     if use_sqlite:
         env = dict(os.environ)
         env.update({"DATABASE_ENGINE": "sqlite", "DATABASE_PATH": str(scratch / "restored.sqlite3")})

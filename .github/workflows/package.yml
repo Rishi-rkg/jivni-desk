@@ -1,5 +1,5 @@
 name: Package the installed app
-# Builds the DocHP program folder on each system and runs the browser tests against it.
+# Builds the Jivni program folder on each system and runs the browser tests against it.
 # PyInstaller builds for the system it runs on, so every system and processor type needs its own runner.
 # Never run yet: the repository has not been published to GitHub. Treat as unverified until it has passed once.
 on:
@@ -14,12 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: windows-latest, name: windows-x64, program: dist/DocHP/DocHP.exe }
-          - { os: windows-11-arm, name: windows-arm64, program: dist/DocHP/DocHP.exe }
-          - { os: macos-latest, name: macos-arm64, program: dist/DocHP/DocHP }
-          - { os: macos-13, name: macos-x64, program: dist/DocHP/DocHP }
-          - { os: ubuntu-latest, name: linux-x64, program: dist/DocHP/DocHP }
-          - { os: ubuntu-24.04-arm, name: linux-arm64, program: dist/DocHP/DocHP }
+          - { os: windows-latest, name: windows-x64, program: dist/Jivni/Jivni.exe }
+          - { os: windows-11-arm, name: windows-arm64, program: dist/Jivni/Jivni.exe }
+          - { os: macos-latest, name: macos-arm64, program: dist/Jivni/Jivni }
+          - { os: macos-13, name: macos-x64, program: dist/Jivni/Jivni }
+          - { os: ubuntu-latest, name: linux-x64, program: dist/Jivni/Jivni }
+          - { os: ubuntu-24.04-arm, name: linux-arm64, program: dist/Jivni/Jivni }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -36,14 +36,14 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
-      - run: pyinstaller packaging/dochp.spec --noconfirm
+      - run: pyinstaller packaging/jivni.spec --noconfirm
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - run: npm run e2e:app
         working-directory: frontend
         env:
-          DOCHP_APP: ../${{ matrix.program }}
+          JIVNI_APP: ../${{ matrix.program }}
       - uses: actions/upload-artifact@v4
         with:
-          name: DocHP-${{ matrix.name }}
-          path: dist/DocHP
+          name: Jivni-${{ matrix.name }}
+          path: dist/Jivni

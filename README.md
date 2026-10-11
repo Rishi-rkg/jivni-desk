@@ -31,14 +31,14 @@ cd frontend && npm ci && npm run build
 cd ../backend && python launcher.py
 ```
 
-It keeps its database, stored files and logs in one data folder (`%LOCALAPPDATA%\DocHP` on Windows, `~/Library/Application Support/DocHP` on a Mac, `~/.local/share/dochp` on Linux; `--data-dir` to choose another), listens on this computer only, opens the browser on the first-time setup screen, and makes the scheduled backups while it runs. `--no-browser` and `--port` are available.
+It keeps its database, stored files and logs in one data folder (`%LOCALAPPDATA%\Jivni` on Windows, `~/Library/Application Support/Jivni` on a Mac, `~/.local/share/jivni` on Linux; `--data-dir` to choose another), listens on this computer only, opens the browser on the first-time setup screen, and makes the scheduled backups while it runs. `--no-browser` and `--port` are available.
 
 To package it as a program folder for the system you are on:
 
 ```sh
 pip install -r backend/requirements-dev.txt
-pyinstaller packaging/dochp.spec --noconfirm     # result: dist/DocHP
-cd frontend && DOCHP_APP=../dist/DocHP/DocHP.exe npm run e2e:app   # browser tests against the packaged program
+pyinstaller packaging/jivni.spec --noconfirm     # result: dist/Jivni
+cd frontend && JIVNI_APP=../dist/Jivni/Jivni.exe npm run e2e:app   # browser tests against the packaged program
 ```
 
 ## Start with Docker Compose
@@ -76,7 +76,7 @@ Compose applies migrations on development startup. Named volumes preserve Postgr
 
 ## Backups
 
-The owner sets up backups on the **Backups** screen: add one or more folders (a local or USB drive, a NAS share, a cloud drive that appears as a folder), then **Back up now**. Every backup is one encrypted `.dhpb` file; there is no unencrypted option. **Check** reads a backup back in full.
+The owner sets up backups on the **Backups** screen: add one or more folders (a local or USB drive, a NAS share, a cloud drive that appears as a folder), then **Back up now**. Every backup is one encrypted `.jivni` file; there is no unencrypted option. **Check** reads a backup back in full.
 
 ```sh
 python manage.py backup_now --if-due        # for the computer's scheduler; does nothing unless a backup is due

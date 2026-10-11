@@ -1,8 +1,8 @@
-"""DocHP as one program on the clinic's own computer.
+"""Jivni as one program on the clinic's own computer.
 
     python launcher.py                 start the app and open it in the browser
     python launcher.py --no-browser    start without opening a browser
-    python launcher.py --data-dir D:\\DocHP-Data --port 8765
+    python launcher.py --data-dir D:\\Jivni-Data --port 8765
 
 It keeps everything in one data folder (database, stored files, logs), serves the application and its
 screens together on this computer only (127.0.0.1), and makes the scheduled backups while it runs.
@@ -21,15 +21,15 @@ import webbrowser
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-APP_NAME = "DocHP"
+APP_NAME = "Jivni"
 DEFAULT_PORT = 8765
 BACKUP_CHECK_SECONDS = 300
-log = logging.getLogger("dochp.launcher")
+log = logging.getLogger("jivni.launcher")
 
 
 def default_data_dir():
-    if os.environ.get("DOCHP_DATA_DIR"):
-        return Path(os.environ["DOCHP_DATA_DIR"])
+    if os.environ.get("JIVNI_DATA_DIR"):
+        return Path(os.environ["JIVNI_DATA_DIR"])
     if sys.platform == "win32":
         return Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / APP_NAME
     if sys.platform == "darwin":
@@ -144,7 +144,7 @@ def serve(port, open_browser, stop=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=f"Run {APP_NAME} on this computer.")
     parser.add_argument("--data-dir", type=Path, default=None, help="Folder for the database, stored files and logs.")
-    parser.add_argument("--port", type=int, default=int(os.environ.get("DOCHP_PORT", DEFAULT_PORT)))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("JIVNI_PORT", DEFAULT_PORT)))
     parser.add_argument("--no-browser", action="store_true")
     options = parser.parse_args(argv)
     if already_running(options.port):

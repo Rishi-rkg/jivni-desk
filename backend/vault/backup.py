@@ -7,7 +7,7 @@ or the recovery key: the same things that open the records. There is no unencryp
 
 File layout:
 
-    "DHPB1\\n" | 4-byte header length | header (JSON, readable) | sealed chunks
+    "JVNB1\\n" | 4-byte header length | header (JSON, readable) | sealed chunks
 
 The readable header holds only what is needed to open the file: key identifiers and the sealed
 copies of the keys. Everything else, including how many patients there are, is inside the sealed part.
@@ -36,10 +36,10 @@ from accounts.models import Clinic
 from . import crypto, services
 from .models import BackupKey, BackupPlace, BackupPolicy, BackupRun, ClinicKey, KeyGrant
 
-MAGIC = b"DHPB1\n"
+MAGIC = b"JVNB1\n"
 FORMAT = 1
-EXTENSION = ".dhpb"
-PREFIX = "dochp-backup-"
+EXTENSION = ".jivni"
+PREFIX = "jivni-backup-"
 STAMP = "%Y%m%d-%H%M%S"
 APPS = ["accounts", "records", "audit", "vault"]
 BLOCK_BYTES = 64 * 1024
@@ -241,7 +241,7 @@ def write_backup(clinic, target):
 
 def read_header(raw):
     if raw.read(len(MAGIC)) != MAGIC:
-        raise BackupError("This is not a DocHP backup file.")
+        raise BackupError("This is not a Jivni backup file.")
     length = int.from_bytes(raw.read(4), "big")
     if not 0 < length <= MAX_HEADER_BYTES:
         raise BackupError("The backup file is damaged.")
@@ -446,10 +446,10 @@ def check_folder(folder):
         raise BackupError("Give the full path of the folder.")
     if not path.is_dir():
         raise BackupError("That folder cannot be reached from this computer.")
-    probe = path / f".dochp-write-test-{uuid.uuid4().hex}"
+    probe = path / f".jivni-write-test-{uuid.uuid4().hex}"
     try:
-        probe.write_bytes(b"dochp")
-        if probe.read_bytes() != b"dochp":
+        probe.write_bytes(b"jivni")
+        if probe.read_bytes() != b"jivni":
             raise BackupError("A test file could not be read back from that folder.")
     except OSError:
         raise BackupError("A test file could not be written to that folder.") from None
