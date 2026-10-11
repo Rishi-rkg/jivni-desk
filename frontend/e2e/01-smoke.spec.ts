@@ -20,7 +20,10 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
   await page.getByLabel('First name').fill('Synthetic');
   await page.getByLabel('Last name').fill('Smoke-Test');
   await page.getByLabel('Date of birth').fill('1990-01-01');
-  await page.getByLabel('WhatsApp number').fill('5550100');
+  await page.getByLabel('Phone', { exact: true }).fill('5550100');
+  // The patient card has its own test; here the record opens straight after saving.
+  await page.getByLabel('Print card after saving').uncheck();
+  await shot(page, '01-register');
   await page.getByRole('button', { name: 'Save patient' }).click();
   await expect(page.getByText('Patient registered.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Synthetic Smoke-Test' })).toBeVisible();
@@ -100,7 +103,9 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
 
   await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.getByRole('link', { name: 'Activity log' }).click();
-  await expect(page.getByText('Recorded visit')).toBeVisible();
+  // Newest first: the scan that matched nothing is near the top, in plain words.
+  await expect(page.getByText('Scanned an unknown code').first()).toBeVisible();
+  await expect(page.getByText('Scanned a patient card').first()).toBeVisible();
   await shot(page, '01-activity');
 
   // Lock from the header, then come back with the password.

@@ -143,7 +143,8 @@ class APITests(TestCase):
             self.role(role)
             self.assertEqual(self.client.get(f"/api/v1/patients/{self.patient.pk}/").status_code, 200)
             self.assertEqual(self.client.get("/api/v1/encounters/").status_code, 403)
-            self.assertEqual(self.client.get("/api/v1/notes/").status_code, 403)
+            # Notes can be listed by everyone, but only the general (front-desk) ones reach these roles.
+            self.assertEqual(self.client.get("/api/v1/notes/").data["count"], 0)
             self.assertEqual(self.client.get(f"/api/v1/patients/{self.patient.pk}/timeline/").status_code, 403)
             self.assertEqual(self.client.post("/api/v1/encounters/", self.encounter_data(), format="json").status_code, 403)
         self.role("assistant")

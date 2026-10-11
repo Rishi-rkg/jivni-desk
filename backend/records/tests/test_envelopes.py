@@ -100,7 +100,9 @@ class EnvelopeAndRememberTests(TestCase):
         self.assertEqual(self.note("remember").status_code, 403)
         for role in ["reception", "billing", "admin"]:
             self.role(role)
-            self.assertEqual(self.client.get(base + "&kind=remember").status_code, 403)
+            self.assertEqual(self.client.get(base + "&kind=remember").data["count"], 0)
+            self.assertEqual(self.client.get(base).data["count"], 0)
+            self.assertEqual(self.note("clinical", "Not theirs to write").status_code, 403)
 
     def test_remember_notes_stay_inside_the_clinic(self):
         other = Patient.objects.create(clinic=self.other_clinic, first_name="Other", date_of_birth="1990-01-01", gender="other")

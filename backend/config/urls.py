@@ -13,6 +13,7 @@ from modules.contracts import MODULES
 from printing.views import PrintDataViewSet, PrintJobViewSet, PrintTemplateViewSet
 from records.views import (
     AuditViewSet,
+    DocumentViewSet,
     EncounterViewSet,
     NoteViewSet,
     PatientViewSet,
@@ -28,6 +29,7 @@ router.register("patients", PatientViewSet, basename="patient")
 router.register("notes", NoteViewSet, basename="note")
 router.register("encounters", EncounterViewSet, basename="encounter")
 router.register("photos", PhotoViewSet, basename="photo")
+router.register("documents", DocumentViewSet, basename="document")
 router.register("audit-events", AuditViewSet, basename="audit")
 router.register("scan", ScanViewSet, basename="scan")
 router.register("visit-drafts", VisitDraftViewSet, basename="visit-draft")

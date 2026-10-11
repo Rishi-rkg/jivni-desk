@@ -25,6 +25,8 @@ APPEND_ONLY_TABLES = [
     "records_patientrevision",
     "records_encounterproduct",
     "records_encounteramendment",
+    "records_patientconsent",
+    "records_patientdocument",
     "audit_auditevent",
 ]
 # What is measured at a visit and its unit; kept in step with records.models.OBSERVATION_UNITS by a test.

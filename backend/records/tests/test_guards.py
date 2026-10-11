@@ -20,6 +20,8 @@ from records.models import (
     EncounterProduct,
     Observation,
     Patient,
+    PatientConsent,
+    PatientDocument,
     PatientIdentifier,
     PatientNote,
     PatientRevision,
@@ -56,6 +58,16 @@ class DatabaseGuardTests(TestCase):
             PatientRevision.objects.create(patient=self.patient, changed_by=self.user, changes={"phone": {"from": "", "to": "1"}}),
             EncounterProduct.objects.create(encounter=self.encounter, name="Synthetic product", rate=1),
             EncounterAmendment.objects.create(encounter=self.encounter, author=self.user, section="other", correction="x", reason="y"),
+            PatientConsent.objects.create(patient=self.patient, kind="care", granted=True, recorded_by=self.user),
+            PatientDocument.objects.create(
+                patient=self.patient,
+                title="Synthetic",
+                storage_key="k",
+                mime_type="application/pdf",
+                byte_size=1,
+                sha256="0" * 64,
+                uploaded_by=self.user,
+            ),
             AuditEvent.objects.create(clinic=self.clinic, actor=self.user, action="test"),
         ]
         self.assertEqual({row._meta.db_table for row in rows}, set(guards.APPEND_ONLY_TABLES))

@@ -13,7 +13,8 @@ import {
   canWriteDemographics,
   featureOn,
 } from './types';
-import { NewPatient, PatientProfile } from './PatientScreens';
+import { PatientProfile } from './PatientScreens';
+import { PatientForm } from './PatientForm';
 import { PatientList } from './PatientList';
 import { NewEncounter } from './VisitScreen';
 import { Brand, ErrorMessage } from './components';
@@ -340,10 +341,14 @@ export default function App() {
           ) : (
             <Routes key={session.clinic_id}>
               <Route path="/dashboard" element={<Dashboard role={role} />} />
-              <Route path="/patients" element={<PatientList role={role} />} />
+              <Route path="/patients" element={<PatientList role={role} billingOn={allowed('/billing')} />} />
               <Route
                 path="/patients/new"
-                element={canWriteDemographics(role) ? <NewPatient /> : <Navigate to="/patients" replace />}
+                element={canWriteDemographics(role) ? <PatientForm role={role} /> : <Navigate to="/patients" replace />}
+              />
+              <Route
+                path="/patients/:id/edit"
+                element={canWriteDemographics(role) ? <PatientForm role={role} /> : <Navigate to="/patients" replace />}
               />
               <Route path="/patients/:id" element={<PatientProfile role={role} billingOn={allowed('/billing')} />} />
               <Route

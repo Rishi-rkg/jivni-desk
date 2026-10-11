@@ -67,7 +67,8 @@ describe('workspace lock', () => {
       return response(patient);
     });
     mount('/patients/patient-id?tab=notes');
-    await userEvent.type(await screen.findByLabelText('Add patient note'), 'Kept through the lock');
+    await userEvent.click(await screen.findByRole('button', { name: 'Add note' }));
+    await userEvent.type(screen.getByLabelText('Note'), 'Kept through the lock');
     await userEvent.click(screen.getByRole('button', { name: 'Save note' }));
 
     expect(await screen.findByRole('heading', { name: 'Locked' })).toBeInTheDocument();
@@ -75,12 +76,13 @@ describe('workspace lock', () => {
     await userEvent.type(screen.getByLabelText('Password'), 'synthetic-password');
     await userEvent.click(screen.getByRole('button', { name: 'Unlock' }));
 
-    const draft = await screen.findByLabelText('Add patient note');
+    const draft = await screen.findByLabelText('Note');
     expect(draft).toHaveValue('Kept through the lock');
     expect(logins).toEqual([{ username: 'doctor', password: 'synthetic-password' }]);
     expect(screen.queryByRole('heading', { name: 'Locked' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Save note' }));
-    expect(await screen.findByText('Note saved.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Note saved.')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Kept through the lock')).toBeInTheDocument();
   });
 });
 
@@ -94,15 +96,20 @@ describe('archive and restore', () => {
         calls.push(path);
         return response({ ...patient, archived_at: path.endsWith('archive/') ? '2026-01-02T00:00:00Z' : null });
       }
-      if (/encounters|notes/.test(path)) return response(empty);
+      if (/encounters|notes|feed|documents/.test(path)) return response({ ...empty, items: [] });
       return response(patient);
     });
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     mount('/patients/patient-id');
-    await userEvent.click(await screen.findByRole('button', { name: 'Archive patient' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'More ▾' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Archive patient' }));
+    const question = screen.getByRole('alertdialog', { name: 'Archive Synthetic Patient?' });
+    expect(question).toHaveTextContent('The record is kept and can be restored.');
+    await userEvent.click(within(question).getByRole('button', { name: 'Archive' }));
     expect(await screen.findByText('Patient archived.')).toBeInTheDocument();
     expect(screen.queryByText('New visit')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Restore patient' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More ▾' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Restore patient' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Restore' }));
     expect(await screen.findByText('Patient restored.')).toBeInTheDocument();
     expect(calls).toEqual(['/api/v1/patients/patient-id/archive/', '/api/v1/patients/patient-id/restore/']);
   });
@@ -113,7 +120,9 @@ describe('archive and restore', () => {
     );
     mount('/patients/patient-id');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Archive patient' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'More ▾' }));
+    expect(screen.getByRole('menuitem', { name: 'Edit details' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Archive patient' })).not.toBeInTheDocument();
   });
 });
 

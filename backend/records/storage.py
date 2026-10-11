@@ -52,3 +52,46 @@ class PatientPhotoStore:
 
 
 photo_store = PatientPhotoStore()
+
+
+class PatientDocumentStore:
+    """Lab reports and other papers. A PDF is kept as it is; a picture is re-encoded like a photo."""
+
+    MAX_BYTES = 10 * 1024 * 1024
+
+    def store(self, clinic_id, upload) -> StoredPhoto:
+        if upload.size > self.MAX_BYTES:
+            raise ValidationError({"file": "Maximum document size is 10 MiB."})
+        head = upload.read(5)
+        upload.seek(0)
+        if head == b"%PDF-":
+            data, extension, mime_type = upload.read(), "pdf", "application/pdf"
+        else:
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", Image.DecompressionBombWarning)
+                    image = Image.open(upload)
+                    if image.format not in {"JPEG", "PNG"}:
+                        raise ValidationError({"file": "Use a PDF, or a JPEG or PNG picture."})
+                    if image.width * image.height > 40_000_000:
+                        raise ValidationError({"file": "The picture is too large."})
+                    image.load()
+                    image = image.convert("RGB")
+                    image.thumbnail((2400, 2400))
+                    buffer = io.BytesIO()
+                    # Re-encoding discards file names and location data hidden in the picture.
+                    image.save(buffer, "JPEG", quality=88)
+            except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
+                raise ValidationError({"file": "Use a PDF, or a JPEG or PNG picture."}) from None
+            data, extension, mime_type = buffer.getvalue(), "jpg", "image/jpeg"
+        key = default_storage.save(f"clinics/{clinic_id}/documents/{uuid.uuid4()}.{extension}", ContentFile(data))
+        return StoredPhoto(key, mime_type, len(data), hashlib.sha256(data).hexdigest())
+
+    def open(self, key):
+        return default_storage.open(key, "rb")
+
+    def delete(self, key):
+        default_storage.delete(key)
+
+
+document_store = PatientDocumentStore()

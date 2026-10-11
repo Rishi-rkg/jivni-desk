@@ -52,6 +52,11 @@ class Patient(StableRecord):
     phone = models.CharField(max_length=40, blank=True)
     whatsapp_number = models.CharField(max_length=40, blank=True)
     email = models.EmailField(blank=True)
+    referred_by = models.CharField(max_length=120, blank=True)
+    # The number on the patient's old paper file, so it can still be found on the shelf.
+    old_file_number = models.CharField(max_length=60, blank=True)
+    # Something every clinical person must see at once, such as a sensitivity. Clinical roles only.
+    alert = models.CharField(max_length=500, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -203,6 +208,8 @@ class PatientRevision(AppendOnlyRecord):
 
 class PatientNote(AppendOnlyRecord):
     class Kind(models.TextChoices):
+        # A front-desk note with nothing clinical in it ("prefers mornings"). Every role reads it.
+        GENERAL = "general", "General note"
         CLINICAL = "clinical", "Clinical note"
         # "Remember about the patient": a hobby, a family member, how they like things explained.
         # For the doctor's eyes only; never printed, sent or shown to other staff.
@@ -395,3 +402,66 @@ class PrescriptionSet(StableRecord):
     class Meta:
         ordering = ["name", "id"]
         constraints = [models.UniqueConstraint(fields=["clinic", "name"], name="unique_prescription_set_name")]
+
+
+class FamilyLink(StableRecord):
+    """Two patients of the same clinic who belong together: a parent and child, a couple, a guardian."""
+
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="family_links")
+    relative = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="+")
+    # What the relative is to the patient, in the clinic's own words: "daughter", "mother-in-law".
+    relation = models.CharField(max_length=60, blank=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        constraints = [models.UniqueConstraint(fields=["patient", "relative"], name="unique_family_link")]
+
+    def clean(self):
+        if self.patient_id == self.relative_id:
+            raise ValidationError("A patient cannot be linked to themselves.")
+        if self.patient_id and self.relative_id and self.patient.clinic_id != self.relative.clinic_id:
+            raise ValidationError("Both patients must belong to this clinic.")
+
+
+# Raise this when the wording a patient agrees to changes; each consent row keeps the version it was given under.
+CONSENT_WORDING_VERSION = 1
+
+
+class PatientConsent(AppendOnlyRecord):
+    """A patient saying yes or no to a kind of message. The newest row of each kind is what counts."""
+
+    class Kind(models.TextChoices):
+        CARE = "care", "Care messages"
+        GREETINGS = "greetings", "Greetings and clinic news"
+
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="consents")
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    granted = models.BooleanField()
+    wording_version = models.PositiveSmallIntegerField(default=CONSENT_WORDING_VERSION)
+    recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        ordering = ["-created_at", "id"]
+
+
+def current_consent(patient):
+    """{"care": row or None, "greetings": row or None}: the newest answer for each kind of message."""
+    answers = {kind: None for kind in PatientConsent.Kind.values}
+    for row in PatientConsent.objects.filter(patient=patient).select_related("recorded_by").order_by("created_at"):
+        answers[row.kind] = row
+    return answers
+
+
+class PatientDocument(AppendOnlyRecord):
+    """A lab report or other paper kept with the patient: a PDF or a picture."""
+
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="documents")
+    title = models.CharField(max_length=200)
+    storage_key = models.CharField(max_length=500, unique=True, editable=False)
+    mime_type = models.CharField(max_length=50)
+    byte_size = models.PositiveIntegerField()
+    sha256 = models.CharField(max_length=64)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        ordering = ["-created_at", "id"]

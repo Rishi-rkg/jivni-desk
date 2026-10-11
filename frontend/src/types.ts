@@ -56,11 +56,73 @@ export interface Patient {
   photos: Photo[];
   archived_at: string | null;
   created_at: string;
+  referred_by?: string;
+  old_file_number?: string;
+  /** Something every clinical person must see at once. Absent for roles that do not read clinical records. */
+  alert?: string;
+  last_visit?: string | null;
+  next_advised?: string | null;
+  /** What the patient owes. Present only for roles that work with bills. */
+  balance?: string;
+  consent?: Record<'care' | 'greetings', ConsentAnswer | null>;
+  family?: FamilyMember[];
 }
+export interface ConsentAnswer {
+  granted: boolean;
+  at: string;
+  by: string;
+  wording_version: number;
+}
+export interface FamilyMember {
+  id: string;
+  patient: string;
+  name: string;
+  relation: string;
+}
+export interface PatientDocument {
+  id: string;
+  title: string;
+  mime_type: string;
+  byte_size: number;
+  uploaded_by_name?: string;
+  created_at: string;
+}
+export type TimelineItem =
+  | {
+      kind: 'visit';
+      id: string;
+      at: string;
+      visit_type: string;
+      clinician_name: string;
+      amended_at: string | null;
+      visit?: Encounter;
+    }
+  | {
+      kind: 'invoice';
+      id: string;
+      at: string;
+      number: string;
+      state: string;
+      total: string;
+      paid: string;
+      balance: string;
+      method: string;
+    }
+  | { kind: 'note'; id: string; at: string; note_kind: string; body: string; author_name: string }
+  | { kind: 'document'; id: string; at: string; title: string; mime_type: string; byte_size: number }
+  | {
+      kind: 'appointment';
+      id: string;
+      at: string;
+      status: string;
+      visit_type: string;
+      doctor_name: string;
+    }
+  | { kind: 'message'; id: string; at: string; title: string; status: string; body: string };
 export interface Note {
   id: string;
   patient: string;
-  kind?: 'clinical' | 'remember';
+  kind?: 'general' | 'clinical' | 'remember';
   body: string;
   author_name: string;
   amends: string | null;
@@ -166,6 +228,8 @@ export interface Page<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+  /** On the patient list: how many patients the clinic has in all. */
+  clinic_total?: number;
 }
 export const displayName = (p: Patient) => [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
 export const canReadClinical = (r: Role) => ['owner', 'clinician', 'assistant'].includes(r);

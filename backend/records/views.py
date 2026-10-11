@@ -1,9 +1,10 @@
+import datetime
 import uuid
 
 from django.core.exceptions import ValidationError as ModelValidationError
 from django.db import transaction
-from django.db.models import Prefetch, Q
-from django.http import FileResponse
+from django.db.models import F, Prefetch, Q
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from rest_framework import mixins, serializers, viewsets
 from rest_framework.decorators import action
@@ -14,11 +15,14 @@ from accounts.access import BILLING_READ, CLINIC_ADMIN, CLINICAL_READ, CLINICAL_
 from accounts.features import feature_on
 from audit.models import AuditEvent, record_event
 
+from . import patient_extras
 from .models import (
     Encounter,
     EncounterAmendment,
     EncounterDraft,
+    FamilyLink,
     Patient,
+    PatientDocument,
     PatientIdentifier,
     PatientNote,
     PatientPhoto,
@@ -27,16 +31,18 @@ from .models import (
 )
 from .serializers import (
     AmendmentSerializer,
+    DocumentSerializer,
     DraftSerializer,
     DuplicateCheckSerializer,
     EncounterSerializer,
+    FamilyLinkSerializer,
     NoteSerializer,
     PatientSerializer,
     PhotoSerializer,
     PrescriptionSetSerializer,
     RevisionSerializer,
 )
-from .storage import photo_store
+from .storage import document_store, photo_store
 
 
 class ClinicViewSet(viewsets.GenericViewSet):
@@ -76,7 +82,8 @@ class ClinicViewSet(viewsets.GenericViewSet):
 
 class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, ClinicViewSet):
     serializer_class = PatientSerializer
-    http_method_names = ["get", "post", "patch", "head", "options"]
+    # DELETE exists only for unlinking a family member; a patient is archived, never deleted.
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         active_codes = Prefetch(
@@ -105,29 +112,251 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
                 except ValueError:
                     pass
                 queryset = queryset.filter(query).distinct()
+            queryset = self.narrowed(queryset)
         return queryset
 
+    def narrowed(self, queryset):
+        """The list's chips and sort order: follow-up due, balance due, seen this month."""
+        params, clinic = self.request.query_params, self.member.clinic
+        queryset = patient_extras.with_visit_dates(queryset)
+        if params.get("follow_up") == "due":
+            queryset = queryset.filter(next_advised__lte=clinic.today())
+        if params.get("seen") == "month":
+            first = clinic.today().replace(day=1)
+            queryset = queryset.filter(last_visit_at__gte=datetime.datetime.combine(first, datetime.time.min, tzinfo=clinic.tzinfo))
+        if params.get("balance") == "due":
+            if self.member.role_id not in BILLING_READ or not feature_on(clinic, "billing"):
+                raise PermissionDenied("Your clinic role does not allow this action.")
+            queryset = queryset.filter(pk__in=patient_extras.patients_with_a_balance(clinic))
+        order = {
+            "last_visit": [F("last_visit_at").desc(nulls_last=True), "last_name", "first_name", "id"],
+            "registered": ["-created_at", "id"],
+        }.get(params.get("sort"))
+        return queryset.order_by(*order) if order else queryset
+
+    def with_extras(self, patients):
+        return {**self.get_serializer_context(), "extras": patient_extras.extras(self.member, patients)}
+
+    def one(self, patient, status=200):
+        """A patient as the record page shows them: details, dates, balance, consent and family."""
+        data = PatientSerializer(patient, context=self.with_extras([patient])).data
+        return Response(
+            {**data, "consent": patient_extras.consent_data(patient), "family": patient_extras.family_data(patient)}, status=status
+        )
+
     def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        response = self.get_paginated_response(PatientSerializer(page, many=True, context=self.with_extras(page)).data)
+        # How many patients the clinic has in all, so "4 of 312" can be shown beside a search.
+        response.data["clinic_total"] = Patient.objects.filter(clinic=self.member.clinic, archived_at__isnull=True).count()
         self.event("patient.list")
         return response
 
     def retrieve(self, request, *args, **kwargs):
         patient = self.get_object()
         self.event("patient.view", patient)
-        return Response(self.get_serializer(patient).data)
+        return self.one(patient)
 
-    @transaction.atomic
-    def perform_create(self, serializer):
-        require_role(self.request, DEMOGRAPHIC_WRITE)
-        patient = serializer.save(clinic=self.member.clinic)
-        self.event("patient.create", patient)
+    def consent_choices(self):
+        choices = self.request.data.get("consent")
+        if choices is None:
+            return {}
+        if not isinstance(choices, dict) or any(
+            key not in {"care", "greetings"} or not isinstance(value, bool) for key, value in choices.items()
+        ):
+            raise serializers.ValidationError({"consent": "Say yes or no to care messages and to greetings."})
+        return choices
 
-    @transaction.atomic
-    def perform_update(self, serializer):
-        require_role(self.request, DEMOGRAPHIC_WRITE)
-        patient = serializer.save()
-        self.event("patient.update", patient)
+    def create(self, request, *args, **kwargs):
+        require_role(request, DEMOGRAPHIC_WRITE)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        choices = self.consent_choices()
+        with transaction.atomic():
+            patient = serializer.save(clinic=self.member.clinic)
+            patient_extras.record_consent(patient, request.user, choices)
+            self.event("patient.create", patient)
+        return self.one(self.get_queryset().get(pk=patient.pk), 201)
+
+    def partial_update(self, request, *args, **kwargs):
+        require_role(request, DEMOGRAPHIC_WRITE)
+        patient = self.get_object()
+        serializer = self.get_serializer(patient, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        choices = self.consent_choices()
+        with transaction.atomic():
+            patient = serializer.save()
+            patient_extras.record_consent(patient, request.user, choices)
+            self.event("patient.update", patient)
+        return self.one(self.get_queryset().get(pk=patient.pk))
+
+    @action(detail=True, methods=["post"])
+    def consent(self, request, pk=None):
+        """Record the patient's yes or no to each kind of message, with who recorded it and when."""
+        require_role(request, DEMOGRAPHIC_WRITE)
+        patient = self.get_object()
+        choices = {key: value for key, value in request.data.items() if key in {"care", "greetings"}}
+        if not choices or any(not isinstance(value, bool) for value in choices.values()):
+            raise serializers.ValidationError({"consent": "Say yes or no to care messages and to greetings."})
+        with transaction.atomic():
+            patient_extras.record_consent(patient, request.user, choices)
+            self.event("patient.consent", patient)
+        return Response(patient_extras.consent_data(patient))
+
+    @action(detail=True, methods=["get", "post"])
+    def family(self, request, pk=None):
+        patient = self.get_object()
+        if request.method == "POST":
+            require_role(request, DEMOGRAPHIC_WRITE)
+            serializer = FamilyLinkSerializer(data=request.data, context=self.get_serializer_context())
+            serializer.is_valid(raise_exception=True)
+            relative = serializer.validated_data["relative"]
+            if relative.pk == patient.pk:
+                raise serializers.ValidationError({"relative": "A patient cannot be linked to themselves."})
+            with transaction.atomic():
+                link, _ = FamilyLink.objects.update_or_create(
+                    patient=patient, relative=relative, defaults={"relation": serializer.validated_data.get("relation", "")}
+                )
+                self.event("patient.family_link", patient)
+        return Response(patient_extras.family_data(patient))
+
+    @action(detail=True, methods=["delete"], url_path=r"family/(?P<link_id>[^/]+)")
+    def unlink(self, request, pk=None, link_id=None):
+        require_role(request, DEMOGRAPHIC_WRITE)
+        patient = self.get_object()
+        try:
+            link = FamilyLink.objects.filter(Q(patient=patient) | Q(relative=patient)).get(pk=uuid.UUID(str(link_id)))
+        except (FamilyLink.DoesNotExist, ValueError):
+            return Response({"detail": "That link was not found."}, status=404)
+        with transaction.atomic():
+            link.delete()
+            self.event("patient.family_unlink", patient)
+        return Response(patient_extras.family_data(patient))
+
+    @action(detail=True, methods=["get"])
+    def measurements(self, request, pk=None):
+        """Height, weight, blood pressure and pulse over time, newest first."""
+        require_role(request, CLINICAL_READ)
+        patient = self.get_object()
+        rows = {}
+        for observation in patient.observations.select_related("encounter").order_by("-measured_at")[:400]:
+            day = self.member.clinic.local_date(observation.measured_at).isoformat()
+            rows.setdefault((day, observation.encounter_id), {"date": day})[observation.kind] = str(observation.value.normalize())
+        self.event("patient.measurements", patient)
+        return Response({"results": list(rows.values())})
+
+    @action(detail=True, methods=["get", "post"])
+    def documents(self, request, pk=None):
+        require_role(request, CLINICAL_READ)
+        patient = self.get_object()
+        if request.method == "POST":
+            upload = request.FILES.get("file")
+            title = " ".join(str(request.data.get("title", "")).split())[:200]
+            if not upload:
+                raise serializers.ValidationError({"file": "Choose a file."})
+            if not title:
+                raise serializers.ValidationError({"title": "Give the document a short title, such as “Blood report”."})
+            stored = document_store.store(self.member.clinic_id, upload)
+            try:
+                with transaction.atomic():
+                    document = PatientDocument.objects.create(
+                        patient=patient,
+                        title=title,
+                        uploaded_by=request.user,
+                        storage_key=stored.key,
+                        mime_type=stored.mime_type,
+                        byte_size=stored.byte_size,
+                        sha256=stored.sha256,
+                    )
+                    self.event("document.create", document)
+            except Exception:
+                document_store.delete(stored.key)
+                raise
+            return Response(DocumentSerializer(document).data, status=201)
+        self.event("document.list", patient)
+        return Response({"results": DocumentSerializer(patient.documents.select_related("uploaded_by"), many=True).data})
+
+    @action(detail=True, methods=["get"])
+    def feed(self, request, pk=None):
+        """Everything that happened with a patient, newest first, as far as this role may see it."""
+        patient = self.get_object()
+        try:
+            before = datetime.datetime.fromisoformat(request.query_params["before"]) if request.query_params.get("before") else None
+            limit = min(max(int(request.query_params.get("limit", 30)), 1), 100)
+        except ValueError:
+            raise serializers.ValidationError({"before": "Use a full date and time."}) from None
+        items = timeline_items(self.member, patient, before, limit + 1, self.get_serializer_context())
+        self.event("patient.timeline", patient)
+        return Response({"items": items[:limit], "more": len(items) > limit})
+
+    @action(detail=False, methods=["post"], url_path="import")
+    def import_rows(self, request):
+        """Bring patients in from a spreadsheet. A trial run reports what would happen and saves nothing."""
+        require_role(request, {"owner"})
+        rows = request.data.get("rows")
+        if not isinstance(rows, list) or not 1 <= len(rows) <= 2000 or any(not isinstance(row, dict) for row in rows):
+            raise serializers.ValidationError({"rows": "Send between 1 and 2,000 rows."})
+        trial = request.data.get("dry_run") is not False
+        include_duplicates = request.data.get("include_duplicates") is True
+        clinic = self.member.clinic
+        known = set()
+        for first, last, born, phone in Patient.objects.filter(clinic=clinic).values_list(
+            "first_name", "last_name", "date_of_birth", "phone"
+        ):
+            known.add((first.lower(), last.lower(), born.isoformat()))
+            if phone:
+                known.add(("phone", phone))
+        ready, duplicates, errors, created = [], 0, [], 0
+        for number, row in enumerate(rows, start=2):  # row 1 of a spreadsheet is its headings
+            data, problems = patient_extras.clean_import_row(row, clinic.today())
+            if not problems:
+                serializer = PatientSerializer(data=data, context=self.get_serializer_context())
+                if not serializer.is_valid():
+                    problems = [
+                        f"{field}: {' '.join(str(message) for message in messages)}" for field, messages in serializer.errors.items()
+                    ]
+            if problems:
+                errors.append({"row": number, "problem": "; ".join(problems)})
+                continue
+            keys = {(data["first_name"].lower(), data["last_name"].lower(), data["date_of_birth"])}
+            if data["phone"]:
+                keys.add(("phone", data["phone"]))
+            if keys & known:
+                duplicates += 1
+                if not include_duplicates:
+                    continue
+            known |= keys
+            ready.append(serializer)
+        if not trial:
+            with transaction.atomic():
+                for serializer in ready:
+                    serializer.save(clinic=clinic)
+                    created += 1
+                # One audit row for the whole import: how many, never who.
+                self.event("patient.import")
+        return Response(
+            {
+                "dry_run": trial,
+                "ready": len(ready),
+                "duplicates": duplicates,
+                "errors": errors[:200],
+                "error_count": len(errors),
+                "created": created,
+            }
+        )
+
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        """Every patient's details as a spreadsheet, for the owner."""
+        require_role(request, {"owner"})
+        patients = (
+            Patient.objects.filter(clinic=self.member.clinic).prefetch_related("identifiers").order_by("last_name", "first_name", "id")
+        )
+        response = HttpResponse(patient_extras.export_csv(patients), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="jivni-patients.csv"'
+        self.event("patient.export")
+        return response
 
     @action(detail=True, methods=["get"])
     def timeline(self, request, pk=None):
@@ -320,12 +549,100 @@ class PhotoViewSet(mixins.RetrieveModelMixin, ClinicViewSet):
         return FileResponse(photo_store.open(photo.storage_key), content_type=photo.mime_type)
 
 
+class DocumentViewSet(ClinicViewSet):
+    """A patient's document itself, for viewing. Clinical roles only."""
+
+    def retrieve(self, request, pk=None):
+        require_role(request, CLINICAL_READ)
+        try:
+            document = PatientDocument.objects.get(pk=uuid.UUID(str(pk)), patient__clinic=self.member.clinic)
+        except (PatientDocument.DoesNotExist, ValueError):
+            return Response({"detail": "That document was not found."}, status=404)
+        self.event("document.view", document)
+        response = FileResponse(document_store.open(document.storage_key), content_type=document.mime_type)
+        # Shown in the page, under a name that says nothing about the patient, and never guessed to be anything else.
+        response["Content-Disposition"] = f'inline; filename="document.{"pdf" if document.mime_type == "application/pdf" else "jpg"}"'
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
+def timeline_items(member, patient, before, limit, context):
+    """The patient's history as one list. Each role gets only the kinds, and the detail, it may read."""
+    from billing.models import Invoice
+
+    clinic, role = member.clinic, member.role_id
+    clinical = role in CLINICAL_READ
+
+    def older(queryset, field):
+        return queryset.filter(**{f"{field}__lt": before}) if before else queryset
+
+    items = []
+    visits = older(patient.encounters.select_related("clinician").prefetch_related(*VISIT_PARTS), "occurred_at").order_by("-occurred_at")
+    for visit in visits[:limit]:
+        item = {
+            "kind": "visit",
+            "id": str(visit.pk),
+            "at": visit.occurred_at.isoformat(),
+            "visit_type": visit.visit_type,
+            "clinician_name": visit.clinician.get_full_name() or visit.clinician.username,
+            "amended_at": max((a.created_at for a in visit.amendments.all()), default=None),
+        }
+        if clinical:
+            item["visit"] = EncounterSerializer(visit, context=context).data
+        items.append(item)
+    if role in BILLING_READ and feature_on(clinic, "billing"):
+        bills = Invoice.objects.filter(clinic=clinic, patient=patient).exclude(status=Invoice.Status.DRAFT)
+        for bill in older(bills, "issued_at").prefetch_related("payments", "credit_notes").order_by("-issued_at")[:limit]:
+            payments = [payment for payment in bill.payments.all() if payment.kind == "payment"]
+            items.append(
+                {
+                    "kind": "invoice",
+                    "id": str(bill.pk),
+                    "at": bill.issued_at.isoformat(),
+                    "number": bill.number,
+                    "state": bill.state,
+                    "total": str(bill.total),
+                    "paid": str(bill.paid),
+                    "balance": str(bill.balance),
+                    "method": payments[-1].method if payments else "",
+                }
+            )
+    notes = patient.notes.filter(kind__in=patient_extras.visible_note_kinds(role)).exclude(kind=PatientNote.Kind.REMEMBER)
+    for note in older(notes.select_related("author"), "created_at").order_by("-created_at")[:limit]:
+        items.append(
+            {
+                "kind": "note",
+                "id": str(note.pk),
+                "at": note.created_at.isoformat(),
+                "note_kind": note.kind,
+                "body": note.body,
+                "author_name": note.author.get_full_name() or note.author.username,
+            }
+        )
+    if clinical:
+        for document in older(patient.documents.all(), "created_at").order_by("-created_at")[:limit]:
+            items.append(
+                {
+                    "kind": "document",
+                    "id": str(document.pk),
+                    "at": document.created_at.isoformat(),
+                    "title": document.title,
+                    "mime_type": document.mime_type,
+                    "byte_size": document.byte_size,
+                }
+            )
+    for extra in TIMELINE_SOURCES:
+        items.extend(extra(member, patient, before, limit))
+    items.sort(key=lambda item: item["at"], reverse=True)
+    return items[:limit]
+
+
+# Other parts of the application (appointments, messages) add their own kinds of timeline item here.
+TIMELINE_SOURCES = []
+
+
 class NoteViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, ClinicViewSet):
     serializer_class = NoteSerializer
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        require_role(request, CLINICAL_READ if request.method in {"GET", "HEAD", "OPTIONS"} else CLINICAL_WRITE)
 
     def get_queryset(self):
         queryset = PatientNote.objects.filter(patient__clinic=self.member.clinic).select_related("author").order_by("-created_at", "id")
@@ -335,9 +652,8 @@ class NoteViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, ClinicViewSet)
             except ValueError:
                 raise serializers.ValidationError({"patient": "Invalid patient ID."}) from None
             queryset = queryset.filter(patient_id=patient_id)
-        # "Remember about the patient" notes are for doctors only, whatever is asked for.
-        if self.member.role_id not in CLINICAL_WRITE:
-            queryset = queryset.exclude(kind=PatientNote.Kind.REMEMBER)
+        # Everyone reads general notes; clinical roles the clinical ones; "Remember" notes are for doctors only.
+        queryset = queryset.filter(kind__in=patient_extras.visible_note_kinds(self.member.role_id))
         kind = self.request.query_params.get("kind")
         if kind in PatientNote.Kind.values:
             queryset = queryset.filter(kind=kind)
@@ -350,6 +666,9 @@ class NoteViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, ClinicViewSet)
 
     @transaction.atomic
     def perform_create(self, serializer):
+        # A general note is front-desk work; anything clinical is written by a doctor.
+        general = serializer.validated_data.get("kind") == PatientNote.Kind.GENERAL
+        require_role(self.request, DEMOGRAPHIC_WRITE if general else CLINICAL_WRITE)
         note = serializer.save(author=self.request.user)
         self.event("note.create", note)
 

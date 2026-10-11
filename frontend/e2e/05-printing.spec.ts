@@ -44,7 +44,8 @@ test('printing: envelope labels, the patient card and a prescription come out at
   // The patient card, the size of a bank card.
   await page.getByRole('link', { name: 'Back to the patient' }).click();
   await page.getByRole('link', { name: 'Overview', exact: true }).click();
-  await page.getByRole('link', { name: 'Print patient card' }).click();
+  await page.getByRole('button', { name: 'More ▾' }).click();
+  await page.getByRole('menuitem', { name: 'Print patient card' }).click();
   await expect(page.getByRole('img', { name: 'Patient card for Synthetic Smoke-Test' })).toBeVisible();
   await page.getByRole('button', { name: 'Print', exact: true }).click();
   await shot(page, '05-card');

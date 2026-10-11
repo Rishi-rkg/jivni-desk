@@ -159,9 +159,12 @@ def _database_objects():
 
 
 def _stored_files():
-    from records.models import PatientPhoto
+    from records.models import PatientDocument, PatientPhoto
 
-    return list(PatientPhoto.objects.order_by("pk").values_list("storage_key", flat=True))
+    return [
+        *PatientPhoto.objects.order_by("pk").values_list("storage_key", flat=True),
+        *PatientDocument.objects.order_by("pk").values_list("storage_key", flat=True),
+    ]
 
 
 def _manifest(clinic, files):

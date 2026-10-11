@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from accounts.access import CLINICAL_WRITE
+from accounts.access import CLINICAL_READ, CLINICAL_WRITE
 
 from .models import (
     OBSERVATION_UNITS,
@@ -9,9 +9,11 @@ from .models import (
     EncounterAmendment,
     EncounterDraft,
     EncounterProduct,
+    FamilyLink,
     Observation,
     Patient,
     PatientAddress,
+    PatientDocument,
     PatientIdentifier,
     PatientNote,
     PatientPhoto,
@@ -40,7 +42,18 @@ class PhotoSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-DEMOGRAPHIC_FIELDS = ["first_name", "middle_name", "last_name", "date_of_birth", "gender", "phone", "whatsapp_number", "email"]
+DEMOGRAPHIC_FIELDS = [
+    "first_name",
+    "middle_name",
+    "last_name",
+    "date_of_birth",
+    "gender",
+    "phone",
+    "whatsapp_number",
+    "email",
+    "referred_by",
+    "old_file_number",
+]
 ADDRESS_FIELDS = ["line1", "line2", "city", "region", "postal_code", "country"]
 
 
@@ -71,6 +84,9 @@ class PatientSerializer(serializers.ModelSerializer):
             "phone",
             "whatsapp_number",
             "email",
+            "referred_by",
+            "old_file_number",
+            "alert",
             "address",
             "photos",
             "archived_at",
@@ -79,6 +95,22 @@ class PatientSerializer(serializers.ModelSerializer):
         ]
         # archived_at changes only through the archive and restore actions.
         read_only_fields = ["id", "archived_at", "created_at", "updated_at"]
+
+    def validate_alert(self, value):
+        member = self.context.get("member")
+        if value != getattr(self.instance, "alert", "") and (not member or member.role_id not in CLINICAL_WRITE):
+            raise serializers.ValidationError("Only a doctor writes a patient's alert.")
+        return value.strip()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        member = self.context.get("member")
+        # The alert is clinical; roles that do not read clinical records do not receive it.
+        if not member or member.role_id not in CLINICAL_READ:
+            data.pop("alert", None)
+        # Last visit, next advised date and balance, when the view worked them out for this page of patients.
+        data.update(self.context.get("extras", {}).get(instance.pk, {}))
+        return data
 
     @transaction.atomic
     def create(self, validated_data):
@@ -373,3 +405,29 @@ class PrescriptionSetSerializer(serializers.ModelSerializer):
         if not isinstance(value, list) or not 1 <= len(value) <= 12:
             raise serializers.ValidationError("A set holds between 1 and 12 envelopes.")
         return bounded_json(value, 20_000)
+
+
+class FamilyLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FamilyLink
+        fields = ["id", "relative", "relation"]
+        read_only_fields = ["id"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        member = self.context.get("member")
+        if member:
+            fields["relative"].queryset = Patient.objects.filter(clinic=member.clinic)
+        return fields
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    uploaded_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientDocument
+        fields = ["id", "patient", "title", "mime_type", "byte_size", "uploaded_by_name", "created_at"]
+        read_only_fields = fields
+
+    def get_uploaded_by_name(self, document):
+        return document.uploaded_by.get_full_name() or document.uploaded_by.username

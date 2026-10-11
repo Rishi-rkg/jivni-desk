@@ -591,7 +591,7 @@ class BillingReportViewSet(BillingViewSet):
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         # The file name says what and when, never who.
         response["Content-Disposition"] = f'attachment; filename="jivni-{kind}-{first.isoformat()}-to-{last.isoformat()}.csv"'
-        response.write("﻿")
+        response.write("\ufeff")
         writer = csv.writer(response)
         show_gst = bool(clinic.tax_identifier) and feature_on(clinic, "show_gst")
         if kind == "payments":
@@ -668,4 +668,4 @@ class BillingReportViewSet(BillingViewSet):
 def safe_cell(text):
     """A spreadsheet treats a cell starting with = + - or @ as a formula; a leading apostrophe makes it plain text."""
     text = str(text or "")
-    return f"'{text}" if text[:1] in "=+-@\t\r" else text
+    return f"'{text}" if text and text[0] in "=+-@\t\r" else text
