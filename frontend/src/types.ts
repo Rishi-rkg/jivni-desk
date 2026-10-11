@@ -21,9 +21,11 @@ export interface Membership {
   features?: Partial<Features>;
 }
 export interface Session {
-  user: { id: string; username: string; name: string };
+  user: { id: string; username: string; name: string; two_step?: boolean };
   clinic_id: string;
   memberships: Membership[];
+  /** What must be finished before the workspace opens: a one-time password to replace, two-step sign-in to set up. */
+  pending?: ('password' | 'two_step')[];
   csrf_token: string;
   idle_timeout_seconds?: number;
 }

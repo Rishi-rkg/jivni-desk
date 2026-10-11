@@ -33,6 +33,9 @@ def valid_prefix(value):
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Set when someone else chose this person's password (an invitation or a reset). They choose their own at the
+    # next sign-in, before anything else opens.
+    must_change_password = models.BooleanField(default=False)
 
 
 class Clinic(models.Model):
@@ -94,6 +97,20 @@ class Membership(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["clinic", "user"], name="unique_clinic_user")]
+
+
+class TwoStep(models.Model):
+    """A person's authenticator-app secret, sealed under a key made from their password (accounts/two_step.py)."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="two_step")
+    salt = models.BinaryField()
+    kdf = models.JSONField()
+    sealed_secret = models.BinaryField()
+    # Empty until a first code has been typed back, which proves the app really holds the secret.
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    # The time step of the last code accepted. A code is never accepted twice.
+    last_step = models.BigIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Installation(models.Model):

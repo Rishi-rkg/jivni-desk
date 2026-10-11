@@ -1,5 +1,6 @@
 import hashlib
 import json
+import time
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -20,6 +21,7 @@ from vault import backup as vault_backup
 from vault import services as vault
 from vault import session as vault_session
 
+from . import totp, two_step
 from .features import features_of
 from .models import Clinic, Installation, Membership, Role, User, valid_time_zone
 
@@ -34,7 +36,14 @@ def session_data(request, unlocked=None):
     clinic_id = request.session.get("clinic_id")
     active = next((m.clinic for m in memberships if str(m.clinic_id) == str(clinic_id)), None)
     return {
-        "user": {"id": str(request.user.id), "username": request.user.username, "name": request.user.get_full_name()},
+        "user": {
+            "id": str(request.user.id),
+            "username": request.user.username,
+            "name": request.user.get_full_name(),
+            "two_step": two_step.enrolled(request.user),
+        },
+        # What this person must finish before the workspace opens: their own password, two-step sign-in.
+        "pending": request.session.get("pending") or [],
         "clinic_id": clinic_id,
         "memberships": [
             {
@@ -51,6 +60,16 @@ def session_data(request, unlocked=None):
         "idle_timeout_seconds": idle_seconds(request, active),
         "csrf_token": get_token(request),
     }
+
+
+def pending_steps(user):
+    """What a person has to finish straight after signing in. The server refuses everything else until they have."""
+    steps = []
+    if user.must_change_password:
+        steps.append("password")
+    if two_step.required_for(user) and not two_step.enrolled(user):
+        steps.append("two_step")
+    return steps
 
 
 def idle_seconds(request, clinic):
@@ -124,9 +143,21 @@ def sign_in(request):
         for member in former or [None]:
             record_event(request, "auth.login_denied", clinic=member.clinic if member else None, outcome="denied", actor=user)
         return JsonResponse({"detail": "No active clinic membership."}, status=403)
+    # Unlocking the screen of a session that is still alive is not a new sign-in, so no code is asked for again.
+    resumed = request.user.is_authenticated and request.user.pk == user.pk
+    if two_step.enrolled(user) and not resumed:
+        code = data.get("code")
+        if not isinstance(code, str) or not code.strip():
+            return JsonResponse({"detail": "Enter the 6-digit code from your authenticator app.", "two_step": True}, status=401)
+        if not two_step.check(user, data["password"], code):
+            cache.set(key, failures + 1, 300)
+            record_event(request, "auth.two_step_failed", clinic=memberships[0].clinic, outcome="failed", actor=user)
+            return JsonResponse({"detail": "That code is not right. Check the app and try again.", "two_step": True}, status=401)
     cache.delete(key)
     login(request, user)
     request.session["clinic_id"] = str(memberships[0].clinic_id)
+    request.session["signed_in_at"] = int(time.time())
+    request.session["pending"] = pending_steps(user)
     if data.get("shared_computer") is True:
         request.session["shared_computer"] = True
     record_event(request, "auth.login", clinic=memberships[0].clinic)
@@ -200,12 +231,16 @@ def change_password(request):
         return JsonResponse({"new_password": error.messages}, status=400)
     with transaction.atomic():
         vault.change_password(user, data["current_password"], data["new_password"])
+        two_step.reseal(user, data["current_password"], data["new_password"])
         user.set_password(data["new_password"])
+        # A password the person chose themselves ends the one-time password they were given.
+        user.must_change_password = False
         user.save()
         record_event(request, "auth.password_changed", clinic=clinic)
     # Keeps this session signed in; other sessions of this user are signed out by Django.
     update_session_auth_hash(request, user)
-    return JsonResponse({"detail": "Password changed.", "csrf_token": get_token(request)})
+    request.session["pending"] = pending_steps(user)
+    return JsonResponse({"detail": "Password changed.", "csrf_token": get_token(request), "pending": request.session["pending"]})
 
 
 @require_POST
@@ -284,6 +319,7 @@ def setup(request):
         return JsonResponse({"detail": "This installation is already set up. Sign in instead."}, status=409)
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     request.session["clinic_id"] = str(clinic.pk)
+    request.session["signed_in_at"] = int(time.time())
     record_event(request, "clinic.setup", clinic, clinic)
     unlocked = vault.unlock(user, password)
     # The recovery key is returned exactly once, here. It is not stored and cannot be shown again.
@@ -291,3 +327,130 @@ def setup(request):
     vault_session.start(request, response, unlocked)
     library_store.warm(clinic.pk)
     return response
+
+
+def _password_request(request):
+    """The signed-in person and the fields they sent, once their password has been typed again and is right."""
+    if not request.user.is_authenticated:
+        return None, JsonResponse({"detail": "Authentication required."}, status=401)
+    data = payload(request)
+    if not data or not isinstance(data.get("password"), str):
+        return None, JsonResponse({"password": ["Enter your password."]}, status=400)
+    if not request.user.check_password(data["password"]):
+        return None, JsonResponse({"password": ["That password is not correct."]}, status=400)
+    return data, None
+
+
+def _active_clinic(request):
+    member = (
+        Membership.objects.filter(user=request.user, clinic_id=request.session.get("clinic_id"), is_active=True)
+        .select_related("clinic")
+        .first()
+    )
+    return member.clinic if member else None
+
+
+@require_POST
+@csrf_protect
+@sensitive_variables()
+def two_step_start(request):
+    """Begin setting up two-step sign-in. Answers once with the secret for the authenticator app."""
+    data, refused = _password_request(request)
+    if refused:
+        return refused
+    if two_step.enrolled(request.user):
+        return JsonResponse({"detail": "Two-step sign-in is already on. Turn it off first to set it up again."}, status=400)
+    secret = two_step.start(request.user, data["password"])
+    return JsonResponse({"secret": secret, "uri": totp.uri(secret, request.user.username)})
+
+
+@require_POST
+@csrf_protect
+@sensitive_variables()
+def two_step_confirm(request):
+    """Finish setting up: a code typed back proves the app holds the secret. From now on sign-in asks for one."""
+    data, refused = _password_request(request)
+    if refused:
+        return refused
+    if not two_step.check(request.user, data["password"], data.get("code", ""), confirming=True):
+        return JsonResponse({"code": ["That code is not right. Check the app and try again."]}, status=400)
+    request.session["pending"] = pending_steps(request.user)
+    record_event(request, "auth.two_step_on", clinic=_active_clinic(request))
+    return JsonResponse(session_data(request))
+
+
+@require_POST
+@csrf_protect
+@sensitive_variables()
+def two_step_off(request):
+    data, refused = _password_request(request)
+    if refused:
+        return refused
+    if two_step.required_for(request.user):
+        return JsonResponse({"detail": "Your clinic asks owners and doctors to use two-step sign-in."}, status=400)
+    two_step.remove(request.user)
+    record_event(request, "auth.two_step_off", clinic=_active_clinic(request))
+    return JsonResponse(session_data(request))
+
+
+RECOVERY_REFUSED = "That username and recovery key do not open a clinic here."
+
+
+@require_POST
+@csrf_protect
+@sensitive_variables()
+def recover(request):
+    """Every password is lost: the recovery key gives an owner a new password. The key is then replaced.
+
+    Open without signing in, so it answers the same way whichever part was wrong, and allows few attempts.
+    """
+    data = payload(request) or {}
+    username, typed, password = (data.get(name) for name in ("username", "recovery_key", "new_password"))
+    if not all(isinstance(value, str) and value for value in (username, typed, password)):
+        return JsonResponse({"detail": "Enter the owner's username, the recovery key and a new password."}, status=400)
+    key = "recover:" + hashlib.sha256(request.META.get("REMOTE_ADDR", "").encode()).hexdigest()
+    failures = cache.get(key, 0)
+    if failures >= 5:
+        return JsonResponse({"detail": "Too many attempts. Try again in 15 minutes."}, status=429)
+    owners = list(
+        Membership.objects.filter(user__username=username[:150], role_id="owner", is_active=True).select_related("user", "clinic")
+    )
+    opened = []
+    for member in owners:
+        try:
+            opened.append((member.clinic, vault.recover(member.clinic, typed)))
+        except vault.VaultError:
+            continue
+    if not opened:
+        cache.set(key, failures + 1, 900)
+        for member in owners or [None]:
+            record_event(
+                request,
+                "auth.recovery_failed",
+                clinic=member.clinic if member else None,
+                outcome="failed",
+                actor=member.user if member else None,
+            )
+        return JsonResponse({"detail": RECOVERY_REFUSED}, status=400)
+    user = owners[0].user
+    try:
+        validate_password(password, user)
+    except ValidationError as error:
+        return JsonResponse({"new_password": error.messages}, status=400)
+    from .team import end_sessions
+
+    fresh = []
+    with transaction.atomic():
+        user.set_password(password)
+        user.must_change_password = False
+        user.save()
+        # Whoever set up the authenticator app may be the person who lost everything: it is set up again.
+        two_step.remove(user)
+        end_sessions([user.pk])
+        for clinic, keys in opened:
+            vault.grant_access(clinic, keys, user, password, granted_by=user)
+            # A recovery key that has been typed in is spent.
+            fresh.append({"clinic": clinic.name, "recovery_key": vault.replace_recovery_key(clinic, keys, replaced_by=user)})
+            record_event(request, "auth.recovery_used", clinic=clinic, actor=user)
+    cache.delete(key)
+    return JsonResponse({"detail": "Password reset. Sign in with the new password.", "recovery_keys": fresh})

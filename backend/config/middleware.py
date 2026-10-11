@@ -63,3 +63,24 @@ class IdleTimeoutMiddleware:
                 # Written at most once a minute so ordinary reads do not rewrite the session.
                 request.session["last_activity"] = now
         return self.get_response(request)
+
+
+class SignInStepsMiddleware:
+    """Until someone has chosen their own password and set up two-step sign-in where it is asked, nothing else answers.
+
+    The steps themselves live under /api/v1/auth/. Without this the screens that ask for them would be decoration.
+    """
+
+    OPEN = "/api/v1/auth/"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated and request.path.startswith("/api/") and not request.path.startswith(self.OPEN):
+            pending = request.session.get("pending")
+            if pending:
+                from django.http import JsonResponse
+
+                return JsonResponse({"detail": "Finish signing in first.", "pending": pending}, status=403)
+        return self.get_response(request)

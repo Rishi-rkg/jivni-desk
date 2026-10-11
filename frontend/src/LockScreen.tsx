@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { api, initializeCSRF, msSinceServerContact, setCSRF } from './api';
 import { Brand, ErrorMessage } from './components';
+import { asksForCode } from './SignInSteps';
 import { Session } from './types';
 import { Avatar } from './ui';
 
@@ -56,18 +57,22 @@ export function LockScreen({
 }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // Asked for only when the session behind the locked screen has ended and this is a full sign-in again.
+  const [needsCode, setNeedsCode] = useState(false);
   const name = session.user.name || session.user.username;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError('');
-    const password = String(new FormData(event.currentTarget).get('password') || '');
+    const form = new FormData(event.currentTarget);
+    const password = String(form.get('password') || '');
+    const code = String(form.get('code') || '');
     try {
       await initializeCSRF();
       let next = await api<Session>('auth/login/', {
         method: 'POST',
-        body: JSON.stringify({ username: session.user.username, password }),
+        body: JSON.stringify({ username: session.user.username, password, ...(code ? { code } : {}) }),
       });
       setCSRF(next.csrf_token);
       // Signing in selects the first clinic; return to the one that was open so drafts stay valid.
@@ -80,7 +85,8 @@ export function LockScreen({
       }
       onUnlocked(next);
     } catch (e) {
-      setError((e as Error).message);
+      if (asksForCode(e) && !needsCode) setNeedsCode(true);
+      else setError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -110,6 +116,12 @@ export function LockScreen({
           Password
           <input name="password" type="password" autoComplete="current-password" required autoFocus />
         </label>
+        {needsCode && (
+          <label>
+            6-digit code from your authenticator app
+            <input name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={7} required autoFocus />
+          </label>
+        )}
         <button disabled={busy}>{busy ? 'Unlocking…' : 'Unlock'}</button>
         <button type="button" className="secondary" onClick={onSwitchUser}>
           Sign in as someone else

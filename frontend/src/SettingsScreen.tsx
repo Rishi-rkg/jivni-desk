@@ -5,6 +5,14 @@ import { ActivityLog, ClinicDetails } from './AdminScreens';
 import { BackupScreen } from './BackupScreen';
 import { ErrorMessage } from './components';
 import { RulesPanel, TemplatesPanel } from './MessagesScreen';
+import {
+  ImportExport,
+  PriceListSettings,
+  PrintSettings,
+  SecuritySettings,
+  TwoStepPanel,
+  UsersAndRoles,
+} from './TeamScreens';
 import { WorkWeek } from './WorkWeek';
 import {
   ClinicSettings,
@@ -32,11 +40,17 @@ const KEEPERS: Role[] = ['owner', 'admin'];
 const SECTIONS: Section[] = [
   { key: 'clinic', label: 'Clinic details', group: 'Clinic', roles: KEEPERS },
   { key: 'work-week', label: 'Work week', group: 'Clinic', roles: KEEPERS },
-  { key: 'messaging', label: 'Messaging', group: 'Clinic', roles: KEEPERS, feature: 'messages' },
+  { key: 'price-list', label: 'Price list and tax', group: 'Clinic', roles: KEEPERS, feature: 'billing' },
+  { key: 'users', label: 'Users and roles', group: 'People', roles: OWNER },
   { key: 'account', label: 'My account', group: 'People', roles: KEEPERS },
   { key: 'switches', label: 'Switches', group: 'Features', roles: OWNER },
+  { key: 'messaging', label: 'Messaging', group: 'Features', roles: KEEPERS, feature: 'messages' },
+  { key: 'print-templates', label: 'Print templates', group: 'Features', roles: KEEPERS },
+  { key: 'printers', label: 'Printers', group: 'Features', roles: KEEPERS },
+  { key: 'security', label: 'Security', group: 'Safety', roles: OWNER },
   { key: 'backups', label: 'Backups', group: 'Safety', roles: OWNER },
   { key: 'activity', label: 'Activity log', group: 'Safety', roles: KEEPERS },
+  { key: 'import-export', label: 'Import and export', group: 'Safety', roles: OWNER },
 ];
 
 /** P58: how messages leave the clinic, and the wording and rules behind them. */
@@ -109,7 +123,15 @@ export function SettingsScreen({
           {current.key === 'clinic' && <ClinicDetails role={member.role} onSaved={onSaved} />}
           {current.key === 'work-week' && <WorkWeek role={member.role} />}
           {current.key === 'messaging' && <Messaging role={member.role} />}
+          {current.key === 'price-list' && <PriceListSettings role={member.role} />}
+          {current.key === 'users' && <UsersAndRoles />}
           {current.key === 'account' && <MyAccount session={session} onSaved={onSaved} />}
+          {current.key === 'print-templates' && <PrintSettings which="templates" />}
+          {current.key === 'printers' && <PrintSettings which="printers" />}
+          {current.key === 'security' && <SecuritySettings onSaved={onSaved} />}
+          {current.key === 'import-export' && (
+            <ImportExport role={member.role} billingOn={featureOn(member, 'billing')} />
+          )}
           {current.key === 'switches' && <Switches onSaved={onSaved} />}
           {current.key === 'backups' && canManageBackups(member.role) && <BackupScreen />}
           {current.key === 'activity' && <ActivityLog />}
@@ -316,6 +338,7 @@ export function MyAccount({
           </div>
         </form>
       </section>
+      <TwoStepPanel session={session} onChanged={onSaved} />
     </>
   );
 }

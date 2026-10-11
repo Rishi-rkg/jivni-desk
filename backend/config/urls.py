@@ -8,6 +8,7 @@ from rest_framework.routers import DefaultRouter
 
 from accounts import views as auth
 from accounts.api import ClinicLogoView, ClinicSettingsView
+from accounts.team import RecoveryKeyView, SecurityView, SessionsView, TeamActionView, TeamMemberView, TeamView
 from billing.views import BillingReportViewSet, InvoiceViewSet, PaymentViewSet, PriceItemViewSet
 from messaging.views import CampaignViewSet, MessageViewSet, RuleViewSet, TemplateViewSet
 from modules.contracts import MODULES
@@ -77,8 +78,18 @@ urlpatterns = [
     path("api/v1/auth/clinic/", auth.select_clinic),
     path("api/v1/auth/password/", auth.change_password),
     path("api/v1/auth/account/", auth.account),
+    path("api/v1/auth/two-step/start/", auth.two_step_start),
+    path("api/v1/auth/two-step/confirm/", auth.two_step_confirm),
+    path("api/v1/auth/two-step/off/", auth.two_step_off),
+    path("api/v1/auth/recover/", auth.recover),
     path("api/v1/clinic/", ClinicSettingsView.as_view()),
     path("api/v1/clinic/logo/", ClinicLogoView.as_view()),
+    path("api/v1/clinic/users/", TeamView.as_view()),
+    path("api/v1/clinic/users/<uuid:user_id>/", TeamMemberView.as_view()),
+    path("api/v1/clinic/users/<uuid:user_id>/<slug:action>/", TeamActionView.as_view()),
+    path("api/v1/clinic/security/", SecurityView.as_view()),
+    path("api/v1/clinic/recovery-key/", RecoveryKeyView.as_view()),
+    path("api/v1/clinic/sessions/end/", SessionsView.as_view()),
     path("api/v1/backups/", backups.overview),
     path("api/v1/backups/policy/", backups.policy),
     path("api/v1/backups/places/", backups.places),

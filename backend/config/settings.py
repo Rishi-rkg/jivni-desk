@@ -33,6 +33,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "config.middleware.IdleTimeoutMiddleware",
+    "config.middleware.SignInStepsMiddleware",
     "vault.session.VaultMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "config.middleware.PrivateResponseMiddleware",

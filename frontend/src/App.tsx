@@ -28,6 +28,7 @@ import { PrintRoutes } from './PrintScreens';
 import { PrintingScreen } from './PrintingScreen';
 import { DraftStateContext } from './useUnsavedChanges';
 import { MyAccount, SettingsScreen } from './SettingsScreen';
+import { FinishSignIn } from './SignInSteps';
 import { SetupScreen } from './SetupScreen';
 import { LockScreen, useIdleLock } from './LockScreen';
 import { Login } from './Login';
@@ -242,6 +243,16 @@ export default function App() {
             setSession(s);
           }}
         />
+        <Notices />
+        <DevBanner />
+      </>
+    );
+  // A one-time password to replace, or two-step sign-in to set up: nothing else opens until it is done.
+  if (session.pending?.length)
+    return (
+      <>
+        <FinishSignIn session={session} onDone={setSession} onSignOut={logout} />
+        <Notices />
         <DevBanner />
       </>
     );

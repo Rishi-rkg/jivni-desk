@@ -29,12 +29,7 @@ export class ApiError extends Error {
 function describe(value: unknown): string {
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) return value.map(describe).join(' ');
-  if (
-    value &&
-    typeof value === 'object' &&
-    typeof (value as { detail?: unknown }).detail === 'string' &&
-    Object.keys(value).length === 1
-  )
+  if (value && typeof value === 'object' && typeof (value as { detail?: unknown }).detail === 'string')
     return (value as { detail: string }).detail;
   if (value && typeof value === 'object')
     return Object.entries(value)
