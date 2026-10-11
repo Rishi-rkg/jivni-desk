@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Floating windows and menus · DocHP mockup</title>
+<title>Floating windows and menus · DocHP prototype</title>
 <link rel="stylesheet" href="mockup.css">
 </head>
 <body data-bare>
@@ -13,68 +13,27 @@
   <h2 style="margin-top: 22px">Windows that ask for something</h2>
   <div class="gallery">
 
-    <div class="specimen"><h3>1. Find a patient (Ctrl K or the search box)</h3><p class="muted small">Opens from anywhere. A scanned card lands here too.</p>
-      <div class="stage"><div class="dialog wide">
-        <div class="body"><input value="rao" style="font-size: 1.1rem"></div>
-        <div class="menu" style="border: 0; box-shadow: none; border-top: 1px solid var(--border); border-radius: 0">
-          <div class="hd">Patients</div>
-          <div class="hover"><span><strong>Anita Rao</strong> · 42 F · …0142</span><span class="kbd">Enter</span></div>
-          <div><span><strong>Vikram Rao</strong> · 47 M · …0143</span></div>
-          <div><span><strong>Sunita Rao-Mehta</strong> · 8 F · …0142</span></div>
-          <div class="sep"></div><div class="hd">Actions</div>
-          <div><span>Register "rao" as a new patient</span></div>
-          <div><span>See all results</span></div>
-        </div></div></div></div>
+    <div class="specimen"><h3>1. Find a patient (Ctrl K or the search box)</h3><p class="muted small">Opens from anywhere. Try it: press Ctrl K on any screen.</p>
+      <div class="stage" data-dialog="finder"></div></div>
 
-    <div class="specimen"><h3>2. Card scanned</h3><p class="muted small">Shown when a card is scanned while other work is open.</p>
-      <div class="stage"><div class="dialog">
-        <header>Card scanned <span class="x">✕</span></header>
-        <div class="body"><div class="patient-banner" style="padding: 0"><div class="photo">AR</div><div><strong>Anita Rao</strong><p class="muted">42 F · PAT-W8KQ3G7DP9 · appointment today 09:30</p></div></div>
-          <div class="error" style="margin-bottom: 0">Other state: "This card is no longer valid. It was replaced on 12 Sep 2026."</div></div>
-        <footer><button class="secondary">Mark arrived</button><button>Open record</button></footer></div></div></div>
+    <div class="specimen"><h3>2. Card or envelope label scanned</h3><p class="muted small">Shown when a barcode is scanned while other work is open.</p>
+      <div class="stage" data-dialog="scan"></div></div>
 
     <div class="specimen"><h3>3. Record payment</h3><p class="muted small">From an invoice, the billing list or the patient banner.</p>
-      <div class="stage"><div class="dialog">
-        <header>Record payment · INV-2026-1042 <span class="x">✕</span></header>
-        <div class="body"><p>Anita Rao · balance due <strong>250.00</strong></p>
-          <div class="form-grid two">
-            <label>Amount <input value="250.00"></label>
-            <label>Date <input value="06 Oct 2026"></label>
-            <label class="span-all">Method <span class="segmented"><span class="on">Cash</span><span>Card</span><span>Bank transfer</span><span>Instant payment</span></span></label>
-            <label class="span-all">Reference <input placeholder="Optional, for card or transfer"></label>
+      <div class="stage" data-dialog="payment"></div></div>
           </div>
           <label class="check" style="margin-top: 10px"><input type="checkbox" checked> Print receipt</label>
           <label class="check"><input type="checkbox"> Send receipt on WhatsApp</label></div>
         <footer><button class="secondary">Cancel</button><button>Save payment</button></footer></div></div></div>
 
-    <div class="specimen"><h3>4. Print medicine labels</h3><p class="muted small">After finalising a visit, or from any prescription.</p>
-      <div class="stage"><div class="dialog wide">
-        <header>Print medicine labels <span class="x">✕</span></header>
-        <div class="body">
-          <table class="small">
-            <tr><th></th><th>Medicine</th><th>Instructions on label</th><th>Copies</th></tr>
-            <tr><td><input type="checkbox" checked></td><td>Arnica montana 30C</td><td>4 pills, twice daily, 14 days</td><td><input value="1" style="width: 50px"></td></tr>
-            <tr><td><input type="checkbox" checked></td><td>Nux vomica 200C</td><td>1 dose at bedtime, weekly</td><td><input value="1" style="width: 50px"></td></tr>
-          </table>
-          <div class="form-grid two" style="margin-top: 12px">
-            <label>Printer <select><option>Label printer, dispensary</option></select></label>
-            <label>Layout <select><option>A: text only</option><option>B: with barcode</option></select></label>
+    <div class="specimen"><h3>4. Print envelope labels</h3><p class="muted small">After finalising a visit, or from any prescription.</p>
+      <div class="stage" data-dialog="label"></div></div>
           </div>
           <div class="setting"><span class="toggle"></span><div><strong>Hide medicine names</strong></div><a href="print-label.html">Preview</a></div></div>
         <footer><button class="secondary">Skip</button><button>Print 2 labels</button></footer></div></div></div>
 
     <div class="specimen"><h3>5. Book appointment</h3><p class="muted small">From a free slot, a patient record or a finished visit.</p>
-      <div class="stage"><div class="dialog">
-        <header>Book appointment <span class="x">✕</span></header>
-        <div class="body"><div class="form-grid two">
-          <label class="span-all">Patient <input value="Anita Rao · PAT-W8KQ3G7DP9"></label>
-          <label>Date <input value="20 Oct 2026"></label>
-          <label>Time <select><option>10:15</option></select></label>
-          <label>Doctor <select><option>Dr. R. Patel</option></select></label>
-          <label>Type <select><option>Follow-up (15 min)</option><option>First consultation (45 min)</option></select></label>
-          <label class="span-all">Note for reception <input placeholder="Optional"></label>
-        </div><label class="check" style="margin-top: 10px"><input type="checkbox" checked> Send a reminder the day before</label></div>
-        <footer><button class="secondary">Cancel</button><button>Book</button></footer></div></div></div>
+      <div class="stage" data-dialog="book"></div></div>
 
     <div class="specimen"><h3>6. Take patient photo</h3><p class="muted small">From registration or the patient details panel.</p>
       <div class="stage"><div class="dialog">
@@ -95,18 +54,13 @@
 
     <div class="specimen"><h3>8. Void invoice or issue credit note</h3><p class="muted small">A reason is always required. Owner or billing only.</p>
       <div class="stage"><div class="dialog">
-        <header>Void invoice INV-2026-1039 <span class="x">✕</span></header>
+        <header>Void invoice INV/26-27/1039 <span class="x">✕</span></header>
         <div class="body"><p>The invoice stays in the list marked Void. Its number is not reused.</p>
           <label>Reason <input value="Billed to the wrong patient"></label></div>
         <footer><button class="secondary">Keep invoice</button><button class="danger">Void invoice</button></footer></div></div></div>
 
-    <div class="specimen"><h3>9. Edit message before sending</h3><p class="muted small">Used for template, rule and AI drafts alike.</p>
-      <div class="stage"><div class="dialog">
-        <header>Message to Farid Khan <span class="x">✕</span></header>
-        <div class="body"><p><span class="badge b-amber">AI draft</span> <span class="small muted">Sent to the AI service: first name, days since visit, follow-up note. <a href="#">Show exactly</a></span></p>
-          <textarea rows="5">Hello Farid, Dr. Sharma wanted to check how you have been doing since your recent consultation. Reply here or call us to book a follow-up. Sunrise Clinic</textarea>
-          <p class="small muted" style="margin: 8px 0 0">Insert: <span class="chip">first name</span> <span class="chip">doctor</span> <span class="chip">appointment time</span> <span class="chip">clinic name</span></p></div>
-        <footer><button class="danger">Discard</button><button class="secondary">Save draft</button><button>Approve and send</button></footer></div></div></div>
+    <div class="specimen"><h3>9. Write or edit a message</h3><p class="muted small">Used for template, rule and AI drafts alike.</p>
+      <div class="stage" data-dialog="message"></div></div>
 
     <div class="specimen"><h3>10. Invite or edit a user</h3><p class="muted small">Owner only.</p>
       <div class="stage"><div class="dialog">
@@ -134,11 +88,18 @@
         <footer><button class="secondary">Download error list</button><button class="secondary">Back</button><button>Import 284 patients</button></footer></div></div></div>
   </div>
 
+  <div class="gallery" style="margin-top: 20px">
+    <div class="specimen"><h3>12b. Add a product to the bill</h3><p class="muted small">From a draft invoice or the visit page. Shelf medicines, supplements, consumables.</p>
+      <div class="stage" data-dialog="product"></div></div>
+  </div>
+
   <h2 style="margin-top: 28px">Windows that warn or confirm</h2>
   <div class="gallery">
     <div class="specimen"><h3>13. Unsaved changes</h3>
+      <div class="stage" data-dialog="leave"></div></div>
       <div class="stage"><div class="dialog"><header>Leave without saving?</header><div class="body">The visit for Anita Rao has changes that are not saved.</div><footer><button class="secondary">Keep editing</button><button class="secondary">Save draft and leave</button><button class="danger">Discard changes</button></footer></div></div></div>
     <div class="specimen"><h3>14. Finalise visit</h3>
+      <div class="stage" data-dialog="finalise"></div></div>
       <div class="stage"><div class="dialog"><header>Finalise this visit?</header><div class="body">After this the visit cannot be edited. Corrections are added as amendments.<br><br><label class="check"><input type="checkbox"> Do not ask again today</label></div><footer><button class="secondary">Back</button><button>Finalise</button></footer></div></div></div>
     <div class="specimen"><h3>15. Archive patient</h3>
       <div class="stage"><div class="dialog"><header>Archive Prakash Raorane?</header><div class="body">The record is kept and can be restored. Archived patients do not appear in search unless "Archived" is chosen and receive no messages.</div><footer><button class="secondary">Cancel</button><button class="danger">Archive</button></footer></div></div></div>
@@ -148,9 +109,9 @@
 
   <h2 style="margin-top: 28px">Menus</h2>
   <div class="gallery" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
-    <div class="specimen"><h3>17. Account menu</h3><div class="stage plain"><div class="menu"><div class="hd">Dr. R. Patel · Owner</div><div>My account</div><div>Change password</div><div><span>Keyboard shortcuts</span><span class="kbd">?</span></div><div class="sep"></div><div><span>Lock</span><span class="kbd">Ctrl L</span></div><div>Sign out</div></div></div></div>
+    <div class="specimen"><h3>17. Account menu</h3><div class="stage plain" data-menu-specimen="account"></div></div>
     <div class="specimen"><h3>18. Clinic switcher</h3><div class="stage plain"><div class="menu"><div class="hd">Your clinics</div><div class="hover"><span>Sunrise Clinic</span><span>✓</span></div><div>Sunrise Clinic, East branch</div></div></div></div>
-    <div class="specimen"><h3>19. Patient "More" menu</h3><div class="stage plain"><div class="menu"><div>Edit details</div><div>Book appointment</div><div>Print patient card</div><div>Replace lost card</div><div>Message consent…</div><div>Change history</div><div class="sep"></div><div style="color: #853124">Archive patient</div></div></div></div>
+    <div class="specimen"><h3>19. Patient "More" menu</h3><div class="stage plain" data-menu-specimen="patientMore"></div></div>
     <div class="specimen"><h3>20. Invoice "More" menu</h3><div class="stage plain"><div class="menu"><div>Print receipt</div><div>Download PDF</div><div>Issue credit note</div><div>Refund payment</div><div class="sep"></div><div style="color: #853124">Void invoice</div></div></div></div>
     <div class="specimen"><h3>21. Row menu (lists)</h3><div class="stage plain"><div class="menu"><div>Open</div><div>Open in new tab</div><div>Start visit</div><div>Book appointment</div><div>New invoice</div></div></div></div>
     <div class="specimen"><h3>22. Appointment menu</h3><div class="stage plain"><div class="menu"><div>Mark arrived</div><div>Start visit</div><div>Reschedule…</div><div>Send reminder now</div><div class="sep"></div><div>No-show</div><div style="color: #853124">Cancel appointment</div></div></div></div>
@@ -161,9 +122,9 @@
   <h2 style="margin-top: 28px">Side panels and notices</h2>
   <div class="gallery">
     <div class="specimen"><h3>25. Last visit panel (slides in beside a visit)</h3>
-      <div class="stage" style="place-items: stretch"><div class="drawer"><div class="heading"><h2>Last visit · 06 Aug 2026</h2><span class="x">✕</span></div><dl><dt>Complaint</dt><dd>Right-sided headache, worse in sunlight.</dd><dt>Prescription</dt><dd>Arnica montana 30C, 4 pills twice daily, 14 days</dd><dt>Measurements</dt><dd>162 cm · 65 kg</dd></dl><p><button class="secondary btn-sm">Copy prescription</button> <a href="#">‹ Earlier</a></p></div></div></div>
+      <div class="stage" style="place-items: stretch"><div class="drawer"><div class="heading"><h2>Last visit · 06 Aug 2026</h2><span class="x">✕</span></div><dl><dt>Complaint</dt><dd>Right-sided headache, worse in sunlight.</dd><dt>Envelope</dt><dd>Arnica montana 30C + Bryonia alba 30C · 4 tabs twice daily, 14 days</dd><dt>Measurements</dt><dd>162 cm · 65 kg</dd></dl><p><button class="secondary btn-sm">Copy prescription</button> <a href="#">‹ Earlier</a></p></div></div></div>
     <div class="specimen"><h3>26. Notices (bottom corner, fade after a few seconds)</h3>
-      <div class="stage plain" style="gap: 10px"><div class="toast">Visit finalised. <a href="#">Print prescription</a></div><div class="toast">2 labels sent to the label printer. <a href="#">Undo</a></div><div class="toast" style="background: #853124">Could not save. Check the connection and try again. <a href="#">Retry</a></div><div class="toast" style="background: #725112">You are offline. Changes will not be saved.</div></div></div>
+      <div class="stage plain" style="gap: 10px"><div class="toast">Visit finalised. <a href="#">Print prescription</a></div><div class="toast">2 envelope labels sent to the label printer. <a href="#">Undo</a></div><div class="toast" style="background: #853124">Could not save. Check the connection and try again. <a href="#">Retry</a></div><div class="toast" style="background: #725112">You are offline. Changes will not be saved.</div></div></div>
   </div>
 
   <h2 style="margin-top: 28px">Small parts used everywhere</h2>
