@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from './api';
+import { looksLikePatientCode, resolveScan } from './Scanner';
 import { ErrorMessage } from './components';
 import { Page, Patient, Role, canWriteDemographics, displayName } from './types';
 
@@ -19,7 +20,14 @@ export function Dashboard({ role }: { role: Role }) {
   }, []);
   function findPatient(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    navigate(`/patients?search=${encodeURIComponent(String(new FormData(e.currentTarget).get('search') || ''))}`);
+    const text = String(new FormData(e.currentTarget).get('search') || '');
+    const search = () => navigate(`/patients?search=${encodeURIComponent(text)}`);
+    // A scanned or typed patient card code opens the patient directly; anything else is a search.
+    if (looksLikePatientCode(text))
+      resolveScan(text)
+        .then((result) => navigate(`/patients/${result.patient.id}`))
+        .catch(search);
+    else search();
   }
   return (
     <>

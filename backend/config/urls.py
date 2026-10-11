@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 from accounts import views as auth
 from accounts.api import ClinicSettingsView
 from modules.contracts import MODULES
-from records.views import AuditViewSet, EncounterViewSet, NoteViewSet, PatientViewSet, PhotoViewSet
+from records.views import AuditViewSet, EncounterViewSet, NoteViewSet, PatientViewSet, PhotoViewSet, ScanViewSet
 
 router = DefaultRouter()
 router.register("patients", PatientViewSet, basename="patient")
@@ -16,6 +16,7 @@ router.register("notes", NoteViewSet, basename="note")
 router.register("encounters", EncounterViewSet, basename="encounter")
 router.register("photos", PhotoViewSet, basename="photo")
 router.register("audit-events", AuditViewSet, basename="audit")
+router.register("scan", ScanViewSet, basename="scan")
 
 
 @api_view(["GET"])

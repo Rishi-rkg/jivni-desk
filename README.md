@@ -128,6 +128,7 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | `/api/v1/auth/password/` | POST | Change your password; re-seals your access to the clinic's encryption key |
 | `/api/v1/patients/` | GET, POST | Paginated registry; `search`, `page`, `archived=true` |
 | `/api/v1/patients/{id}/` | GET, PATCH | Demographics; `archived_at` is read-only |
+| `/api/v1/scan/{code}/` | GET | Identify any scanned barcode; today a patient card returns `{kind: "patient", patient}`. The workspace routes on the answer |
 | `/api/v1/patients/by-code/{code}/` | GET | Open a patient from a scanned or typed card code; active codes of this clinic only |
 | `/api/v1/patients/check-duplicates/` | POST | Possible existing records before registering; advice only |
 | `/api/v1/patients/{id}/revisions/` | GET | Latest 50 demographic changes with old and new values |

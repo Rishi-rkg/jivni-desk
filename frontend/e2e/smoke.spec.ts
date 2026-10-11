@@ -37,6 +37,14 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
   await expect(page.getByText('Visit saved.')).toBeVisible();
   await expect(page.getByText('Synthetic complaint for the smoke test').first()).toBeVisible();
 
+  // A barcode scanner types the card code very fast and presses Enter; that opens the patient from anywhere.
+  const code = (await page.getByText(/^PAT-[2-9A-Z]{10}$/).textContent()) ?? '';
+  await page.getByRole('link', { name: 'More tools' }).click();
+  await expect(page.getByRole('heading', { name: 'More clinic tools' })).toBeVisible();
+  await page.keyboard.type(code, { delay: 5 });
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Synthetic Smoke-Test' })).toBeVisible();
+
   await page.getByRole('link', { name: 'Audit log' }).click();
   await expect(page.getByText('Recorded visit')).toBeVisible();
 

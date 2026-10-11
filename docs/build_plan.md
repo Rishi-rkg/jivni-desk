@@ -8,7 +8,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 105 backend tests pass on PostgreSQL 16 with none skipped, 13 frontend tests, 2 browser end-to-end tests, Ruff, ESLint and Prettier all clean.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 108 backend tests pass on PostgreSQL 16 with none skipped, 19 frontend tests, 2 browser end-to-end tests (including a simulated card scan), Ruff, ESLint and Prettier all clean.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -70,6 +70,14 @@ These come from reading the code. Each is small now and expensive later.
 - **Billing lines.** Medicines the doctor prescribes are made and mixed by the doctor and billed as one single item. Over-the-shelf medicines, consumables and supplements are sold as separate line items. Shelf products appear only on the bill, never on a label.
 - **The visit page records more than the complaint.** Alongside the complaint and clinical notes, the doctor keeps personal notes that help remember the patient and build a relationship, such as a hobby, a family member or a story. The page also covers medicines prescribed, medicine search and dosage units.
 - **Navigation** is up to eight flat tabs, fewer for roles with less access, with no nested menu. The screen list and mockups live in `mockups/` (`mockups/ui-inventory.md`).
+
+### Added by the owner later on 2026-10-11
+
+- **The patient ID is on everything the patient takes home.** Labels and bills both print the patient's barcode, so anything brought back at the next visit pulls up the record without asking for a phone number, which a household may share.
+- **One scan service routes every barcode** (marked important by the owner). A patient card opens the patient's profile, from where the doctor can start a visit. A product barcode, while a visit is open, asks whether to add it to that patient or start a new bill; with no visit open it goes straight to a new bill. A new bill can be for a walk-in buyer who is not a patient on record.
+- **New appointments start from the phone number**, which looks up an existing patient or begins registering a new one. Date and time are picked the way phones do it.
+- **Settings has a "Work week"**, not "opening hours": pick month and year, select or deselect dates and times, quick buttons for regular clinic times and for different weekend times, and up to four saved work-week templates.
+- **Patient photos are cropped automatically around the face**, using the lightest face detection that works. Recognising patients by face is a possible future plug-in and is out of scope.
 
 ### Still open
 
@@ -133,6 +141,7 @@ Step 2, the missing foundation:
 - **Accounts**: second factor for owner and clinicians, password reset that respects key grants, idle lock, session revocation, shared-cache login throttling (finding 8), and a user-management screen for the owner.
 - **Audit**: outcome, source address and request ID on every event, denied access recorded, scheduled off-host export, retention policy (finding 9).
 - **Clinic settings**: name, address, tax identifier, time zone, currency, logo. Later snapshots on invoices and labels read from here. *Built 2026-10-10 except the logo.*
+- **Work week** in settings (owner, 2026-10-11): a calendar of working dates and times with quick presets for regular and weekend hours and up to four saved templates. Appointments (Phase 5) read their available slots from it.
 - **Deployment**: HTTPS reverse proxy, Gunicorn, separate database identities for migrations and runtime, a deliberate migration release step, error reporting without request bodies.
 - **Independent review** of the encryption and key handling by someone who did not write it.
 
@@ -143,8 +152,8 @@ Phases 2 and 3 may proceed alongside step 2 on synthetic data. Real data waits f
 ### Phase 2: Patient MVP (mostly built)
 
 - ~~**Patient identifier** (`PatientIdentifier`, finding 12): a short opaque random code per patient, shown in the banner in place of the UUID and reissuable if a card is lost.~~ Built 2026-10-10.
-- **Barcode generation and lookup** (lookup endpoint built 2026-10-10; card printing and the global scan handler remain): the identifier printed as Code 128 or QR on a patient card. Scanners act as keyboards, so the application has one global scan handler. A code resolves only for a signed-in user of the same clinic, every scan is audited, and a revoked code opens nothing. The card is printed with ordinary browser printing; no agent is needed yet.
-- **Webcam capture** with crop and resize, through the existing protected photo store.
+- **Barcode generation and lookup** (lookup endpoint built 2026-10-10; card printing and the global scan handler remain): the identifier printed as Code 128 or QR on a patient card. Scanners act as keyboards, so the application has one global scan handler. A code resolves only for a signed-in user of the same clinic, every scan is audited, and a revoked code opens nothing. The card is printed with ordinary browser printing; no agent is needed yet. *Scan routing built 2026-10-11 for patient cards:* `GET /api/v1/scan/{code}/` is the single place that identifies a code, and the workspace catches scanner input anywhere outside a text field and in the dashboard search. Printing the card remains.
+- **Webcam capture** with crop and resize, through the existing protected photo store. Photos are cropped automatically around the face (owner, 2026-10-11): run a small face detector in the browser before upload so no image leaves the clinic for this, and fall back to a centred crop when no face is found.
 - **Demographics editing screen** with a revision record for every change (finding 4), explicit archive and restore, and a duplicate check at registration (finding 13).
 - ~~**`whatsapp_number`** as its own field, separate from phone.~~ Built 2026-10-10.
 - **Import** of existing patients from a spreadsheet, with a dry run and an error report (D8).
@@ -177,6 +186,7 @@ Exit: the doctor completes a full day of synthetic consultations without leaving
 
 - **Job queue and outbox**, built once here and reused by Phases 5 to 7.
 - **Billing data**: invoice drafted from a finalised visit without choosing the patient again. The doctor's dispensed medicines are one line with no remedy names. Shelf medicines, consumables and supplements come from a product list with prices and are separate lines; product sales are in scope from the first billing release. The clinic is always GST-registered (owner, 2026-10-11); if no GST number is entered in clinic settings, the GST field is simply left off the printed bill. Discounts, and tax from clinic settings once the GST treatment is confirmed.
+- **Products have barcodes, and bills do not need a patient** (owner, 2026-10-11): the product list stores each product's own barcode so the scan service can route it, and an invoice may be for a walk-in buyer with no patient record. Every bill for a patient prints that patient's barcode.
 - **Invoice lifecycle** exactly as the original section 19: draft, issued, partially paid, paid, void, refunded. Issued invoices are immutable snapshots with gapless numbering per clinic and financial year. Corrections are credit notes, never edits.
 - **Payments** are recorded, not processed: cash, card, bank transfer or local instant payment, including part payments.
 - **Templates separate from data**: invoice, prescription and label templates are versioned, and each issued document records which version rendered it.
@@ -191,7 +201,7 @@ Exit: a month of synthetic invoices reconciles to the day-end reports to the las
 
 ### Phase 5: Appointments and correspondence
 
-- **Appointments and a walk-in queue**, with the dashboard counts from the original section 23 now backed by real data.
+- **Appointments and a walk-in queue**, with the dashboard counts from the original section 23 now backed by real data. A new appointment starts from a phone number that finds or begins registering the patient; one phone number may belong to several patients in a household, so the result is a list to choose from.
 - **Consent first** (`PatientCommunicationConsent`): separate opt-ins for care messages and for promotional messages, each with date, wording version and who recorded it. Opt-out is honoured immediately.
 - **Messaging engine behind the `Correspondence` adapter**, so WhatsApp stays one provider among possible others.
 - **Templates and triggers** as the original sections 15 and 16. Triggers create drafts in an approval queue; nothing rule-driven is sent without approval at first.

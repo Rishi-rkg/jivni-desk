@@ -25,6 +25,10 @@ Successful registration, note entry, photo upload and visit saves show explicit 
 
 Unsaved registration, visit and note changes warn before internal navigation away from the form/record or browser unloading. Notes may switch patient tabs without losing their draft. Signing out or switching clinics checks for unsaved changes before changing the session. Drafts are never stored in browser local storage; a refresh discards them after the browser warning. There is no autosave claim.
 
+## Scanning
+
+A barcode scanner behaves like a keyboard that types very fast and presses Enter. Anywhere in the workspace, when no text field is in use, a scanned patient card opens that patient. In the dashboard search box a scanned or typed card code also opens the patient directly. A scan while typing in another field is left alone so it lands where the cursor is. If the open screen has unsaved work, the usual leave warning appears first. A code that matches nothing shows a plain message and changes nothing.
+
 ## Lock screen
 
 After 15 minutes without keyboard or pointer activity, or when the server reports that the session has ended, the workspace is covered by a lock screen that asks for the same user's password. The screen underneath stays loaded, so an unsaved visit or note is still there after unlocking. While someone is typing, the session is kept alive in the background, so a long case is not interrupted. "Sign in as a different user" discards the locked screen after a warning if there is unsaved work. The locked page is hidden, not erased: it protects against someone walking past, not against someone with developer tools.

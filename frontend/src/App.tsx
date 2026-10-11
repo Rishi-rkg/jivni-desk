@@ -17,6 +17,7 @@ import { Dashboard, BillingPlaceholder } from './WorkspaceScreens';
 import { DraftStateContext } from './useUnsavedChanges';
 import { AuditLogScreen, ClinicSettingsScreen } from './AdminScreens';
 import { LockScreen, useIdleLock } from './LockScreen';
+import { resolveScan, useScanner } from './Scanner';
 
 function Login({ onLogin }: { onLogin: (s: Session) => void }) {
   const [error, setError] = useState('');
@@ -212,6 +213,23 @@ export default function App() {
     api('auth/logout/', { method: 'POST', body: '{}' }).catch(() => {});
   }, []);
   useIdleLock(!!session && !locked, session?.idle_timeout_seconds, lockForInactivity);
+  // A scanned patient card opens that patient from anywhere. Unsaved work is still protected by the leave warning.
+  const openScanned = useCallback(
+    (code: string) => {
+      setError('');
+      resolveScan(code)
+        .then((result) => navigate(`/patients/${result.patient.id}`))
+        .catch((e) =>
+          setError(
+            e instanceof ApiError && e.status === 404
+              ? 'That code does not match a patient in this clinic.'
+              : e.message,
+          ),
+        );
+    },
+    [navigate],
+  );
+  useScanner(!!session && !locked, openScanned);
   const refreshSession = useCallback(() => {
     api<Session>('auth/me/')
       .then((s) => {

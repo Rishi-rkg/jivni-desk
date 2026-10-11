@@ -241,6 +241,34 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         return Response(PhotoSerializer(photo).data, status=201)
 
 
+class ScanViewSet(ClinicViewSet):
+    """The one place that answers "what is this barcode?", so every scanner in the clinic behaves the same.
+
+    Today it knows patient card codes. Product barcodes join here when the product list is built; the
+    screen then decides where to go (patient record, add to the open visit's bill, or a new bill).
+    """
+
+    lookup_field = "code"
+    lookup_value_regex = "[^/]+"
+
+    def retrieve(self, request, code=None):
+        normalized = normalize_patient_code(code)
+        if normalized:
+            patient = (
+                Patient.objects.filter(clinic=self.member.clinic, identifiers__code=normalized, identifiers__revoked_at__isnull=True)
+                .select_related("address")
+                .prefetch_related("photos")
+                .first()
+            )
+            if patient:
+                self.event("patient.scan", patient)
+                data = PatientSerializer(patient, context=self.get_serializer_context()).data
+                return Response({"kind": "patient", "patient": data})
+        # What was scanned is never written to the audit log.
+        record_event(request, "scan.unknown", clinic=self.member.clinic, outcome="failed")
+        return Response({"kind": "unknown", "detail": "Nothing in this clinic matches that code."}, status=404)
+
+
 class PhotoViewSet(mixins.RetrieveModelMixin, ClinicViewSet):
     serializer_class = PhotoSerializer
 

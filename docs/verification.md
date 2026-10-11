@@ -61,6 +61,10 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## Scan routing (2026-10-11)
+
+108 backend tests pass on PostgreSQL 16; 19 frontend tests pass; the browser end-to-end test now types a patient card code at scanner speed on a page with no field in use and lands on that patient. Not tested with a physical scanner; the 50 ms gap between characters is an assumption to confirm with the clinic's device.
+
 ## Encryption key system (2026-10-11)
 
 105 backend tests pass on PostgreSQL 16 and on SQLite (4 PostgreSQL-only checks skipped there); Ruff clean; no migration drift; 13 frontend tests and the 2 browser end-to-end tests pass with a clinic key created by the real sign-up command and unlocked at sign-in with production Argon2id settings.
