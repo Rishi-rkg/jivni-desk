@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.db import connection
-from django.http import JsonResponse
-from django.urls import include, path
+from django.http import HttpResponse, JsonResponse
+from django.urls import include, path, re_path
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
@@ -54,3 +55,14 @@ urlpatterns = [
     path("api/v1/modules/", modules),
     path("api/v1/", include(router.urls)),
 ]
+
+
+def single_page_app(request):
+    """Any path that is not the API is a screen of the application; the browser code decides which."""
+    response = HttpResponse((settings.FRONTEND_DIST / "index.html").read_bytes(), content_type="text/html; charset=utf-8")
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+if settings.SERVE_FRONTEND:
+    urlpatterns.append(re_path(r"^(?!api/|health/).*$", single_page_app))

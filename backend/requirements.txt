@@ -5,3 +5,5 @@ Pillow>=11.3,<12
 gunicorn>=23,<24
 argon2-cffi>=25.1,<26
 cryptography>=50,<51
+waitress>=3,<4
+whitenoise>=6,<7

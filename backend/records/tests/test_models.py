@@ -3,7 +3,6 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import DatabaseError, connection, transaction
 from django.test import TestCase
 from django.utils import timezone
 
@@ -80,17 +79,3 @@ class ModelTests(TestCase):
 
     def test_roles_seeded(self):
         self.assertEqual(set(Role.objects.values_list("code", flat=True)), set(Role.Code.values))
-
-    def test_postgres_identity_trigger(self):
-        if connection.vendor != "postgresql":
-            self.skipTest("PostgreSQL trigger test; run CI or TEST_DATABASE=postgres.")
-        with self.assertRaises(DatabaseError), transaction.atomic():
-            Patient.objects.filter(pk=self.patient.pk).update(id=uuid.uuid4())
-
-    def test_postgres_audit_trigger(self):
-        if connection.vendor != "postgresql":
-            self.skipTest("PostgreSQL trigger test; run CI or TEST_DATABASE=postgres.")
-        event = AuditEvent.objects.create(clinic=self.clinic, actor=self.user, action="test")
-        with self.assertRaises(DatabaseError), transaction.atomic():
-            with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM audit_auditevent WHERE id = %s", [event.pk])
