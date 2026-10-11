@@ -12,6 +12,10 @@ const venvPython = ['../.venv/Scripts/python.exe', '../.venv/bin/python']
   .find((path) => existsSync(path));
 const python = venvPython ? `"${venvPython}"` : 'python';
 const dataDir = mkdtempSync(join(tmpdir(), 'dochp-e2e-app-'));
+// Set DOCHP_APP to a packaged program (for example ../dist/DocHP/DocHP.exe) to test the real installed application.
+const program = process.env.DOCHP_APP
+  ? `"${resolve(process.env.DOCHP_APP)}"`
+  : `${python} "${resolve('../backend/launcher.py')}"`;
 
 export default defineConfig({
   testDir: './e2e',
@@ -20,7 +24,7 @@ export default defineConfig({
   reporter: [['list']],
   use: { baseURL: APP, viewport: { width: 1366, height: 768 }, trace: 'retain-on-failure' },
   webServer: {
-    command: `${python} "${resolve('../backend/launcher.py')}" --no-browser --port ${PORT} --data-dir "${dataDir}"`,
+    command: `${program} --no-browser --port ${PORT} --data-dir "${dataDir}"`,
     url: `${APP}/health/`,
     timeout: 120_000,
     reuseExistingServer: false,

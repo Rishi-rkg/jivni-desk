@@ -22,6 +22,25 @@ No messaging, AI requests, library-based treatment suggestions, billing or print
 
 The interface now uses a laptop workspace with clinic navigation and patient-specific tabs. See [user flows and UX decisions](docs/user-experience.md) for the dashboard, visit workflow, navigation and draft behavior.
 
+## Run it as one program
+
+The application can run as a single program on one computer, with its database in a file (SQLite) and no other software to install:
+
+```sh
+cd frontend && npm ci && npm run build
+cd ../backend && python launcher.py
+```
+
+It keeps its database, stored files and logs in one data folder (`%LOCALAPPDATA%\DocHP` on Windows, `~/Library/Application Support/DocHP` on a Mac, `~/.local/share/dochp` on Linux; `--data-dir` to choose another), listens on this computer only, opens the browser on the first-time setup screen, and makes the scheduled backups while it runs. `--no-browser` and `--port` are available.
+
+To package it as a program folder for the system you are on:
+
+```sh
+pip install -r backend/requirements-dev.txt
+pyinstaller packaging/dochp.spec --noconfirm     # result: dist/DocHP
+cd frontend && DOCHP_APP=../dist/DocHP/DocHP.exe npm run e2e:app   # browser tests against the packaged program
+```
+
 ## Start with Docker Compose
 
 Install Docker Desktop with Compose v2 and Python 3.11+ to generate the local configuration. From this repository:
@@ -80,6 +99,7 @@ python scripts/dev_db.py stop          # stop the development database
 cd backend && ruff check . && ruff format --check .
 cd frontend && npm run lint && npm run format:check && npm test && npm run build
 cd frontend && npm run e2e             # browser test: starts its own backend, database and frontend
+cd frontend && npm run build && npm run e2e:app   # the same tests against the one-program app on SQLite
 ```
 
 With Docker Compose:
@@ -92,7 +112,7 @@ docker compose exec frontend npm run build
 docker compose exec frontend npm test
 ```
 
-The first command is a fast SQLite test suite. The second uses real PostgreSQL, including database triggers; the local Compose database user can create the temporary test database. CI uses PostgreSQL and also checks migration drift. SQLite is only a test convenience and is not the application database.
+The first command is the suite on SQLite. The second uses real PostgreSQL, including database triggers; the local Compose database user can create the temporary test database. CI uses PostgreSQL and also checks migration drift. Both databases are supported and carry the same safeguards: PostgreSQL for Docker and servers, SQLite for the installed app (`DATABASE_ENGINE=sqlite`, `DATABASE_PATH`).
 
 For development without Docker: create a Python virtual environment, install `backend/requirements.lock`, provision a local PostgreSQL 16 database, and export the variables from `.env` into your shell (Django does not auto-load dotenv). Set `POSTGRES_HOST=127.0.0.1`, run migrations and bootstrap, then run `python manage.py runserver` from `backend/`. From `frontend/`, use Node 22.12+ or 24, run `npm ci` and `npm run dev`. Vite proxies `/api` to port 8000 so session cookies and CSRF stay on the same browser origin.
 
@@ -170,7 +190,7 @@ Unsafe requests require `X-CSRFToken` and the session cookie. Login is protected
 
 ## Before real patient data
 
-Read [the security architecture](docs/security-architecture.md), [the envelope-encryption design](docs/encryption.md) and [the deployment checklist](docs/deployment.md). Current startup accepts only `DJANGO_DEBUG=true` with `DATA_PROTECTION_MODE=development-only`; there is no setting that enables unimplemented encryption. The contracts do not protect fields by themselves. There is no compliance certification or production-readiness claim.
+Read [the security architecture](docs/security-architecture.md), [the envelope-encryption design](docs/encryption.md) and [the deployment checklist](docs/deployment.md). Startup accepts only `DATA_PROTECTION_MODE=development-only`, which puts a banner on every screen; there is no setting that enables unimplemented encryption. The contracts do not protect fields by themselves. There is no compliance certification or production-readiness claim.
 
 ## Next milestones
 

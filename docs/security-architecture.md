@@ -85,6 +85,7 @@ What a backup does not protect against: someone who has both a backup file and a
 | Searching encrypted names and phone numbers | not started | Needs the design in section 7 |
 | Screens: change password, manage staff access, use the recovery key | not started | Mockups P5, P6, P8 |
 | Second factor, clinic key replacement procedure, narrow messaging key | not started | Planned |
+| Database safeguards (append-only, fixed identity) on SQLite as well as PostgreSQL | `backend/records/guards.py` | Built, tested on both |
 | Independent review | not done | Required before real data |
 
 ## 7. Decisions still needed before fields are encrypted

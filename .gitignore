@@ -18,3 +18,4 @@ test-results/
 .npm-cache/
 .tools/
 *.tsbuildinfo
+build/

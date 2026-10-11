@@ -134,3 +134,6 @@ if SERVE_FRONTEND:
     MIDDLEWARE.insert(MIDDLEWARE.index("django.middleware.security.SecurityMiddleware") + 1, "whitenoise.middleware.WhiteNoiseMiddleware")
     WHITENOISE_ROOT = FRONTEND_DIST
     WHITENOISE_INDEX_FILE = True
+    # Django's own static-file collection is unused; point it at a folder that exists so nothing warns.
+    STATIC_ROOT = FRONTEND_DIST / "assets"
+    STATIC_URL = "/assets/"

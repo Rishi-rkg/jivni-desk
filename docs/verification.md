@@ -61,6 +61,19 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## SQLite and the installed app (2026-10-11)
+
+| Check | Result |
+| --- | --- |
+| Backend suite on SQLite | 144 passed, none skipped. The database-trigger tests now run on SQLite too |
+| Backend suite on PostgreSQL 16 | 144 passed, 1 skipped (a SQLite-only check that guards survive a table rebuild) |
+| Browser tests against development servers (PostgreSQL) | 4 passed |
+| Browser tests against the one-program app (`launcher.py`, SQLite, built frontend, empty data folder) | 4 passed |
+| Browser tests against the packaged Windows program (`dist/DocHP/DocHP.exe`, 88 MB) | 4 passed |
+| Restore of a backup made by the app on SQLite | Restored into a new PostgreSQL database and into a new SQLite database; both returned 1 clinic, 1 user, 1 patient, 1 visit, 26 audit events |
+
+**Not verified:** Mac, Linux and arm64 packages (the recipe is the same, but it has only been run on Windows x64); the packaging and test workflows on GitHub (never run); Docker (Docker Desktop has not been started); behaviour with several people saving at once on SQLite; a real installer with shortcuts. The packaged program still shows a console window.
+
 ## First-time setup (2026-10-11)
 
 137 backend tests pass on PostgreSQL 16; 25 frontend tests pass. The browser end-to-end run now starts from an **empty database**: the first test sets the clinic up through the real setup screen with a randomly generated password, sees a well-formed recovery key, cannot continue until the tick box is ticked, lands in the workspace, signs out and sees the ordinary sign-in. The later tests sign in with that account, register a patient, record a visit, scan the card, make a backup and check it. The restore drill was repeated on that backup and passed (1 clinic, 1 user, 1 patient, 1 visit, 34 audit events).

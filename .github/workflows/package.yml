@@ -1,0 +1,49 @@
+name: Package the installed app
+# Builds the DocHP program folder on each system and runs the browser tests against it.
+# PyInstaller builds for the system it runs on, so every system and processor type needs its own runner.
+# Never run yet: the repository has not been published to GitHub. Treat as unverified until it has passed once.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: windows-x64, program: dist/DocHP/DocHP.exe }
+          - { os: windows-11-arm, name: windows-arm64, program: dist/DocHP/DocHP.exe }
+          - { os: macos-latest, name: macos-arm64, program: dist/DocHP/DocHP }
+          - { os: macos-13, name: macos-x64, program: dist/DocHP/DocHP }
+          - { os: ubuntu-latest, name: linux-x64, program: dist/DocHP/DocHP }
+          - { os: ubuntu-24.04-arm, name: linux-arm64, program: dist/DocHP/DocHP }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements.lock -r backend/requirements-dev.txt
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: pyinstaller packaging/dochp.spec --noconfirm
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run e2e:app
+        working-directory: frontend
+        env:
+          DOCHP_APP: ../${{ matrix.program }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DocHP-${{ matrix.name }}
+          path: dist/DocHP

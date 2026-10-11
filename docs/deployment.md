@@ -1,6 +1,6 @@
 # Deployment boundary
 
-Compose is local development infrastructure. Its development web servers, database-owner credentials, localhost HTTP and plaintext media volumes are not a production recipe. The application deliberately refuses non-development startup until encryption is complete.
+Compose is local development infrastructure. Its development web servers, database-owner credentials, localhost HTTP and plaintext media volumes are not a production recipe. The application deliberately refuses any mode other than `development-only` until encryption is complete. The installed app (`backend/launcher.py`) is the other way to run it: one program with SQLite, listening on 127.0.0.1 only, with debug pages off.
 
 Before deployment, add and test:
 
