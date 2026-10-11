@@ -10,7 +10,7 @@ It is reference material. It never writes a prescription; the doctor decides.
 
 | Layer | Where | Who changes it |
 | --- | --- | --- |
-| **Shipped** | this folder: `medicines/`, `rubrics/`, `sources.toml`, `vocabulary.toml` | importers only (`backend/knowledge/importers/`) |
+| **Shipped** | this folder: `medicines/`, `rubrics/`, `sources.toml`, `abbreviations.toml`, `vocabulary.toml` | importers only (`backend/knowledge/importers/`) |
 | **Clinic** | the clinic's data folder: `library/<clinic id>/` with the same `medicines/` and `rubrics/`, plus `preferences.toml` | the clinic's doctors, in Jivni or by editing the files |
 
 Jivni reads the shipped layer and lays the clinic layer over it. **The clinic layer never rewrites a shipped
@@ -64,6 +64,23 @@ medicines = [
   { medicine = "glonoinum", name = "Glonoinum", grade = 3, source = "clinic" },
 ]
 ```
+
+### A chapter of a repertory: `rubrics/<book>/<chapter>.toml`
+
+A whole repertory has tens of thousands of rubrics, so an imported one is kept a chapter to a file, one rubric
+to a line, with the remedies in the book's own abbreviations under the grade the book gives them:
+
+```toml
+source = "kent-repertory"
+chapter = "Head"
+
+rubrics = [
+  { name = "Pain, sun, from exposure to", page = 149, g3 = ["glon", "nat-c"], g2 = ["bell", "bry"], g1 = ["acon"] },
+]
+```
+
+`abbreviations.toml` says which remedy each abbreviation means for each source (`acon = "aconitum-napellus"`).
+A remedy may also be written by its full `id`. A clinic can add files of the same shape in its own layer.
 
 ### Sources: `sources.toml`
 

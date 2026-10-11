@@ -45,10 +45,13 @@ class KnowledgeViewSet(ClinicViewSet):
         return Response(
             {
                 "medicines": len(held.medicines),
-                "rubrics": len(held.rubrics),
+                "rubrics": len(index.rubric_names),
                 "lines": len(index.lines),
                 "sources": [held.source(identifier) for identifier in held.sources],
-                "problems": held.problems,
+                "problems": [
+                    *held.problems,
+                    *([{"file": "preferences.toml", "problem": index.preference_problem}] if index.preference_problem else []),
+                ],
             }
         )
 

@@ -5,6 +5,7 @@ each line comes from. There is no percentage, because the data does not support 
 """
 
 import re
+from array import array
 from bisect import bisect_left
 from collections import defaultdict
 
@@ -25,31 +26,92 @@ SHORTCUTS = {
 SHORTCUT = re.compile(r"^\s*([a-z]+)\s*\+\s*(.*)$", re.I)
 MAX_PARTS = 8
 LINES_SHOWN = 3
+RUBRIC, LINE = 0, 1
 
 
 def brief(medicine):
     return {"id": medicine["id"], "name": medicine["name"], "abbreviation": medicine.get("abbreviation", "")}
 
 
+def short(abbreviation):
+    return fold(abbreviation).strip().strip(".").replace(" ", "")
+
+
 class Index:
     def __init__(self, library):
         self.library = library
+        self.preference_problem = ""
+        self.picks, self.pins = {}, {}
+
+        # Lines of the remedies' own entries: symptoms and what makes them worse or better.
         self.lines = []
-        self.postings = defaultdict(set)
+        self.line_postings = defaultdict(list)
         for medicine in library.medicines.values():
             for entry in medicine.get("symptoms", []):
-                self._add(medicine["id"], "symptom", entry.get("section", ""), entry, entry.get("text", ""))
+                self._add_line(medicine["id"], "symptom", entry.get("section", ""), entry, entry.get("text", ""))
             for entry in medicine.get("modalities", []):
                 if entry.get("kind") in ("worse", "better"):
-                    self._add(medicine["id"], "modality", entry["kind"].capitalize(), entry, f"{entry['kind']} {entry.get('text', '')}")
-        for rubric in library.rubrics.values():
-            searched = " ".join([rubric["name"], *rubric.get("synonyms", [])])
-            for entry in rubric.get("medicines", []):
-                if entry.get("medicine") in library.medicines:
-                    shown = {**entry, "text": rubric["name"], "rubric": rubric["id"]}
-                    self._add(entry["medicine"], "rubric", rubric.get("chapter", "Rubric"), shown, searched)
-        self.vocabulary = sorted(self.postings)
+                    self._add_line(
+                        medicine["id"], "modality", entry["kind"].capitalize(), entry, f"{entry['kind']} {entry.get('text', '')}"
+                    )
 
+        # Rubrics. A repertory has tens of thousands, so each is kept as a name and a packed list of
+        # (remedy, grade) rather than as one record per remedy.
+        self.medicine_ids = list(library.medicines)
+        number_of = {identifier: number for number, identifier in enumerate(self.medicine_ids)}
+        by_abbreviation = {short(medicine.get("abbreviation", "")): medicine["id"] for medicine in library.medicines.values()}
+        self.rubric_names, self.rubric_remedies, self.rubric_origin = [], [], []
+        self.origins = []
+        self.rubric_postings = defaultdict(list)
+        self.unknown_remedies = 0
+
+        def add_rubric(name, searched, chapter, graded, origin):
+            packed = array("H")
+            for identifier, grade in graded:
+                if identifier in number_of:
+                    packed.append(number_of[identifier] * 4 + min(max(grade, 1), 3))
+                else:
+                    self.unknown_remedies += 1
+            if not packed:
+                return
+            number = len(self.rubric_names)
+            self.rubric_names.append(name)
+            self.rubric_remedies.append(packed)
+            self.rubric_origin.append(origin)
+            for item in set(stems(f"{chapter} {searched}")):
+                self.rubric_postings[item].append(number)
+
+        for rubric in library.rubrics.values():
+            graded = [
+                (entry.get("medicine", ""), entry.get("grade", 1) if isinstance(entry.get("grade", 1), int) else 1)
+                for entry in rubric.get("medicines", [])
+            ]
+            # A single rubric may cite a different source for each remedy; the first is shown.
+            source = next((entry.get("source", "") for entry in rubric.get("medicines", [])), "")
+            self.origins.append((rubric.get("chapter", "Rubric"), source, rubric.get("layer", "shipped")))
+            add_rubric(
+                rubric["name"],
+                " ".join([rubric["name"], *rubric.get("synonyms", [])]),
+                rubric.get("chapter", ""),
+                graded,
+                len(self.origins) - 1,
+            )
+        for group in library.rubric_sets:
+            source, chapter = str(group.get("source", "")), str(group.get("chapter", "Rubric"))
+            meaning = library.abbreviations.get(source, {})
+            self.origins.append((chapter, source, group["layer"]))
+            origin = len(self.origins) - 1
+            for rubric in group["rubrics"]:
+                if not isinstance(rubric, dict) or not rubric.get("name"):
+                    continue
+                graded = []
+                for grade in (3, 2, 1):
+                    for written in rubric.get(f"g{grade}", []):
+                        key = short(written)
+                        graded.append((meaning.get(key) or (written if written in number_of else by_abbreviation.get(key, "")), grade))
+                add_rubric(rubric["name"], " ".join([rubric["name"], *rubric.get("synonyms", [])]), chapter, graded, origin)
+
+        self.vocabulary = sorted({*self.line_postings, *self.rubric_postings})
         self.same = defaultdict(set)
         for group in library.vocabulary:
             group_stems = {stem(fold(word)) for word in group if " " not in word.strip()}
@@ -61,18 +123,7 @@ class Index:
             labels = [medicine["name"], medicine["id"].replace("-", " "), medicine.get("abbreviation", ""), *medicine.get("aliases", [])]
             self.names.append((medicine["id"], [fold(label).strip(" .") for label in labels if label]))
 
-        self.picks = defaultdict(lambda: defaultdict(int))
-        for word, counts in library.preferences.get("picks", {}).items():
-            if isinstance(counts, dict):
-                for medicine, count in counts.items():
-                    if isinstance(count, int) and not isinstance(count, bool):
-                        self.picks[stem(fold(word))][medicine] += count
-        self.pins = {}
-        for word, medicines in library.preferences.get("pins", {}).items():
-            if isinstance(medicines, list):
-                self.pins[stem(fold(word))] = [medicine for medicine in medicines if isinstance(medicine, str)]
-
-    def _add(self, medicine, kind, section, entry, searched):
+    def _add_line(self, medicine, kind, section, entry, searched):
         number = len(self.lines)
         self.lines.append(
             {
@@ -86,24 +137,43 @@ class Index:
             }
         )
         for item in set(stems(f"{section} {searched}")):
-            self.postings[item].add(number)
+            self.line_postings[item].append(number)
+
+    def learn(self, preferences):
+        """Take in what the clinic's preferences file says. Called whenever that file changes."""
+        self.preference_problem = str(preferences.get("problem", "")) if isinstance(preferences.get("problem"), str) else ""
+        picks = defaultdict(lambda: defaultdict(int))
+        for word, counts in preferences.get("picks", {}).items() if isinstance(preferences.get("picks"), dict) else ():
+            if isinstance(counts, dict):
+                for medicine, count in counts.items():
+                    if isinstance(count, int) and not isinstance(count, bool):
+                        picks[stem(fold(word))][medicine] += count
+        pins = {}
+        for word, medicines in preferences.get("pins", {}).items() if isinstance(preferences.get("pins"), dict) else ():
+            if isinstance(medicines, list):
+                pins[stem(fold(word))] = [medicine for medicine in medicines if isinstance(medicine, str)]
+        self.picks, self.pins = {word: dict(counts) for word, counts in picks.items()}, pins
 
     def knows(self, word):
         """Whether a typed word is already a word of the library."""
-        return stem(fold(word)) in self.postings
+        item = stem(fold(word))
+        return item in self.line_postings or item in self.rubric_postings
 
-    def _lines_for(self, part_stems):
+    def _expand(self, item):
+        candidates = {item, *self.same.get(item, ())}
+        if len(item) >= 3:
+            # What is typed may be the start of a word: "naus" finds nausea.
+            position = bisect_left(self.vocabulary, item)
+            while position < len(self.vocabulary) and self.vocabulary[position].startswith(item):
+                candidates.add(self.vocabulary[position])
+                position += 1
+        return candidates
+
+    def _matching(self, part_stems, postings):
         found = None
         for item in part_stems:
-            candidates = {item, *self.same.get(item, ())}
-            if len(item) >= 3:
-                # What is typed may be the start of a word: "naus" finds nausea.
-                position = bisect_left(self.vocabulary, item)
-                while position < len(self.vocabulary) and self.vocabulary[position].startswith(item):
-                    candidates.add(self.vocabulary[position])
-                    position += 1
-            lines = set().union(*(self.postings.get(candidate, ()) for candidate in candidates))
-            found = lines if found is None else found & lines
+            numbers = set().union(*(postings.get(candidate, ()) for candidate in self._expand(item)))
+            found = numbers if found is None else found & numbers
             if not found:
                 return set()
         return found or set()
@@ -169,6 +239,13 @@ class Index:
             "sources": {identifier: self.library.source(identifier) for identifier in sorted(used) if identifier},
         }
 
+    def _shown(self, reference):
+        grade, kind, number = reference
+        if kind == LINE:
+            return {key: value for key, value in self.lines[number].items() if key != "medicine"}
+        chapter, source, layer = self.origins[self.rubric_origin[number]]
+        return {"kind": "rubric", "section": chapter, "text": self.rubric_names[number], "grade": grade, "source": source, "layer": layer}
+
     def search(self, query, limit=20):
         query = str(query or "")[:300]
         response = {"shortcut": None, "medicines": [], "parts": [], "results": [], "total": 0, "sources": {}}
@@ -192,36 +269,43 @@ class Index:
         if len(parts) == 1:
             response["medicines"] = self.find_medicines(parts[0][0])
 
+        # For each remedy and each part of the query: the lines and rubrics that are the reason, as
+        # (grade, kind, number), turned into readable lines only for what is finally shown.
         matched = defaultdict(dict)
         for position, (_, part_stems) in enumerate(parts):
-            for number in self._lines_for(part_stems):
-                matched[self.lines[number]["medicine"]].setdefault(position, []).append(self.lines[number])
+            for number in self._matching(part_stems, self.line_postings):
+                line = self.lines[number]
+                matched[line["medicine"]].setdefault(position, []).append((line["grade"], LINE, number))
+            for number in self._matching(part_stems, self.rubric_postings):
+                for packed in self.rubric_remedies[number]:
+                    matched[self.medicine_ids[packed >> 2]].setdefault(position, []).append((packed & 3, RUBRIC, number))
 
         query_stems = {item for _, part_stems in parts for item in part_stems}
         ranked = []
         for identifier, by_part in matched.items():
-            medicine = self.library.medicines[identifier]
             chosen = sum(self.picks[item].get(identifier, 0) for item in query_stems if item in self.picks)
             pinned = min((self.pins[item].index(identifier) for item in query_stems if identifier in self.pins.get(item, [])), default=None)
-            grades = sum(max(line["grade"] for line in lines) for lines in by_part.values())
-            count = sum(len(lines) for lines in by_part.values())
-            key = (-len(by_part), pinned is None, pinned or 0, -chosen, -grades, -count, medicine["name"])
+            grades = sum(max(reference[0] for reference in references) for references in by_part.values())
+            count = sum(len(references) for references in by_part.values())
+            key = (-len(by_part), pinned is None, pinned or 0, -chosen, -grades, -count, self.library.medicines[identifier]["name"])
             ranked.append((key, identifier, by_part, chosen, pinned is not None))
         ranked.sort(key=lambda item: item[0])
         response["total"] = len(ranked)
 
         for _, identifier, by_part, chosen, pinned in ranked[:limit]:
             shown = []
-            for position, lines in sorted(by_part.items()):
-                lines.sort(key=lambda line: (-line["grade"], line["kind"] != "rubric", len(line["text"])))
-                used_sources |= {line["source"] for line in lines[:LINES_SHOWN]}
-                shown.append(
-                    {
-                        "part": parts[position][0],
-                        "count": len(lines),
-                        "lines": [{k: v for k, v in line.items() if k != "medicine"} for line in lines[:LINES_SHOWN]],
-                    }
+            for position, references in sorted(by_part.items()):
+                # Strongest first; at the same grade a rubric before a sentence, and the shorter rubric first.
+                references.sort(
+                    key=lambda reference: (
+                        -reference[0],
+                        reference[1],
+                        len(self.rubric_names[reference[2]]) if reference[1] == RUBRIC else 0,
+                    )
                 )
+                lines = [self._shown(reference) for reference in references[:LINES_SHOWN]]
+                used_sources |= {line["source"] for line in lines}
+                shown.append({"part": parts[position][0], "count": len(references), "lines": lines})
             response["results"].append(
                 {
                     **brief(self.library.medicines[identifier]),

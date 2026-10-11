@@ -70,7 +70,9 @@ class LibraryFiles:
         tomlfmt.write(self.shipped / "rubrics" / f"{RUBRIC['id']}.toml", RUBRIC)
         (self.shipped / "sources.toml").write_text('[book]\ntitle = "A book"\nauthor = "An author"\nyear = 1900\n', encoding="utf-8")
         (self.shipped / "vocabulary.toml").write_text('same = [["bruised", "contusion"], ["haemorrhage", "bleeding"]]\n', encoding="utf-8")
-        overridden = override_settings(KNOWLEDGE_BASE_DIR=self.shipped, KNOWLEDGE_CLINIC_DIR=self.folder / "clinics")
+        overridden = override_settings(
+            KNOWLEDGE_BASE_DIR=self.shipped, KNOWLEDGE_CLINIC_DIR=self.folder / "clinics", KNOWLEDGE_RECHECK_SECONDS=0
+        )
         overridden.enable()
         self.addCleanup(overridden.disable)
 
@@ -191,6 +193,44 @@ class SearchTests(LibraryFiles, SimpleTestCase):
     def test_a_rubric_is_a_reason_like_any_other(self):
         line = library("one").search("head pain sun")["results"][0]["matched"][0]["lines"][0]
         self.assertEqual((line["kind"], line["text"], line["grade"]), ("rubric", "Head, pain, sun, from exposure to", 3))
+
+    def test_a_chapter_of_a_repertory_is_read_with_its_grades_and_abbreviations(self):
+        chapter = {
+            "source": "book",
+            "chapter": "Head",
+            "rubrics": [
+                {"name": "Motions of head, rolling head", "page": 131, "g3": ["camph"], "g2": ["arn", "bellis-perennis"], "g1": ["zzz"]},
+                {"name": "Motions of head, rolling head, sleep, during", "page": 131, "g1": ["bell-p"]},
+                {"name": "Nobody listed", "g1": ["zzz"]},
+            ],
+        }
+        tomlfmt.write(self.shipped / "rubrics" / "book" / "head.toml", chapter)
+        tomlfmt.write(self.shipped / "abbreviations.toml", {"book": {"camph": "camphora", "arn": "arnica-montana"}})
+        index = library("one")
+        found = index.search("rolling head")
+        self.assertEqual([result["name"] for result in found["results"]], ["Camphora", "Bellis perennis", "Arnica montana"])
+        line = found["results"][0]["matched"][0]["lines"][0]
+        self.assertEqual(
+            line,
+            {
+                "kind": "rubric",
+                "section": "Head",
+                "text": "Motions of head, rolling head",
+                "grade": 3,
+                "source": "book",
+                "layer": "shipped",
+            },
+        )
+        # Bellis is under both rubrics; an abbreviation the library cannot place is left out, not guessed.
+        self.assertEqual(found["results"][1]["matched"][0]["count"], 2)
+        self.assertEqual(index.unknown_remedies, 2)
+        self.assertEqual(self.names("one", "nobody listed"), [])
+        # The clinic can add a chapter of its own in the same shape.
+        own = {"source": "clinic", "chapter": "Clinic", "rubrics": [{"name": "Cyclist's knee", "g2": ["arnica-montana"]}]}
+        self.clinic_file("one", "rubrics/ours.toml", own)
+        mine = library("one").search("cyclist knee")["results"][0]
+        self.assertEqual((mine["name"], mine["matched"][0]["lines"][0]["layer"]), ("Arnica montana", "clinic"))
+        self.assertEqual(self.names("two", "cyclist knee"), [])
 
     def test_a_name_finds_the_remedy(self):
         index = library("one")

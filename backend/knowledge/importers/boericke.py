@@ -301,11 +301,12 @@ def main():
     parser.add_argument("--cache", required=True, help="folder that keeps the fetched pages")
     parser.add_argument("--out", default=str(Path(__file__).resolve().parents[3] / "knowledge"))
     parser.add_argument("--date", default=datetime.date.today().isoformat(), help="the import date to record")
+    parser.add_argument("--all", action="store_true", help="every remedy in the book's index")
     options = parser.parse_args()
 
     index = remedy_index(options.cache)
     resolver = Resolver(index)
-    for code in [code.upper() for code in options.codes] or SEED:
+    for code in sorted(index) if options.all else [code.upper() for code in options.codes] or SEED:
         if code not in index:
             raise SystemExit(f"{code} is not in the book's index")
         medicine = parse(fetch(index[code]["page"], options.cache), code, resolver, options.date)

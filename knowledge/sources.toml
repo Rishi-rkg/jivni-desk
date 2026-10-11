@@ -13,6 +13,16 @@ transcription = "Médi-T, 1999 (homeoint.org)"
 imported_by = "knowledge.importers.boericke"
 note = "Symptom lines are sentences of the book, unaltered. Grade 2 marks what the book prints in italics."
 
+[kent-repertory]
+title = "Repertory of the Homoeopathic Materia Medica"
+author = "James Tyler Kent"
+kind = "repertory"
+rights = "Public domain. The author died in 1916."
+url = "http://www.homeoint.org/books/kentrep/index.htm"
+transcription = "Médi-T, 1998 (homeoint.org)"
+imported_by = "knowledge.importers.kent"
+note = "Grades are the book's own type: 3 bold, 2 italics, 1 plain. Cross-references (See ...) are not imported."
+
 [jivni]
 title = "Jivni editorial"
 author = "Jivni"
