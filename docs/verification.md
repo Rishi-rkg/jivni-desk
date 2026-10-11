@@ -61,6 +61,31 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## Jivni: tray application, installers and portable builds (2026-10-11)
+
+*The application was renamed from DocHP to Jivni at this point. Sections below this one were written before the rename and keep the old name and paths.*
+
+| Check | Result |
+| --- | --- |
+| Backend suite after the rename | 151 passed on SQLite; 151 passed on PostgreSQL 16 with 1 SQLite-only check skipped |
+| Application start, stop, start again; listens on 127.0.0.1 only | Passed (automated) |
+| Tray menu contents and actions, running and stopped | Passed (automated, without a desktop) |
+| Packaged Windows program in tray mode | Started, served the health check, the setup check, an application page and the logo; no "no system tray" fallback was logged. **The menu itself was not clicked by a person** |
+| Browser tests against the packaged Windows program | 4 passed |
+| Windows portable zip | Unzipped to a temporary folder, ran, and kept its data in `Jivni-Data` beside the program; nothing was written to the user's application-data folder |
+| Windows installer | Silent install to a temporary folder: program installed, Start-menu entry created, no desktop shortcut when not asked for, installed copy served; silent uninstall removed the program and the Start-menu entry and **left the data folder intact** |
+| Linux x64 build (made in WSL, Ubuntu 24.04) | Browser tests for first-time setup, the visit flow and a refused password passed against it (3 of 3; the backup test was not run because the test harness passes a Windows folder path) |
+| Linux `.deb` | Package metadata and file list checked (`/opt/jivni`, `/usr/bin/jivni`, desktop entry, icon); the program extracted from it started and served |
+
+**Not verified, stated plainly:**
+
+- macOS builds, Windows arm64 and Linux arm64: none exists yet. They cannot be built on this PC.
+- The packaging workflow on GitHub: never run.
+- On the Linux build in WSL there is no system tray; the tray library logged an error and the application carried on serving without an icon. On a Linux desktop without tray support there is then no menu to quit from; starting Jivni again opens the browser, and `--no-tray` in a terminal is the reliable way to run it there.
+- The `.deb` was not installed with `dpkg -i` (that needs an administrator password); it was unpacked and run.
+- Nothing is code-signed. Windows SmartScreen and macOS Gatekeeper will warn.
+- Installing over a running copy, and updating from one version to the next, were not tried.
+
 ## SQLite and the installed app (2026-10-11)
 
 | Check | Result |

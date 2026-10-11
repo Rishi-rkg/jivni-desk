@@ -1,5 +1,7 @@
 # Jivni build plan
 
+*The application was named Jivni by the owner on 2026-10-11; earlier documents and the owner's original plan call it DocHP.*
+
 A browser-based clinic operating system for a homeopathy practice, from a solo practitioner to a team of five. Patient records are the stable core; billing, messaging, printing, barcode lookup and the homeopathy knowledge library are separate modules around it.
 
 > The database represents the clinic's facts. The UI is only one way of viewing and editing those facts.
@@ -8,7 +10,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 144 backend tests pass on both PostgreSQL 16 and SQLite, 25 frontend tests, 4 browser end-to-end tests from an empty database (against the development servers, against the single-program app on SQLite, and against the packaged Windows program), restore drills into both databases, and Ruff, ESLint and Prettier all clean.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 151 backend tests pass on both SQLite and PostgreSQL 16, 25 frontend tests, 4 browser end-to-end tests from an empty database (development servers, the one-program app, the packaged Windows program, and the Linux build), restore drills into both databases, a tested Windows installer and portable zip, a tested Linux .deb and portable archive, and Ruff, ESLint and Prettier all clean.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -85,12 +87,15 @@ These come from reading the code. Each is small now and expensive later.
 - **Encryption is on from the first-time setup**, when the user creates the database. There is no unencrypted mode and no switch.
 - **Backups are built in**: saved to a local folder, a NAS, or a cloud drive that appears as a folder, and encrypted with the same clinic key. *Built 2026-10-11; see Phase 1.*
 - **The UI, pages and prints in `mockups/` are accepted for now** and are the reference for building screens.
+- **The application is called Jivni**, with a "J+" logo (`packaging/icons`, drawn by `packaging/make_icons.py`; a one-colour version exists for the thermal label printer).
+- **It runs as a tray application**: start and stop the process, open the web page, open the admin console.
+- **Installers and portable builds for each platform come before publishing**, and publishing uses the account signed in to the owner's GitHub Desktop.
 
 What follows from this, as a packaging track inside Phase 1:
 
 1. ~~**A first-time setup screen** that creates the clinic and owner, turns on encryption and shows the recovery key once.~~ *Built 2026-10-11:* a new installation opens on "Set up your clinic"; the recovery key is shown once and must be acknowledged before the workspace opens; setup can never run a second time.
 2. ~~**A database that needs no separate installation.**~~ *Decided by the owner and built 2026-10-11:* SQLite inside the installed app, PostgreSQL for Docker. SQLite has the same append-only and identity safeguards as database triggers, re-created after every migration, and the same tests run on both. A backup made on either restores into either.
-3. **One program to start.** *Built 2026-10-11:* `backend/launcher.py` runs the application, its screens and the scheduled backups as one program on this computer only (127.0.0.1), keeping everything in one data folder. `packaging/jivni.spec` turns it into a Windows program folder (`dist/Jivni`, about 88 MB), which passes the full browser test. *Remaining:* a proper installer with a Start-menu entry and no console window; the Mac, Linux and arm64 builds (the same recipe, run on those systems by the packaging workflow, which has never run because the repository is not on GitHub yet); and the Docker image for both processor types.
+3. **One program to start, living in the system tray.** *Built 2026-10-11:* `backend/launcher.py` runs the application, its screens and the scheduled backups as one program on this computer only (127.0.0.1). Its tray icon opens Jivni, the admin console and the backups screen, starts, stops and restarts the application, backs up on request, opens the data folder and log, and quits. `packaging/build.py` produces, for the system it runs on, the program, a portable archive (data kept beside the program) and an installer. **Built and tested:** Windows x64 installer and portable zip; Linux x64 `.deb` and portable archive. **Not built:** macOS (Intel and Apple silicon), Windows arm64 and Linux arm64. These can only be built on those machines; `.github/workflows/package.yml` does it on GitHub's runners once the repository is published, and has never run. Also remaining: code signing (Windows and macOS warn about an unknown publisher until then), an update mechanism, and the Docker image.
 4. **More than one computer in the clinic.** The app runs on one computer and the others use a browser. That needs an encrypted connection inside the clinic's network, which is not designed yet.
 5. **One clinic per installation** is now fixed (it was D4's default); backups refuse to run otherwise.
 

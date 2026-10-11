@@ -1,6 +1,6 @@
-# Clinic Management MVP
+# Jivni
 
-A new, independent repository for a browser-based clinic record system. Django 5.2 LTS and Django REST Framework own the clinical data and API; PostgreSQL 16 owns persistence; React + TypeScript provide the interface. Docker Compose is the standard local development environment.
+Jivni is a clinic workspace for a small homeopathy practice: patient records, visits, prescriptions and encrypted backups, running on the clinic's own computer. Django 5.2 LTS and Django REST Framework own the clinical data and API; PostgreSQL 16 owns persistence; React + TypeScript provide the interface. Docker Compose is the standard local development environment.
 
 **This is a production-oriented foundation, not a production deployment. Use synthetic patient data only. Patient fields, photos, local volumes and backups are currently plaintext. Startup rejects production mode until envelope encryption has been implemented and verified.** Passwords are hashed with Argon2; that does not encrypt patient records.
 
@@ -31,15 +31,26 @@ cd frontend && npm ci && npm run build
 cd ../backend && python launcher.py
 ```
 
+Jivni puts a **J+ icon in the system tray**. Its menu opens Jivni, the admin console and the backups screen, starts, stops and restarts the application, backs up now, opens the data folder and the log, and quits. `--no-tray` runs it in a terminal instead (servers, Docker, tests); a computer without a tray falls back to that by itself.
+
 It keeps its database, stored files and logs in one data folder (`%LOCALAPPDATA%\Jivni` on Windows, `~/Library/Application Support/Jivni` on a Mac, `~/.local/share/jivni` on Linux; `--data-dir` to choose another), listens on this computer only, opens the browser on the first-time setup screen, and makes the scheduled backups while it runs. `--no-browser` and `--port` are available.
 
-To package it as a program folder for the system you are on:
+To build the installer and the portable build for the system you are on:
 
 ```sh
 pip install -r backend/requirements-dev.txt
-pyinstaller packaging/jivni.spec --noconfirm     # result: dist/Jivni
-cd frontend && JIVNI_APP=../dist/Jivni/Jivni.exe npm run e2e:app   # browser tests against the packaged program
+python packaging/build.py                         # results in dist/release
+cd frontend && JIVNI_APP=../dist/Jivni/Jivni.exe npm run e2e:app   # browser tests against the built program
 ```
+
+| System | Installer | Portable | State |
+| --- | --- | --- | --- |
+| Windows x64 | `Jivni-<version>-windows-x64-setup.exe` (needs Inno Setup 6) | `…-portable.zip` | Built and tested |
+| Linux x64 | `jivni_<version>_amd64.deb` | `…-portable.tar.gz` | Built and tested |
+| macOS Intel and Apple silicon | `.dmg` | zipped `Jivni.app` | Recipe only; must be built on a Mac |
+| Windows arm64, Linux arm64 | as above | as above | Recipe only; must be built on that processor |
+
+The installer is per-user and needs no administrator password. A portable build keeps the clinic's data in a `Jivni-Data` folder beside the program; an installed one keeps it in the user's application-data folder. Neither is code-signed yet, so Windows and macOS warn about an unknown publisher. `.github/workflows/package.yml` builds every row on GitHub's machines.
 
 ## Start with Docker Compose
 

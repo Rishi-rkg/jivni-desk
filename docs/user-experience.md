@@ -25,6 +25,10 @@ Successful registration, note entry, photo upload and visit saves show explicit 
 
 Unsaved registration, visit and note changes warn before internal navigation away from the form/record or browser unloading. Notes may switch patient tabs without losing their draft. Signing out or switching clinics checks for unsaved changes before changing the session. Drafts are never stored in browser local storage; a refresh discards them after the browser warning. There is no autosave claim.
 
+## The tray icon
+
+Jivni runs quietly with a J+ icon in the system tray (the menu bar on a Mac). Double-clicking the icon opens Jivni in the browser. Its menu: Open Jivni, Open admin console, Open backups; a line saying whether it is running; Start, Stop or Restart; Back up now (with a notification saying where it was saved); Open data folder and Open log; Quit. Stopping drops any browser still connected, so "stopped" really means nobody can use it. Starting Jivni a second time does not start a second copy; it opens the browser on the one already running.
+
 ## First-time setup
 
 A new installation opens on **Set up your clinic** instead of the sign-in: clinic name, the owner's name, username, password twice, and time zone (filled in from the computer). There is no encryption choice to make. The next screen shows the recovery key in large type with four plain rules, a Print button, and a tick box that must be ticked before **Continue to the clinic** works. The key is held only while that screen is open. Once a clinic exists, the setup screen never appears again.
