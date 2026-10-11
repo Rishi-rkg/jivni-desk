@@ -1,5 +1,4 @@
 import secrets
-
 from django.db import migrations
 
 # Same alphabet and shape as records.models.new_patient_code; copied because migrations must not
