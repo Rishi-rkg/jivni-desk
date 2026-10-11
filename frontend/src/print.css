@@ -248,3 +248,286 @@ span.b-logo {
     box-shadow: none;
   }
 }
+
+/* Envelope label: pure black on white, no greys, because a thermal printer cannot print them. */
+.label {
+  box-sizing: border-box;
+  padding: 0.08in 0.09in 0.07in;
+  background: #fff;
+  color: #000;
+  font-family: Arial, 'Segoe UI', sans-serif;
+  line-height: 1.18;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 4px #0004;
+}
+.label * {
+  color: #000;
+}
+.l-head {
+  display: flex;
+  gap: 4pt;
+  align-items: center;
+  border-bottom: 1.5pt solid #000;
+  padding-bottom: 2.5pt;
+  margin-bottom: 3pt;
+}
+.l-who {
+  min-width: 0;
+}
+.l-logo {
+  width: 0.3in;
+  height: 0.3in;
+  flex: none;
+  object-fit: contain;
+  filter: grayscale(1) contrast(1.8);
+}
+span.l-logo {
+  border: 1.2pt solid #000;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 8pt;
+  font-weight: 700;
+  filter: none;
+}
+.l-clinic {
+  font-size: 8.5pt;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.l-addr {
+  font-size: 5.8pt;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.l-patient {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2.5pt;
+}
+.l-dose {
+  font-weight: 700;
+  line-height: 1.15;
+  overflow: hidden;
+}
+.l-dose small {
+  display: block;
+  font-size: 8pt;
+  margin-top: 1.5pt;
+}
+.l-dose .l-medicines {
+  font-size: 6.5pt;
+  font-weight: 400;
+}
+.l-dates {
+  margin-top: auto;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 0.75pt solid #000;
+  font-size: 7pt;
+}
+.l-dates div {
+  padding: 1.5pt 3pt;
+  white-space: nowrap;
+}
+.l-dates div + div {
+  border-left: 0.75pt solid #000;
+}
+.l-dates span {
+  display: block;
+  font-size: 5.3pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.l-dates b {
+  font-size: 7.5pt;
+}
+.l-code {
+  display: block;
+  width: 100%;
+  margin-top: 3pt;
+  height: 0.17in;
+  flex: none;
+}
+.l-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 5.8pt;
+  font-family: Consolas, 'Courier New', monospace;
+  margin-top: 1pt;
+}
+/* A short label (for example 50 x 25 mm): one line for the clinic, no logo or address. */
+.label.compact {
+  padding: 0.04in 0.06in 0.03in;
+}
+.label.compact .l-head {
+  border-bottom-width: 0.75pt;
+  padding-bottom: 1pt;
+  margin-bottom: 1.5pt;
+}
+.label.compact .l-clinic {
+  font-size: 5.5pt;
+}
+.label.compact .l-patient {
+  margin-bottom: 1pt;
+}
+.label.compact .l-dose small {
+  font-size: 6pt;
+  margin-top: 0.5pt;
+}
+.label.compact .l-dates {
+  border: 0;
+  font-size: 5.5pt;
+}
+.label.compact .l-dates div {
+  padding: 0;
+}
+.label.compact .l-dates div + div {
+  border: 0;
+  text-align: right;
+}
+.label.compact .l-dates span {
+  display: inline;
+  font-size: 5pt;
+  margin-right: 2pt;
+}
+.label.compact .l-dates b {
+  font-size: 5.8pt;
+}
+.label.compact .l-code {
+  height: 0.1in;
+  margin-top: 1pt;
+}
+.label.compact .l-foot {
+  font-size: 5pt;
+}
+.label-desk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  padding: 0 16px;
+}
+.label-zoom {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  overflow: hidden;
+}
+.label-zoom .label {
+  zoom: 1.9;
+}
+
+/* Patient card, the size of a bank card. */
+.p-card {
+  box-sizing: border-box;
+  width: 85.6mm;
+  height: 54mm;
+  padding: 4mm 5mm 3mm;
+  background: #fff;
+  color: #000;
+  font-family: Arial, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 4px #0004;
+}
+.p-card * {
+  color: #000;
+}
+.p-card-head {
+  display: flex;
+  gap: 3mm;
+  align-items: center;
+  border-bottom: 1pt solid #000;
+  padding-bottom: 2mm;
+  font-size: 7pt;
+}
+.p-card-head strong {
+  display: block;
+  font-size: 10pt;
+}
+.p-card-head span {
+  display: block;
+}
+.p-card-logo {
+  width: 9mm;
+  height: 9mm;
+  flex: none;
+  object-fit: contain;
+}
+span.p-card-logo {
+  border: 1pt solid #000;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 8pt;
+}
+.p-card-name {
+  font-size: 13pt;
+  font-weight: 700;
+  margin: auto 0 1mm;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.p-card-code {
+  display: block;
+  width: 62mm;
+  height: 9mm;
+  flex: none;
+}
+.p-card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 3mm;
+  font-size: 6pt;
+  margin-top: 1mm;
+}
+.p-card-foot span:first-child {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 8pt;
+  letter-spacing: 0.06em;
+}
+.sheet.a5 {
+  width: 148mm;
+  min-height: 210mm;
+  padding: 10mm 11mm 9mm;
+  font-size: 9.5pt;
+}
+.rx-envelope td:first-child {
+  width: 28mm;
+  white-space: nowrap;
+}
+.rx-envelope .muted {
+  display: block;
+}
+@media print {
+  .label,
+  .p-card {
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+  .label:last-child,
+  .p-card:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .label-desk {
+    display: block;
+    padding: 0;
+  }
+}

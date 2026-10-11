@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "audit",
     "vault",
     "billing",
+    "printing",
 ]
 MIDDLEWARE = [
     "config.middleware.RequestIdMiddleware",

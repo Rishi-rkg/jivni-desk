@@ -10,6 +10,7 @@ from accounts import views as auth
 from accounts.api import ClinicLogoView, ClinicSettingsView
 from billing.views import BillingReportViewSet, InvoiceViewSet, PaymentViewSet, PriceItemViewSet
 from modules.contracts import MODULES
+from printing.views import PrintDataViewSet, PrintJobViewSet, PrintTemplateViewSet
 from records.views import AuditViewSet, EncounterViewSet, NoteViewSet, PatientViewSet, PhotoViewSet, ScanViewSet
 from vault import api as backups
 
@@ -24,6 +25,9 @@ router.register("price-items", PriceItemViewSet, basename="price-item")
 router.register("invoices", InvoiceViewSet, basename="invoice")
 router.register("payments", PaymentViewSet, basename="payment")
 router.register("billing", BillingReportViewSet, basename="billing")
+router.register("print-templates", PrintTemplateViewSet, basename="print-template")
+router.register("print-jobs", PrintJobViewSet, basename="print-job")
+router.register("print-data", PrintDataViewSet, basename="print-data")
 
 
 @api_view(["GET"])

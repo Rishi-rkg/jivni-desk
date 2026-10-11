@@ -14,6 +14,7 @@ import {
   displayName,
 } from './types';
 import { PatientBilling } from './BillingScreen';
+import { PrintLabelsWindow } from './PrintingScreen';
 import { useUnsavedChanges } from './useUnsavedChanges';
 
 export function NewPatient() {
@@ -161,6 +162,7 @@ export function NewPatient() {
 }
 
 function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounter; expanded?: boolean }) {
+  const [labelling, setLabelling] = useState(false);
   return (
     <details className="timeline-card panel" open={expanded}>
       <summary>
@@ -222,6 +224,17 @@ function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounte
             <strong>Follow-up:</strong> {e.follow_up_date}
           </p>
         )}
+        <p className="actions">
+          {!!e.prescriptions.length && (
+            <button type="button" className="secondary btn-sm" onClick={() => setLabelling(true)}>
+              Print labels
+            </button>
+          )}
+          <Link className="button secondary btn-sm" to={`/print/prescription/${e.id}`}>
+            Print prescription
+          </Link>
+        </p>
+        {labelling && <PrintLabelsWindow encounterId={e.id} onClose={() => setLabelling(false)} />}
       </div>
     </details>
   );
@@ -463,6 +476,13 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
                 <span className="muted">JPEG or PNG, up to 5 MiB</span>
               </form>
             </details>
+          )}
+          {canWriteDemographics(role) && patient.identifier && (
+            <div className="archive-control">
+              <Link className="button secondary" to={`/print/card/${patient.id}`}>
+                Print patient card
+              </Link>
+            </div>
           )}
           {canWriteClinical(role) && (
             <div className="archive-control">

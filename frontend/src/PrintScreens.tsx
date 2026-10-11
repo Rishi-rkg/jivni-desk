@@ -2,7 +2,7 @@
  * Pages made for paper. Each one shows the sheet as it will print, with Print and Back above it.
  * Printing goes through the browser's own print window, where "Save as PDF" gives a PDF.
  */
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { api } from './api';
 import {
@@ -17,10 +17,34 @@ import {
   upiLink,
 } from './billing';
 import { Barcode, QrCode, barcodeText } from './codes';
+import { CardData, EnvelopeLabel, LabelData, PatientCard, dosageParts, labelSize } from './Labels';
 import { ErrorMessage } from './components';
 import { amount, dateTime, initials, money, shortDate } from './format';
 import { useLoad } from './ui';
 import './print.css';
+
+interface TemplateRow {
+  kind: string;
+  version: number;
+  settings: Record<string, string | number | boolean>;
+}
+/** The saved layout choices for one kind of document. Empty until they arrive; the page prints sensibly without them. */
+function useLayout(kind: string) {
+  const { data } = useLoad((signal) => api<TemplateRow[]>('print-templates/', { signal }), []);
+  return (Array.isArray(data) ? data : []).find((row) => row.kind === kind)?.settings ?? {};
+}
+
+/** Tells the print queue that something was sent to the printer. Once per visit to a print page is enough. */
+function usePrintRecord(body: Record<string, unknown> | null) {
+  const sent = useRef(false);
+  const latest = useRef(body);
+  latest.current = body;
+  return useCallback(() => {
+    if (sent.current || !latest.current) return;
+    sent.current = true;
+    api('print-jobs/', { method: 'POST', body: JSON.stringify(latest.current) }).catch(() => {});
+  }, []);
+}
 
 /** Sets the paper size for as long as a print page is open. */
 export function usePaper(size: string) {
@@ -138,13 +162,9 @@ export function PrintInvoice() {
   const { id } = useParams();
   usePaper('A4');
   const { data: bill, error } = useLoad((signal) => api<Invoice>(`invoices/${id}/`, { signal }), [id]);
-  const noted = useRef(false);
-  const note = () => {
-    // The bill's history says it was printed; once per visit to this page is enough.
-    if (noted.current || !bill || bill.status === 'draft') return;
-    noted.current = true;
-    api(`invoices/${bill.id}/printed/`, { method: 'POST', body: '{}' }).catch(() => {});
-  };
+  const layout = useLayout('invoice');
+  // The print queue and the bill's own history both note that it was printed.
+  const note = usePrintRecord(bill && bill.status !== 'draft' ? { kind: 'invoice', invoice: bill.id } : null);
   useAutoPrint(!!bill && bill.status !== 'draft', note);
   if (error) return <ErrorMessage message={error} />;
   if (!bill) return <p role="status">Preparing the bill…</p>;
@@ -179,7 +199,7 @@ export function PrintInvoice() {
         ))}
       </>
     );
-  const payUpi = bill.status === 'issued' && due > 0 && !!clinic.upi_id;
+  const payUpi = bill.status === 'issued' && due > 0 && !!clinic.upi_id && layout.show_upi !== false;
   return (
     <PrintPage
       title="Bill · A4"
@@ -387,7 +407,7 @@ export function PrintInvoice() {
                 <br />
               </>
             )}
-            Thank you for visiting {clinic.name}.
+            {String(layout.footer_note || '') || `Thank you for visiting ${clinic.name}.`}
           </div>
           <div className="b-sign">For {clinic.name}</div>
         </div>
@@ -405,7 +425,11 @@ export function PrintReceipt() {
   usePaper('A4');
   const { data: bill, error } = useLoad((signal) => api<Invoice>(`invoices/${id}/`, { signal }), [id]);
   const payment = bill?.payments.find((item) => item.id === paymentId);
-  useAutoPrint(!!payment);
+  const layout = useLayout('receipt');
+  const note = usePrintRecord(
+    bill && payment ? { kind: 'receipt', invoice: bill.id, receipt_number: payment.receipt_number } : null,
+  );
+  useAutoPrint(!!payment, note);
   if (error) return <ErrorMessage message={error} />;
   if (!bill) return <p role="status">Preparing the receipt…</p>;
   if (!payment)
@@ -422,6 +446,7 @@ export function PrintReceipt() {
       hint="Half an A4 sheet, through the browser’s print window."
       back={`/billing/invoices/${bill.id}`}
       backLabel="Back to the invoice"
+      onPrint={note}
     >
       <div className="sheet half" aria-label={`Receipt ${payment.receipt_number}`}>
         <div className="b-head">
@@ -464,7 +489,9 @@ export function PrintReceipt() {
           </div>
         </div>
         <div className="b-foot no-qr">
-          <div className="muted">Received by {payment.received_by_name}. Thank you.</div>
+          <div className="muted">
+            Received by {payment.received_by_name}. {String(layout.footer_note || '') || 'Thank you.'}
+          </div>
           <div className="b-sign">For {clinic.name}</div>
         </div>
         <div className="b-small">
@@ -481,7 +508,8 @@ export function PrintDayEnd() {
   usePaper('A4');
   const { data, error } = useLoad((signal) => api<DayEnd>(`billing/day-end/?day=${day}`, { signal }), [day]);
   const { data: clinic } = useLoad((signal) => api<{ name: string }>('clinic/', { signal }), []);
-  useAutoPrint(!!data && !!clinic);
+  const note = usePrintRecord(data ? { kind: 'day_end' } : null);
+  useAutoPrint(!!data && !!clinic, note);
   if (error) return <ErrorMessage message={error} />;
   if (!data || !clinic) return <p role="status">Preparing the report…</p>;
   return (
@@ -490,6 +518,7 @@ export function PrintDayEnd() {
       hint="Prints on any A4 printer through the browser’s print window."
       back="/billing/day-end"
       backLabel="Back to billing"
+      onPrint={note}
     >
       <div className="sheet half" aria-label="Day-end report">
         <div className="b-head">
@@ -552,6 +581,237 @@ export function PrintDayEnd() {
   );
 }
 
+/** `?e=1,2&c=1,2`: which envelopes to label and how many copies of each. No list means every envelope once. */
+function chosenLabels(params: URLSearchParams, data: LabelData) {
+  const numbers = (params.get('e') ?? '')
+    .split(',')
+    .map(Number)
+    .filter((number) => data.envelopes.some((envelope) => envelope.number === number));
+  const copies = (params.get('c') ?? '').split(',').map((value) => Math.min(Math.max(Number(value) || 1, 1), 20));
+  const chosen = numbers.length ? numbers : data.envelopes.map((envelope) => envelope.number);
+  return chosen.map((number, index) => ({
+    envelope: data.envelopes.find((envelope) => envelope.number === number)!,
+    copies: copies[index] ?? copies[0] ?? 1,
+  }));
+}
+
+function LabelPage({
+  data,
+  labels,
+  title,
+  back,
+  backLabel,
+  onPrint,
+}: {
+  data: LabelData;
+  labels: { envelope: LabelData['envelopes'][number]; copies: number }[];
+  title: string;
+  back: string;
+  backLabel: string;
+  onPrint?: () => void;
+}) {
+  const [width, height] = labelSize(data.settings);
+  usePaper(`${width}mm ${height}mm`);
+  const sheets = labels.flatMap(({ envelope, copies }) =>
+    Array.from({ length: copies }, (_, copy) => ({ envelope, copy })),
+  );
+  return (
+    <PrintPage
+      title={title}
+      hint={`${sheets.length} label${sheets.length === 1 ? '' : 's'}, each ${width} × ${height} mm. Choose the label printer in the print window; the page is already the size of the label.`}
+      back={back}
+      backLabel={backLabel}
+      onPrint={onPrint}
+    >
+      <div className="label-desk">
+        {sheets.map(({ envelope, copy }) => (
+          <EnvelopeLabel key={`${envelope.number}-${copy}`} data={data} envelope={envelope} />
+        ))}
+      </div>
+      {!!sheets.length && (
+        <div className="label-zoom screen-only" aria-hidden="true">
+          <EnvelopeLabel data={data} envelope={sheets[0].envelope} />
+        </div>
+      )}
+      {!sheets.length && <p className="content warning screen-only">This visit has no envelopes to label.</p>}
+    </PrintPage>
+  );
+}
+
+export function PrintLabels() {
+  const { encounterId } = useParams();
+  const [params] = useSearchParams();
+  const { data, error } = useLoad(
+    (signal) => api<LabelData>(`print-data/label/${encounterId}/`, { signal }),
+    [encounterId],
+  );
+  const labels = data ? chosenLabels(params, data) : [];
+  const note = usePrintRecord(
+    data && labels.length
+      ? {
+          kind: 'label',
+          encounter: encounterId,
+          envelopes: labels.map((label) => label.envelope.number),
+          copies: labels.reduce((sum, label) => sum + label.copies, 0),
+        }
+      : null,
+  );
+  useAutoPrint(!!data && !!labels.length, note);
+  if (error) return <ErrorMessage message={error} />;
+  if (!data) return <p role="status">Preparing the labels…</p>;
+  return (
+    <LabelPage
+      data={data}
+      labels={labels}
+      title="Envelope labels"
+      back={`/patients/${data.patient.id}?tab=visits`}
+      backLabel="Back to the patient"
+      onPrint={note}
+    />
+  );
+}
+
+export function PrintTestLabel() {
+  const { data, error } = useLoad((signal) => api<LabelData>('print-data/test-label/', { signal }), []);
+  const note = usePrintRecord(data ? { kind: 'test' } : null);
+  useAutoPrint(!!data, note);
+  if (error) return <ErrorMessage message={error} />;
+  if (!data) return <p role="status">Preparing the test label…</p>;
+  return (
+    <LabelPage
+      data={data}
+      labels={[{ envelope: data.envelopes[0], copies: 1 }]}
+      title="Test label"
+      back="/printing/printers"
+      backLabel="Back to printing"
+      onPrint={note}
+    />
+  );
+}
+
+export function PrintCard() {
+  const { patientId } = useParams();
+  usePaper('85.6mm 54mm');
+  const { data, error } = useLoad((signal) => api<CardData>(`print-data/card/${patientId}/`, { signal }), [patientId]);
+  const note = usePrintRecord(data ? { kind: 'card', patient: patientId } : null);
+  useAutoPrint(!!data, note);
+  if (error) return <ErrorMessage message={error} />;
+  if (!data) return <p role="status">Preparing the card…</p>;
+  return (
+    <PrintPage
+      title="Patient card"
+      hint="The size of a bank card (85.6 × 54 mm). Print on card stock or a label and hand it to the patient."
+      back={`/patients/${data.patient.id}`}
+      backLabel="Back to the patient"
+      onPrint={note}
+    >
+      <div className="label-desk">
+        <PatientCard data={data} />
+      </div>
+    </PrintPage>
+  );
+}
+
+interface PrescriptionData extends Omit<LabelData, 'settings'> {
+  doctor: string;
+  settings: { paper: 'A4' | 'A5'; show_medicines: boolean; footer_note: string };
+}
+
+export function PrintPrescription() {
+  const { encounterId } = useParams();
+  const { data, error } = useLoad(
+    (signal) => api<PrescriptionData>(`print-data/prescription/${encounterId}/`, { signal }),
+    [encounterId],
+  );
+  usePaper(data?.settings.paper ?? 'A4');
+  const note = usePrintRecord(data ? { kind: 'prescription', encounter: encounterId } : null);
+  useAutoPrint(!!data, note);
+  if (error) return <ErrorMessage message={error} />;
+  if (!data) return <p role="status">Preparing the prescription…</p>;
+  const { clinic, patient } = data;
+  const head = [data.doctor, clinic.registration_number && `Reg. no. ${clinic.registration_number}`].filter(Boolean);
+  return (
+    <PrintPage
+      title={`Prescription · ${data.settings.paper}`}
+      hint="Prints through the browser’s print window."
+      back={`/patients/${patient.id}?tab=visits`}
+      backLabel="Back to the patient"
+      onPrint={note}
+    >
+      <div className={`sheet half ${data.settings.paper === 'A5' ? 'a5' : ''}`} aria-label="Prescription">
+        <div className="b-head">
+          <div className="b-clinic">
+            <Logo name={clinic.name} />
+            <div>
+              <h1>{clinic.name}</h1>
+              <span className="muted address">
+                {[clinic.address, [clinic.phone, clinic.email].filter(Boolean).join(' · '), head.join(' · ')]
+                  .filter(Boolean)
+                  .join('\n')}
+              </span>
+            </div>
+          </div>
+          <div className="b-title">
+            <h2>PRESCRIPTION</h2>
+            <span className="muted">Date {shortDate(data.date)}</span>
+          </div>
+        </div>
+        <div className="b-meta">
+          <div>
+            <p className="cap">Patient</p>
+            <strong>{patient.name}</strong>
+            <PatientCode code={patient.code} />
+          </div>
+          <div>
+            <p className="cap">Doctor</p>
+            {data.doctor}
+          </div>
+          <div>
+            <p className="cap">Next visit advised</p>
+            {data.next_visit ? shortDate(data.next_visit) : 'As needed'}
+          </div>
+        </div>
+        <table className="rx-envelope">
+          <thead>
+            <tr>
+              <th>Envelope</th>
+              <th>How to take it</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.envelopes.map((envelope) => {
+              const [main, rest] = dosageParts(envelope);
+              return (
+                <tr key={envelope.number}>
+                  <td>Envelope {envelope.number}</td>
+                  <td>
+                    <strong>{main}</strong>
+                    {rest && <span className="muted">{rest}</span>}
+                    {!!envelope.medicines.length && <span className="muted">{envelope.medicines.join(' + ')}</span>}
+                  </td>
+                </tr>
+              );
+            })}
+            {!data.envelopes.length && (
+              <tr>
+                <td colSpan={2}>No medicines were prescribed at this visit.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <div className="b-foot no-qr">
+          <div className="muted">{data.settings.footer_note}</div>
+          <div className="b-sign">{data.doctor}</div>
+        </div>
+        <div className="b-small">
+          <span>Computer-generated prescription</span>
+          <span>Printed {printedNow()}</span>
+        </div>
+      </div>
+    </PrintPage>
+  );
+}
+
 /** Every print page. Shown without the tabs and header, so the paper holds only the document. */
 export function PrintRoutes() {
   return (
@@ -559,6 +819,10 @@ export function PrintRoutes() {
       <Route path="/print/invoice/:id" element={<PrintInvoice />} />
       <Route path="/print/receipt/:id/:paymentId" element={<PrintReceipt />} />
       <Route path="/print/day-end/:day" element={<PrintDayEnd />} />
+      <Route path="/print/labels/:encounterId" element={<PrintLabels />} />
+      <Route path="/print/test-label" element={<PrintTestLabel />} />
+      <Route path="/print/card/:patientId" element={<PrintCard />} />
+      <Route path="/print/prescription/:encounterId" element={<PrintPrescription />} />
       <Route
         path="*"
         element={

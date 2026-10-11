@@ -312,7 +312,7 @@ describe('billing screens', () => {
       return response(page([]));
     });
     const router = mount('/printing');
-    await screen.findByRole('heading', { name: 'Printing' });
+    await screen.findByRole('heading', { name: 'Documents and printing' });
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });

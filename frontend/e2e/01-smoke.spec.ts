@@ -52,7 +52,7 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
   // A barcode scanner types the card code very fast and presses Enter; that opens the patient from anywhere.
   const code = (await page.getByText(/^PAT-[2-9A-Z]{10}$/).textContent()) ?? '';
   await page.getByRole('link', { name: 'Printing', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Printing' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Documents and printing' })).toBeVisible();
   await page.keyboard.type(code, { delay: 5 });
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Synthetic Smoke-Test' })).toBeVisible();

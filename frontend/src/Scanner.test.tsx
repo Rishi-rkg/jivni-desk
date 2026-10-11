@@ -50,7 +50,7 @@ function scan(code: string, target: Element | Window = window) {
  * in an effect, which runs just after the screen appears; without this wait a scan can arrive first.
  */
 async function workspaceReady() {
-  await screen.findByRole('heading', { name: 'Printing' });
+  await screen.findByRole('heading', { name: 'Documents and printing' });
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
@@ -95,7 +95,7 @@ describe('barcode scanning', () => {
     expect(window_).toHaveTextContent('Nothing was opened.');
     await userEvent.click(within(window_).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Printing' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Documents and printing' })).toBeInTheDocument();
   });
 
   it('leaves a scan alone when someone is typing in a field', async () => {

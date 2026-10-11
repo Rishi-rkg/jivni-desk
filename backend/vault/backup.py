@@ -41,7 +41,7 @@ FORMAT = 1
 EXTENSION = ".jivni"
 PREFIX = "jivni-backup-"
 STAMP = "%Y%m%d-%H%M%S"
-APPS = ["accounts", "records", "audit", "vault", "billing"]
+APPS = ["accounts", "records", "audit", "vault", "billing", "printing"]
 BLOCK_BYTES = 64 * 1024
 MAX_HEADER_BYTES = 1024 * 1024
 

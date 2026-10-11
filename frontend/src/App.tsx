@@ -21,6 +21,7 @@ import { Dashboard } from './WorkspaceScreens';
 import { BillingScreen } from './BillingScreen';
 import { InvoiceScreen, NewBill } from './InvoiceScreen';
 import { PrintRoutes } from './PrintScreens';
+import { PrintingScreen } from './PrintingScreen';
 import { DraftStateContext } from './useUnsavedChanges';
 import { MyAccount, SettingsScreen } from './SettingsScreen';
 import { SetupScreen } from './SetupScreen';
@@ -355,7 +356,7 @@ export default function App() {
               />
               <Route path="/billing/:tab?" element={guarded('/billing', <BillingScreen role={role} />)} />
               <Route path="/library" element={guarded('/library', <LibraryScreen role={role} />)} />
-              <Route path="/printing" element={<ComingSoon title="Printing" />} />
+              <Route path="/printing/:section?" element={<PrintingScreen role={role} />} />
               <Route path="/account" element={<MyAccount session={session} onSaved={refreshSession} standalone />} />
               <Route
                 path="/settings/:section?"

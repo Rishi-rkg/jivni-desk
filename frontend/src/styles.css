@@ -1660,3 +1660,19 @@ td select {
   margin-top: 10px;
   margin-bottom: 0;
 }
+
+/* Printing */
+input.copies {
+  width: 60px;
+}
+.label-preview-box {
+  background: #cfd8dc;
+  border-radius: 5px;
+  min-height: 240px;
+}
+.template-actions {
+  margin-top: 14px;
+}
+fieldset[disabled] {
+  opacity: 0.85;
+}
