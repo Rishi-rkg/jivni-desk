@@ -51,11 +51,9 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
       ...options.headers,
     },
   });
-  const data: unknown = await response
-    .json()
-    .catch(() => ({
-      detail: 'The server could not complete the request. Refresh and sign in again if your session expired.',
-    }));
+  const data: unknown = await response.json().catch(() => ({
+    detail: 'The server could not complete the request. Refresh and sign in again if your session expired.',
+  }));
   if (response.status === 401 && !path.startsWith('auth/')) {
     unauthorizedHandler?.();
     throw new ApiError(401, LOCKED_MESSAGE);
