@@ -36,11 +36,19 @@ class IdleTimeoutMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
+    @staticmethod
+    def allowed(request):
+        """The clinic's own lock time when it is shorter, with a minute's grace so the screen locks first."""
+        chosen = request.session.get("idle_seconds")
+        if isinstance(chosen, int) and chosen > 0:
+            return min(settings.SESSION_IDLE_SECONDS, chosen + 60)
+        return settings.SESSION_IDLE_SECONDS
+
     def __call__(self, request):
         if request.user.is_authenticated:
             now = int(time.time())
             last = request.session.get("last_activity")
-            if isinstance(last, int) and now - last > settings.SESSION_IDLE_SECONDS:
+            if isinstance(last, int) and now - last > self.allowed(request):
                 from accounts.models import Membership
                 from audit.models import record_event
 

@@ -41,7 +41,8 @@ class ScanTests(TestCase):
 
         revoked.revoked_at = timezone.now()
         revoked.save()
-        self.assertEqual(self.client.get(f"/api/v1/scan/{self.code}/").status_code, 404)
+        replaced = self.client.get(f"/api/v1/scan/{self.code}/")
+        self.assertEqual((replaced.status_code, replaced.data["kind"]), (404, "revoked"))
         events = AuditEvent.objects.filter(action="scan.unknown", outcome="failed")
         self.assertEqual(events.count(), 5)
         # Nothing about what was scanned is kept.

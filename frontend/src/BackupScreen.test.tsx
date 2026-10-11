@@ -132,7 +132,9 @@ describe('backups', () => {
         : response({ count: 0, next: null, previous: null, results: [] }),
     );
     mount('/backups');
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    // An administrator lands on the settings they may keep; the backups section is not offered.
+    expect(await screen.findByRole('heading', { name: 'Clinic details' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Backups' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Backups' })).not.toBeInTheDocument();
   });
 });

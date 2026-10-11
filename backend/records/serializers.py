@@ -242,9 +242,9 @@ class EncounterSerializer(serializers.ModelSerializer):
         encounter = Encounter.objects.create(**validated_data)
         for data in observations:
             Observation.objects.create(patient=encounter.patient, encounter=encounter, **data)
-        for data in prescriptions:
+        for position, data in enumerate(prescriptions):
             items = data.pop("items")
-            prescription = Prescription.objects.create(encounter=encounter, prescriber=encounter.clinician, **data)
-            for item in items:
-                PrescriptionItem.objects.create(prescription=prescription, **item)
+            prescription = Prescription.objects.create(encounter=encounter, prescriber=encounter.clinician, position=position, **data)
+            for at, item in enumerate(items):
+                PrescriptionItem.objects.create(prescription=prescription, position=at, **item)
         return encounter

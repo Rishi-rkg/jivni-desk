@@ -290,9 +290,12 @@ class Prescription(AppendOnlyRecord):
     instructions = models.TextField(blank=True)
     dosage_line = models.CharField(max_length=200, blank=True)
     dosage = models.JSONField(default=dict, blank=True)
+    # Envelope 1, envelope 2: the order the doctor made them up in. Two rows saved in the same instant
+    # have the same created_at, so the order is written down rather than inferred.
+    position = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
-        ordering = ["created_at", "id"]
+        ordering = ["position", "created_at", "id"]
 
 
 class PrescriptionItem(AppendOnlyRecord):
@@ -306,6 +309,7 @@ class PrescriptionItem(AppendOnlyRecord):
     duration = models.CharField(max_length=100, blank=True)
     instructions = models.TextField(blank=True)
     quantity = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
+    position = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
-        ordering = ["created_at", "id"]
+        ordering = ["position", "created_at", "id"]

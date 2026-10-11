@@ -269,6 +269,9 @@ class ScanViewSet(ClinicViewSet):
                 return Response({"kind": "patient", "patient": data})
         # What was scanned is never written to the audit log.
         record_event(request, "scan.unknown", clinic=self.member.clinic, outcome="failed")
+        if normalized and PatientIdentifier.objects.filter(code=normalized, patient__clinic=self.member.clinic).exists():
+            # A card that was replaced: say so, but open nothing.
+            return Response({"kind": "revoked", "detail": "This card is no longer valid."}, status=404)
         return Response({"kind": "unknown", "detail": "Nothing in this clinic matches that code."}, status=404)
 
 

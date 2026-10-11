@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
@@ -70,7 +70,7 @@ describe('workspace lock', () => {
     await userEvent.type(await screen.findByLabelText('Add patient note'), 'Kept through the lock');
     await userEvent.click(screen.getByRole('button', { name: 'Save note' }));
 
-    expect(await screen.findByRole('heading', { name: 'Workspace locked' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Locked' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Synthetic Patient' })).not.toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Password'), 'synthetic-password');
     await userEvent.click(screen.getByRole('button', { name: 'Unlock' }));
@@ -78,7 +78,7 @@ describe('workspace lock', () => {
     const draft = await screen.findByLabelText('Add patient note');
     expect(draft).toHaveValue('Kept through the lock');
     expect(logins).toEqual([{ username: 'doctor', password: 'synthetic-password' }]);
-    expect(screen.queryByRole('heading', { name: 'Workspace locked' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Locked' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Save note' }));
     expect(await screen.findByText('Note saved.')).toBeInTheDocument();
   });
@@ -148,14 +148,53 @@ describe('clinic administration', () => {
     expect(saved).toMatchObject({ name: 'Test clinic', time_zone: 'Asia/Kolkata' });
   });
 
-  it('shows settings read-only to other roles and hides the audit log', async () => {
+  it('keeps settings away from roles that do not run the clinic', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation((url) =>
-      String(url).endsWith('me/') ? response(sessionFor('clinician')) : response(settings),
+      String(url).endsWith('me/') ? response(sessionFor('clinician')) : response(empty),
     );
     mount('/settings');
-    expect(await screen.findByLabelText('Clinic name')).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Save settings' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Audit log' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Clinic name')).not.toBeInTheDocument();
+  });
+
+  it('shows an administrator the clinic details but not the owner-only sections', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) =>
+      String(url).endsWith('me/') ? response(sessionFor('admin')) : response(settings),
+    );
+    mount('/settings/switches');
+    expect(await screen.findByLabelText('Clinic name')).toBeEnabled();
+    const sections = screen.getByRole('navigation', { name: 'Settings sections' });
+    expect(within(sections).getByRole('link', { name: 'Activity log' })).toBeInTheDocument();
+    expect(within(sections).queryByRole('link', { name: 'Switches' })).not.toBeInTheDocument();
+    expect(within(sections).queryByRole('link', { name: 'Backups' })).not.toBeInTheDocument();
+  });
+
+  it('lets the owner turn a part of the application off, which removes its tab', async () => {
+    const features = { appointments: true, billing: true, messages: true, library: true, product_sales: true };
+    let billing = true;
+    const sent: unknown[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url, options) => {
+      if (String(url).endsWith('me/')) {
+        const s = sessionFor('owner');
+        return response({ ...s, memberships: [{ ...s.memberships[0], features: { ...features, billing } }] });
+      }
+      if (options?.method === 'PATCH') {
+        sent.push(JSON.parse(options.body as string));
+        billing = false;
+      }
+      return response({ ...settings, features: { ...features, billing, stock_control: false, ai_drafting: false } });
+    });
+    mount('/settings/switches');
+    const tabs = await screen.findByRole('navigation', { name: 'Clinic workspace' });
+    expect(within(tabs).getByRole('link', { name: 'Billing' })).toBeInTheDocument();
+    const billingSwitch = await screen.findByRole('switch', { name: 'Billing' });
+    expect(billingSwitch).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'AI drafting' })).toBeDisabled();
+    await userEvent.click(billingSwitch);
+    await waitFor(() => expect(within(tabs).queryByRole('link', { name: 'Billing' })).not.toBeInTheDocument());
+    expect(sent).toEqual([{ features: { billing: false } }]);
+    expect(screen.getByRole('switch', { name: 'Billing' })).not.toBeChecked();
   });
 
   it('shows the owner failed sign-ins in plain words', async () => {

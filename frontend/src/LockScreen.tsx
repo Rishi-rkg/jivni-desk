@@ -2,9 +2,9 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { api, initializeCSRF, msSinceServerContact, setCSRF } from './api';
 import { Brand, ErrorMessage } from './components';
 import { Session } from './types';
+import { Avatar } from './ui';
 
 const CHECK_EVERY_MS = 15_000;
-const KEEP_ALIVE_AFTER_MS = 4 * 60_000;
 const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
 
 /**
@@ -17,6 +17,8 @@ export function useIdleLock(active: boolean, timeoutSeconds: number | undefined,
   useEffect(() => {
     if (!active || !timeoutSeconds) return;
     lastActivity.current = Date.now();
+    // The server ends an untouched session by the same clock, so it hears from us well inside that time.
+    const keepAliveAfter = Math.min(4 * 60_000, (timeoutSeconds * 1000) / 2);
     const touch = () => {
       lastActivity.current = Date.now();
     };
@@ -24,8 +26,7 @@ export function useIdleLock(active: boolean, timeoutSeconds: number | undefined,
     const timer = window.setInterval(() => {
       const idle = Date.now() - lastActivity.current;
       if (idle >= timeoutSeconds * 1000) lock();
-      else if (idle < CHECK_EVERY_MS * 2 && msSinceServerContact() > KEEP_ALIVE_AFTER_MS)
-        api('auth/me/').catch(() => {});
+      else if (idle < CHECK_EVERY_MS * 2 && msSinceServerContact() > keepAliveAfter) api('auth/me/').catch(() => {});
     }, CHECK_EVERY_MS);
     return () => {
       ACTIVITY_EVENTS.forEach((name) => window.removeEventListener(name, touch));
@@ -34,18 +35,28 @@ export function useIdleLock(active: boolean, timeoutSeconds: number | undefined,
   }, [active, timeoutSeconds, lock]);
 }
 
+function minutes(seconds: number | undefined) {
+  const count = Math.max(1, Math.round((seconds ?? 0) / 60));
+  return `${count} minute${count === 1 ? '' : 's'}`;
+}
+
 /** Signs the same user back in without unmounting the workspace, so drafts in memory survive. */
 export function LockScreen({
   session,
+  clinicName,
+  reason,
   onUnlocked,
   onSwitchUser,
 }: {
   session: Session;
+  clinicName: string;
+  reason: 'idle' | 'manual';
   onUnlocked: (s: Session) => void;
   onSwitchUser: () => void;
 }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const name = session.user.name || session.user.username;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,14 +87,22 @@ export function LockScreen({
   }
 
   return (
-    <main className="login lock-screen">
+    <main className="login lock-screen locked">
       <div className="brand">
         <Brand />
       </div>
-      <h1>Workspace locked</h1>
+      <div>
+        <Avatar name={name} large />
+      </div>
+      <h1>Locked</h1>
       <p>
-        Signed in as <strong>{session.user.name || session.user.username}</strong>. Enter your password to continue
-        where you left off.
+        <strong>{name}</strong> · {clinicName}
+        <br />
+        <span className="muted">
+          {reason === 'manual'
+            ? 'Locked. Your open work is kept.'
+            : `Locked after ${minutes(session.idle_timeout_seconds)} without activity. Your open work is kept.`}
+        </span>
       </p>
       <form onSubmit={submit} className="panel stack">
         <ErrorMessage message={error} />
@@ -92,11 +111,10 @@ export function LockScreen({
           <input name="password" type="password" autoComplete="current-password" required autoFocus />
         </label>
         <button disabled={busy}>{busy ? 'Unlocking…' : 'Unlock'}</button>
+        <button type="button" className="secondary" onClick={onSwitchUser}>
+          Sign in as someone else
+        </button>
       </form>
-      <p className="muted">Unsaved work on the open screen is kept until you unlock or switch user.</p>
-      <button type="button" className="secondary" onClick={onSwitchUser}>
-        Sign in as a different user
-      </button>
     </main>
   );
 }

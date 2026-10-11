@@ -14,6 +14,7 @@ test('the owner adds a backup folder, backs up, and checks that the backup reads
   await page.getByLabel('Username').fill(credentials.username);
   await page.getByLabel('Password').fill(credentials.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.getByRole('link', { name: 'Backups' }).click();
   await expect(page.getByRole('heading', { name: 'Backups', exact: true })).toBeVisible();
 

@@ -1,10 +1,24 @@
 export type Role = 'owner' | 'admin' | 'clinician' | 'assistant' | 'reception' | 'billing';
+export type FeatureName =
+  | 'appointments'
+  | 'billing'
+  | 'product_sales'
+  | 'show_gst'
+  | 'messages'
+  | 'auto_reminders'
+  | 'library'
+  | 'stock_control'
+  | 'ai_drafting'
+  | 'two_step';
+export type Features = Record<FeatureName, boolean>;
 export interface Membership {
   records_unlocked?: boolean;
   clinic_id: string;
   clinic_name: string;
   role: Role;
   time_zone?: string;
+  currency?: string;
+  features?: Partial<Features>;
 }
 export interface Session {
   user: { id: string; username: string; name: string };
@@ -105,6 +119,12 @@ export interface ClinicSettings {
   email: string;
   tax_identifier: string;
   currency: string;
+  registration_number: string;
+  upi_id: string;
+  invoice_prefix: string;
+  lock_after_minutes: number;
+  features: Features;
+  has_logo: boolean;
 }
 export interface AuditEvent {
   id: string;
@@ -167,3 +187,19 @@ export interface BackupOverview {
   runs: BackupRun[];
 }
 export const canManageBackups = (r: Role) => r === 'owner';
+
+export const ROLE_LABELS: Record<Role, string> = {
+  owner: 'Owner',
+  clinician: 'Doctor',
+  assistant: 'Clinical assistant',
+  reception: 'Reception',
+  billing: 'Billing',
+  admin: 'Administrator',
+};
+/** A switch counts as on unless the server says it is off, so an older server hides nothing. */
+export const featureOn = (member: Membership | undefined, name: FeatureName) => member?.features?.[name] !== false;
+export const canUseAppointments = (r: Role) => ['owner', 'clinician', 'assistant', 'reception'].includes(r);
+export const canUseMessages = (r: Role) => ['owner', 'clinician', 'reception'].includes(r);
+export const canUseBilling = (r: Role) => ['owner', 'clinician', 'reception', 'billing'].includes(r);
+export const canTakePayments = (r: Role) => ['owner', 'reception', 'billing'].includes(r);
+export const canOpenSettings = (r: Role) => ['owner', 'admin'].includes(r);

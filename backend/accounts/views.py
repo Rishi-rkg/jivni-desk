@@ -20,6 +20,7 @@ from vault import backup as vault_backup
 from vault import services as vault
 from vault import session as vault_session
 
+from .features import features_of
 from .models import Clinic, Installation, Membership, Role, User, valid_time_zone
 
 
@@ -29,23 +30,40 @@ def session_data(request, unlocked=None):
     def records_unlocked(clinic_id):
         return clinic_id in unlocked if unlocked is not None else request.vault.is_unlocked(clinic_id)
 
-    memberships = Membership.objects.filter(user=request.user, is_active=True).select_related("clinic", "role")
+    memberships = list(Membership.objects.filter(user=request.user, is_active=True).select_related("clinic", "role"))
+    clinic_id = request.session.get("clinic_id")
+    active = next((m.clinic for m in memberships if str(m.clinic_id) == str(clinic_id)), None)
     return {
         "user": {"id": str(request.user.id), "username": request.user.username, "name": request.user.get_full_name()},
-        "clinic_id": request.session.get("clinic_id"),
+        "clinic_id": clinic_id,
         "memberships": [
             {
                 "clinic_id": str(m.clinic_id),
                 "clinic_name": m.clinic.name,
                 "role": m.role_id,
                 "time_zone": m.clinic.time_zone,
+                "currency": m.clinic.currency,
+                "features": features_of(m.clinic),
                 "records_unlocked": records_unlocked(m.clinic_id),
             }
             for m in memberships
         ],
-        "idle_timeout_seconds": settings.SESSION_IDLE_SECONDS,
+        "idle_timeout_seconds": idle_seconds(request, active),
         "csrf_token": get_token(request),
     }
+
+
+def idle_seconds(request, clinic):
+    """How long the screen may sit untouched before it locks: the clinic's choice, sooner on a shared computer."""
+    seconds = settings.SESSION_IDLE_SECONDS
+    if clinic:
+        seconds = min(seconds, clinic.lock_after_minutes * 60)
+    if request.session.get("shared_computer"):
+        seconds = min(seconds, 120)
+    # The server ends an untouched session by the same clock (config/middleware.py).
+    if request.session.get("idle_seconds") != seconds:
+        request.session["idle_seconds"] = seconds
+    return seconds
 
 
 @require_GET
@@ -109,6 +127,8 @@ def sign_in(request):
     cache.delete(key)
     login(request, user)
     request.session["clinic_id"] = str(memberships[0].clinic_id)
+    if data.get("shared_computer") is True:
+        request.session["shared_computer"] = True
     record_event(request, "auth.login", clinic=memberships[0].clinic)
     # The password is used once more here to open the clinic keys sealed for this person, then discarded.
     unlocked = vault.unlock(user, data["password"])
@@ -186,6 +206,28 @@ def change_password(request):
     # Keeps this session signed in; other sessions of this user are signed out by Django.
     update_session_auth_hash(request, user)
     return JsonResponse({"detail": "Password changed.", "csrf_token": get_token(request)})
+
+
+@require_POST
+@csrf_protect
+@transaction.atomic
+def account(request):
+    """Change the signed-in person's own display name."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication required."}, status=401)
+    data = payload(request)
+    name = data.get("full_name") if data else None
+    if not isinstance(name, str) or not 1 <= len(name.strip()) <= 150:
+        return JsonResponse({"full_name": ["Enter your name as it should appear on records."]}, status=400)
+    request.user.first_name, request.user.last_name = name.strip(), ""
+    request.user.save(update_fields=["first_name", "last_name"])
+    member = (
+        Membership.objects.filter(user=request.user, clinic_id=request.session.get("clinic_id"), is_active=True)
+        .select_related("clinic")
+        .first()
+    )
+    record_event(request, "auth.account_update", clinic=member.clinic if member else None)
+    return JsonResponse(session_data(request))
 
 
 @csrf_protect

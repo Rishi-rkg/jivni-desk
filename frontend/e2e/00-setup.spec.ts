@@ -32,6 +32,7 @@ test('a new installation is set up with encryption on and a recovery key', async
   writeFileSync('../.tools/e2e-credentials.json', JSON.stringify(credentials));
 
   // Setup is closed for good: a second visitor gets the ordinary sign-in.
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByRole('button', { name: /^Account:/ }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Sign in to your clinic' })).toBeVisible();
 });

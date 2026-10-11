@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { shot } from './helpers';
 
 // Written by scripts/e2e_server.py for this run only. Synthetic clinic, synthetic patient.
 function signIn(): { username: string; password: string } {
@@ -50,16 +51,42 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
 
   // A barcode scanner types the card code very fast and presses Enter; that opens the patient from anywhere.
   const code = (await page.getByText(/^PAT-[2-9A-Z]{10}$/).textContent()) ?? '';
-  await page.getByRole('link', { name: 'More tools' }).click();
-  await expect(page.getByRole('heading', { name: 'More clinic tools' })).toBeVisible();
+  await page.getByRole('link', { name: 'Printing', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Printing' })).toBeVisible();
   await page.keyboard.type(code, { delay: 5 });
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Synthetic Smoke-Test' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Audit log' }).click();
-  await expect(page.getByText('Recorded visit')).toBeVisible();
+  // A code nobody knows opens nothing and says so.
+  await page.keyboard.type('8900000000000', { delay: 5 });
+  await page.keyboard.press('Enter');
+  const unknown = page.getByRole('dialog', { name: 'Barcode not recognised' });
+  await expect(unknown).toBeVisible();
+  await shot(page, '01-scan-unknown');
+  await unknown.getByRole('button', { name: 'Close', exact: true }).click();
 
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  // Ctrl K finds a patient from anywhere.
+  await page.keyboard.press('Control+k');
+  await page.getByRole('combobox', { name: 'Find a patient' }).fill('Smoke');
+  await expect(page.getByRole('option', { name: /Synthetic Smoke-Test/ })).toBeVisible();
+  await shot(page, '01-finder');
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
+  await page.getByRole('link', { name: 'Activity log' }).click();
+  await expect(page.getByText('Recorded visit')).toBeVisible();
+  await shot(page, '01-activity');
+
+  // Lock from the header, then come back with the password.
+  await page.getByRole('button', { name: 'Lock', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Locked' })).toBeVisible();
+  await shot(page, '01-locked');
+  await page.getByLabel('Password').fill(credentials.password);
+  await page.getByRole('button', { name: 'Unlock' }).click();
+  await expect(page.getByRole('heading', { name: 'Activity log' })).toBeVisible();
+
+  await page.getByRole('button', { name: /^Account:/ }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Sign in to your clinic' })).toBeVisible();
 });
 

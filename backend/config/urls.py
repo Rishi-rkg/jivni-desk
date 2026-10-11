@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 
 from accounts import views as auth
-from accounts.api import ClinicSettingsView
+from accounts.api import ClinicLogoView, ClinicSettingsView
 from modules.contracts import MODULES
 from records.views import AuditViewSet, EncounterViewSet, NoteViewSet, PatientViewSet, PhotoViewSet, ScanViewSet
 from vault import api as backups
@@ -45,7 +45,9 @@ urlpatterns = [
     path("api/v1/auth/me/", auth.me),
     path("api/v1/auth/clinic/", auth.select_clinic),
     path("api/v1/auth/password/", auth.change_password),
+    path("api/v1/auth/account/", auth.account),
     path("api/v1/clinic/", ClinicSettingsView.as_view()),
+    path("api/v1/clinic/logo/", ClinicLogoView.as_view()),
     path("api/v1/backups/", backups.overview),
     path("api/v1/backups/policy/", backups.policy),
     path("api/v1/backups/places/", backups.places),

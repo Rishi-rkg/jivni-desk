@@ -111,7 +111,8 @@ describe('clinic workflows', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Notes' }));
     expect(screen.getByLabelText('Add patient note')).toHaveValue('Unsaved context');
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Account:/ }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Sign out without saving?'));
     expect(screen.getByLabelText('Add patient note')).toHaveValue('Unsaved context');
     await userEvent.click(screen.getByRole('link', { name: /Patient list/ }));

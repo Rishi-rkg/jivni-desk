@@ -19,6 +19,8 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    /** What the server sent, for the few callers that need more than the sentence. */
+    public data?: unknown,
   ) {
     super(message);
   }
@@ -58,7 +60,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     unauthorizedHandler?.();
     throw new ApiError(401, LOCKED_MESSAGE);
   }
-  if (!response.ok) throw new ApiError(response.status, describe(data));
+  if (!response.ok) throw new ApiError(response.status, describe(data), data);
   lastContact = Date.now();
   return data as T;
 }

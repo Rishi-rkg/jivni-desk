@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
@@ -50,7 +50,7 @@ function scan(code: string, target: Element | Window = window) {
  * in an effect, which runs just after the screen appears; without this wait a scan can arrive first.
  */
 async function workspaceReady() {
-  await screen.findByRole('heading', { name: 'More clinic tools' });
+  await screen.findByRole('heading', { name: 'Printing' });
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
@@ -79,7 +79,7 @@ beforeEach(() => {
 describe('barcode scanning', () => {
   it('opens the patient when a card is scanned with no field in use', async () => {
     const requested = mockServer();
-    mount('/modules');
+    mount('/printing');
     await workspaceReady();
     scan('PAT-W8KQ3G7DP9');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
@@ -88,11 +88,14 @@ describe('barcode scanning', () => {
 
   it('says so when the code matches nothing, and stays on the page', async () => {
     mockServer(404);
-    mount('/modules');
+    mount('/printing');
     await workspaceReady();
     scan('8901234567890');
-    expect(await screen.findByRole('alert')).toHaveTextContent('That code does not match a patient in this clinic.');
-    expect(screen.getByRole('heading', { name: 'More clinic tools' })).toBeInTheDocument();
+    const window_ = await screen.findByRole('dialog', { name: 'Barcode not recognised' });
+    expect(window_).toHaveTextContent('Nothing was opened.');
+    await userEvent.click(within(window_).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Printing' })).toBeInTheDocument();
   });
 
   it('leaves a scan alone when someone is typing in a field', async () => {
@@ -106,7 +109,7 @@ describe('barcode scanning', () => {
 
   it('ignores ordinary slow typing and short bursts', async () => {
     const requested = mockServer();
-    mount('/modules');
+    mount('/printing');
     await workspaceReady();
     scan('abc');
     const clock = vi.spyOn(performance, 'now');
@@ -126,6 +129,49 @@ describe('barcode scanning', () => {
     await userEvent.type(await screen.findByLabelText('Name, phone, or patient ID'), 'pat-w8kq3g7dp9{Enter}');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
     expect(requested).toContain('/api/v1/scan/pat-w8kq3g7dp9/');
+  });
+
+  it('says a replaced card is no longer valid', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
+      const path = String(url);
+      if (path.endsWith('me/')) return response(session);
+      if (path.includes('/scan/')) return response({ kind: 'revoked', detail: 'This card is no longer valid.' }, 404);
+      return response({ count: 0, next: null, previous: null, results: [] });
+    });
+    mount('/printing');
+    await workspaceReady();
+    scan('PAT-W8KQ3G7DP9');
+    expect(await screen.findByRole('dialog', { name: 'This card is no longer valid' })).toBeInTheDocument();
+  });
+
+  it('finds a patient from anywhere with Ctrl K, by name or by card code', async () => {
+    const requested: string[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
+      const path = String(url);
+      requested.push(path);
+      if (path.endsWith('me/')) return response(session);
+      if (path.includes('/scan/')) return response({ kind: 'patient', patient });
+      if (path.includes('patients/?search='))
+        return response({ count: 1, next: null, previous: null, results: [patient] });
+      if (path.includes('patients/patient-id')) return response(patient);
+      return response({ count: 0, next: null, previous: null, results: [] });
+    });
+    mount('/printing');
+    await workspaceReady();
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    const box = await screen.findByRole('combobox', { name: 'Find a patient' });
+    await userEvent.type(box, 'synth');
+    const option = await screen.findByRole('option', { name: /Synthetic Patient/ });
+    expect(option).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('option', { name: 'Register “synth” as a new patient' })).toBeInTheDocument();
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Find a patient' })).not.toBeInTheDocument();
+
+    // A card scanned into the box opens the patient directly, without a search.
+    await userEvent.click(screen.getByRole('button', { name: /Find a patient by name/ }));
+    await userEvent.type(await screen.findByRole('combobox', { name: 'Find a patient' }), 'PAT-W8KQ3G7DP9{Enter}');
+    await waitFor(() => expect(requested).toContain('/api/v1/scan/PAT-W8KQ3G7DP9/'));
   });
 
   it('recognises patient codes and nothing else', () => {
