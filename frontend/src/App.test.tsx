@@ -88,7 +88,8 @@ describe('clinic workflows', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
       const path = String(url);
       if (path.endsWith('me/')) return response(session);
-      if (/encounters|notes/.test(path)) return response({ count: 0, next: null, previous: null, results: [] });
+      if (/encounters|notes|invoices/.test(path))
+        return response({ count: 0, next: null, previous: null, results: [] });
       return response({
         id: 'patient-id',
         first_name: 'Synthetic',

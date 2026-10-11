@@ -1,5 +1,5 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react';
-import { Link, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, setCSRF, setUnauthorizedHandler } from './api';
 import {
   Membership,
@@ -17,17 +17,20 @@ import { NewPatient, PatientProfile } from './PatientScreens';
 import { PatientList } from './PatientList';
 import { NewEncounter } from './VisitScreen';
 import { Brand, ErrorMessage } from './components';
-import { Dashboard, BillingPlaceholder } from './WorkspaceScreens';
+import { Dashboard } from './WorkspaceScreens';
+import { BillingScreen } from './BillingScreen';
+import { InvoiceScreen, NewBill } from './InvoiceScreen';
+import { PrintRoutes } from './PrintScreens';
 import { DraftStateContext } from './useUnsavedChanges';
 import { MyAccount, SettingsScreen } from './SettingsScreen';
 import { SetupScreen } from './SetupScreen';
 import { LockScreen, useIdleLock } from './LockScreen';
 import { Login } from './Login';
 import { FindPatient } from './FindPatient';
-import { resolveScan, useScanner } from './Scanner';
+import { resolveScan, takeScannedProduct, useScanner } from './Scanner';
 import { LibraryScreen } from './Library';
 import { setClinicLocale } from './format';
-import { Avatar, Kbd, Menu, Modal, Notices, useOfflineNotice, useShortcut } from './ui';
+import { Avatar, Kbd, Menu, Modal, Notices, notify, useOfflineNotice, useShortcut } from './ui';
 
 const DevBanner = () => <div className="dev-warning">Development build · Use synthetic patient data only</div>;
 
@@ -79,7 +82,10 @@ export default function App() {
   const [finder, setFinder] = useState(false);
   const [shortcuts, setShortcuts] = useState(false);
   const [scanProblem, setScanProblem] = useState<'' | 'unknown' | 'revoked'>('');
+  const [unknownCode, setUnknownCode] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const printing = location.pathname.startsWith('/print/');
   const working = !!session && !locked;
   useOfflineNotice();
   // The server ended the session (401): cover the workspace but keep it mounted so drafts survive.
@@ -95,6 +101,8 @@ export default function App() {
     api('auth/logout/', { method: 'POST', body: '{}' }).catch(() => {});
   }, []);
   const lockForInactivity = useCallback(() => lock('idle'), [lock]);
+  // Whether a scanned product may start a new bill; kept in a ref so the scan handler always sees today's answer.
+  const billingRef = useRef(false);
   useIdleLock(working, session?.idle_timeout_seconds, lockForInactivity);
   useShortcut('k', () => setFinder(true), { ctrl: true, active: working });
   useShortcut('l', () => lock('manual'), { ctrl: true, active: working });
@@ -108,16 +116,23 @@ export default function App() {
       resolveScan(code)
         .then((result) => {
           if (result.kind === 'patient') navigate(`/patients/${result.patient.id}`);
+          // A product goes to whatever is open: a bill adds a line, a visit asks who it is for.
+          // With neither open, a new bill starts with the product on it.
+          else if (!takeScannedProduct(result.product)) {
+            if (billingRef.current) navigate('/billing/new', { state: { product: result.product } });
+            else notify(`${result.product.name} is a product. Open a visit to add it for a patient.`);
+          }
         })
         .catch((e) => {
-          if (e instanceof ApiError && e.status === 404)
+          if (e instanceof ApiError && e.status === 404) {
+            setUnknownCode(code.trim());
             setScanProblem((e.data as { kind?: string } | undefined)?.kind === 'revoked' ? 'revoked' : 'unknown');
-          else setError(e.message);
+          } else setError(e.message);
         });
     },
     [navigate],
   );
-  useScanner(working, openScanned);
+  useScanner(working && !printing, openScanned);
   const refreshSession = useCallback(() => {
     api<Session>('auth/me/')
       .then((s) => {
@@ -233,6 +248,8 @@ export default function App() {
     ['/settings', 'Settings', canOpenSettings(role)],
   ];
   const allowed = (path: string) => tabs.some(([to, , shown]) => to === path && shown);
+  billingRef.current = allowed('/billing');
+  const canAddProduct = (role === 'owner' || role === 'admin') && featureOn(member, 'billing');
   const guarded = (path: string, element: ReactNode) =>
     allowed(path) ? element : <Navigate to="/dashboard" replace />;
   return (
@@ -250,7 +267,8 @@ export default function App() {
           onSwitchUser={switchUser}
         />
       )}
-      <div hidden={!!locked}>
+      {printing && <div hidden={!!locked}>{switching ? null : <PrintRoutes />}</div>}
+      <div hidden={!!locked || printing}>
         <header className="workspace-header">
           <Link className="brand" to="/dashboard">
             <Brand />
@@ -326,20 +344,16 @@ export default function App() {
                 path="/patients/new"
                 element={canWriteDemographics(role) ? <NewPatient /> : <Navigate to="/patients" replace />}
               />
-              <Route path="/patients/:id" element={<PatientProfile role={role} />} />
+              <Route path="/patients/:id" element={<PatientProfile role={role} billingOn={allowed('/billing')} />} />
               <Route path="/patients/:id/encounters/new" element={<NewEncounter role={role} />} />
               <Route path="/appointments" element={guarded('/appointments', <ComingSoon title="Appointments" />)} />
               <Route path="/messages" element={guarded('/messages', <ComingSoon title="Messages" />)} />
+              <Route path="/billing/new" element={guarded('/billing', <NewBill features={member.features} />)} />
               <Route
-                path="/billing"
-                element={guarded(
-                  '/billing',
-                  <>
-                    <h1>Billing</h1>
-                    <BillingPlaceholder />
-                  </>,
-                )}
+                path="/billing/invoices/:id"
+                element={guarded('/billing', <InvoiceScreen role={role} features={member.features} />)}
               />
+              <Route path="/billing/:tab?" element={guarded('/billing', <BillingScreen role={role} />)} />
               <Route path="/library" element={guarded('/library', <LibraryScreen role={role} />)} />
               <Route path="/printing" element={<ComingSoon title="Printing" />} />
               <Route path="/account" element={<MyAccount session={session} onSaved={refreshSession} standalone />} />
@@ -353,6 +367,8 @@ export default function App() {
               {/* Addresses from before the eight tabs. */}
               <Route path="/audit" element={<Navigate to="/settings/activity" replace />} />
               <Route path="/backups" element={<Navigate to="/settings/backups" replace />} />
+              {/* Print pages are drawn above, without the tabs; this keeps the catch-all from sending them away. */}
+              <Route path="/print/*" element={null} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           )}
@@ -364,9 +380,21 @@ export default function App() {
             title={scanProblem === 'revoked' ? 'This card is no longer valid' : 'Barcode not recognised'}
             onClose={() => setScanProblem('')}
             footer={
-              <button data-autofocus onClick={() => setScanProblem('')}>
-                Close
-              </button>
+              <>
+                <button data-autofocus className="secondary" onClick={() => setScanProblem('')}>
+                  Close
+                </button>
+                {scanProblem === 'unknown' && canAddProduct && (
+                  <button
+                    onClick={() => {
+                      setScanProblem('');
+                      navigate(`/billing/prices?barcode=${encodeURIComponent(unknownCode)}`);
+                    }}
+                  >
+                    Add as a new product
+                  </button>
+                )}
+              </>
             }
           >
             {scanProblem === 'revoked' ? (

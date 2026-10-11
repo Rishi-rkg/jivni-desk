@@ -1542,3 +1542,121 @@ td select {
 .finder .error {
   margin: 0 18px 12px;
 }
+
+/* Billing */
+.field-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.group-row td {
+  background: var(--soft);
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 16px;
+}
+.bill-lines th:nth-child(2),
+.bill-lines td:nth-child(2) {
+  width: 90px;
+}
+.bill-lines th:nth-child(3),
+.bill-lines td:nth-child(3) {
+  width: 120px;
+}
+.bill-lines th:nth-child(4),
+.bill-lines td:nth-child(4) {
+  width: 100px;
+}
+.bill-lines th:nth-child(5),
+.bill-lines td:nth-child(5) {
+  width: 120px;
+}
+.bill-lines th:last-child,
+.bill-lines td:last-child {
+  width: 40px;
+}
+.bill-lines td {
+  vertical-align: middle;
+}
+.custom-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px;
+  gap: 8px;
+}
+.bill-foot {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+}
+.bill-total {
+  font-weight: 650;
+  font-size: 1.1rem;
+}
+.bill-note,
+.inset {
+  margin: 12px 16px;
+}
+.total-row td {
+  border-bottom: 0;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.who-fields {
+  margin-top: 12px;
+}
+.panel-action {
+  margin: 10px 0 0;
+}
+.history span {
+  display: block;
+}
+.pick {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-top: 6px;
+  background: white;
+  color: inherit;
+  text-align: left;
+}
+.pick:hover,
+.pick.sel {
+  border-color: var(--accent);
+  background: #eef4f7;
+}
+.pick-list {
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 8px;
+}
+.wide-search {
+  width: 260px !important;
+}
+.day-end table {
+  max-width: 420px;
+  margin-bottom: 12px;
+}
+.heading h1 .badge {
+  vertical-align: middle;
+  font-weight: 400;
+}
+
+#toast-host {
+  right: auto;
+  left: 20px;
+  align-items: flex-start;
+}
+.check {
+  font-weight: 400;
+}
+.who-fields + p {
+  margin-top: 10px;
+  margin-bottom: 0;
+}

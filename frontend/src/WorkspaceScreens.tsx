@@ -25,7 +25,7 @@ export function Dashboard({ role }: { role: Role }) {
     // A scanned or typed patient card code opens the patient directly; anything else is a search.
     if (looksLikePatientCode(text))
       resolveScan(text)
-        .then((result) => navigate(`/patients/${result.patient.id}`))
+        .then((result) => (result.kind === 'patient' ? navigate(`/patients/${result.patient.id}`) : search()))
         .catch(search);
     else search();
   }

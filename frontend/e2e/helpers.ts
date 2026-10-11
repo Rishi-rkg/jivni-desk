@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { Page, expect } from '@playwright/test';
 
 // Written by 00-setup for this run only. Synthetic clinic, synthetic people.
@@ -33,4 +33,23 @@ export async function shot(page: Page, name: string) {
   if (!process.env.JIVNI_SHOTS) return;
   mkdirSync('../.tools/shots', { recursive: true });
   await page.screenshot({ path: `../.tools/shots/${name}.png`, fullPage: true });
+}
+
+/**
+ * Prints the page to a PDF the way "Save as PDF" does, and reports its page count and paper size in
+ * points (72 to the inch). With JIVNI_SHOTS set the file is kept in .tools/shots for a look.
+ */
+export async function printToPdf(page: Page, name: string) {
+  const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  if (process.env.JIVNI_SHOTS) {
+    mkdirSync('../.tools/shots', { recursive: true });
+    writeFileSync(`../.tools/shots/${name}.pdf`, pdf);
+  }
+  const text = pdf.toString('latin1');
+  const box = /\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/.exec(text);
+  return {
+    count: (text.match(/\/Type\s*\/Page(?![s\w])/g) ?? []).length,
+    width: box ? Number(box[3]) - Number(box[1]) : 0,
+    height: box ? Number(box[4]) - Number(box[2]) : 0,
+  };
 }

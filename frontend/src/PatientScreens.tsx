@@ -13,7 +13,7 @@ import {
   canWriteDemographics,
   displayName,
 } from './types';
-import { BillingPlaceholder } from './WorkspaceScreens';
+import { PatientBilling } from './BillingScreen';
 import { useUnsavedChanges } from './useUnsavedChanges';
 
 export function NewPatient() {
@@ -227,7 +227,7 @@ function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounte
   );
 }
 
-export function PatientProfile({ role }: { role: Role }) {
+export function PatientProfile({ role, billingOn = true }: { role: Role; billingOn?: boolean }) {
   const { id } = useParams();
   const location = useLocation();
   const [params] = useSearchParams();
@@ -418,7 +418,6 @@ export function PatientProfile({ role }: { role: Role }) {
             className={tab === t ? 'active' : ''}
           >
             {t[0].toUpperCase() + t.slice(1)}
-            {t === 'billing' && <span className="planned-label">Planned</span>}
           </Link>
         ))}
       </nav>
@@ -647,7 +646,12 @@ export function PatientProfile({ role }: { role: Role }) {
               )}
             </>
           )}
-          {tab === 'billing' && <BillingPlaceholder patientName={displayName(patient)} />}
+          {tab === 'billing' &&
+            (billingOn ? (
+              <PatientBilling patientId={patient.id} patientName={displayName(patient)} role={role} />
+            ) : (
+              <p className="panel muted">Billing is not available for your role, or is switched off for this clinic.</p>
+            ))}
         </section>
       </div>
     </>

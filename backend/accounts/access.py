@@ -6,6 +6,14 @@ CLINICAL_READ = {"owner", "clinician", "assistant"}
 CLINICAL_WRITE = {"owner", "clinician"}
 DEMOGRAPHIC_WRITE = {"owner", "clinician", "assistant", "reception"}
 CLINIC_ADMIN = {"owner", "admin"}
+# Bills hold no clinical text (prescribed medicines are one unnamed line), so the front desk works with them.
+BILLING_READ = {"owner", "clinician", "reception", "billing"}
+BILLING_WRITE = {"owner", "clinician", "reception", "billing"}
+# Voids, credit notes and refunds undo money that was recorded: owner or billing only.
+BILLING_CORRECT = {"owner", "billing"}
+PRICE_LIST_READ = BILLING_READ | {"admin"}
+PRICE_LIST_WRITE = {"owner", "admin"}
+DAY_END = {"owner", "billing"}
 
 
 def membership(request):

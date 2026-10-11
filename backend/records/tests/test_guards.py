@@ -92,14 +92,14 @@ class DatabaseGuardTests(TestCase):
 
     def test_no_guarded_table_is_missing_its_trigger(self):
         installed = guards.guarded_tables()
-        for table in guards.APPEND_ONLY_TABLES:
+        for table in guards.all_append_only_tables():
             self.assertTrue(any("append_only" in name for name in installed.get(table, ())), table)
         for table in guards.IDENTITY_TABLES:
             self.assertTrue(any("identity" in name for name in installed.get(table, ())), table)
 
     def test_every_append_only_model_is_listed(self):
         declared = {model._meta.db_table for model in apps.get_models() if issubclass(model, AppendOnlyRecord)} | {"audit_auditevent"}
-        self.assertEqual(declared, set(guards.APPEND_ONLY_TABLES))
+        self.assertEqual(declared, set(guards.all_append_only_tables()))
 
     def test_sqlite_guards_survive_a_table_rebuild(self):
         if connection.vendor != "sqlite":
@@ -113,6 +113,6 @@ class DatabaseGuardTests(TestCase):
         self.assertEqual(guards.guarded_tables(), {})
         # ... and afterwards every one is back.
         guards.install_sqlite_guards()
-        for table in guards.APPEND_ONLY_TABLES + guards.IDENTITY_TABLES:
+        for table in guards.all_append_only_tables() + guards.IDENTITY_TABLES:
             self.assertTrue(guards.guarded_tables().get(table), table)
         self.assertIn("guard_append_only_delete_records_patientnote", guards.guarded_tables()["records_patientnote"])

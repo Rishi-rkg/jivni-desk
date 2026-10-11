@@ -10,7 +10,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from accounts.access import CLINIC_ADMIN, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE, membership, require_role
+from accounts.access import BILLING_READ, CLINIC_ADMIN, CLINICAL_READ, CLINICAL_WRITE, DEMOGRAPHIC_WRITE, membership, require_role
+from accounts.features import feature_on
 from audit.models import AuditEvent, record_event
 
 from .models import Encounter, Patient, PatientIdentifier, PatientNote, PatientPhoto, normalize_patient_code
@@ -247,8 +248,8 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
 class ScanViewSet(ClinicViewSet):
     """The one place that answers "what is this barcode?", so every scanner in the clinic behaves the same.
 
-    Today it knows patient card codes. Product barcodes join here when the product list is built; the
-    screen then decides where to go (patient record, add to the open visit's bill, or a new bill).
+    It knows patient card codes and the barcodes of products in the price list. The screen then decides
+    where to go: the patient record, a line on the open bill or visit, or a new bill.
     """
 
     lookup_field = "code"
@@ -267,12 +268,31 @@ class ScanViewSet(ClinicViewSet):
                 self.event("patient.scan", patient)
                 data = PatientSerializer(patient, context=self.get_serializer_context()).data
                 return Response({"kind": "patient", "patient": data})
+        product = self.product(code)
+        if product:
+            self.event("scan.product", product)
+            return Response({"kind": "product", "product": product_data(product)})
         # What was scanned is never written to the audit log.
         record_event(request, "scan.unknown", clinic=self.member.clinic, outcome="failed")
         if normalized and PatientIdentifier.objects.filter(code=normalized, patient__clinic=self.member.clinic).exists():
             # A card that was replaced: say so, but open nothing.
             return Response({"kind": "revoked", "detail": "This card is no longer valid."}, status=404)
         return Response({"kind": "unknown", "detail": "Nothing in this clinic matches that code."}, status=404)
+
+    def product(self, code):
+        """A pack from the price list, when the clinic sells products and the person works with bills."""
+        from billing.models import PriceItem
+
+        clinic, barcode = self.member.clinic, "".join(str(code).split())
+        if not (barcode and feature_on(clinic, "billing") and feature_on(clinic, "product_sales")):
+            return None
+        if self.member.role_id not in BILLING_READ | CLINICAL_READ:
+            return None
+        return PriceItem.objects.filter(clinic=clinic, barcode=barcode, active=True).first()
+
+
+def product_data(item):
+    return {"id": str(item.pk), "name": item.name, "kind": item.kind, "rate": str(item.rate), "gst_rate": str(item.gst_rate)}
 
 
 class PhotoViewSet(mixins.RetrieveModelMixin, ClinicViewSet):

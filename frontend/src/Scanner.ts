@@ -6,8 +6,15 @@ import { Patient } from './types';
 const MAX_GAP_MS = 50;
 const MIN_LENGTH = 6;
 
-/** What the server says a scanned code is. Products join when the product list is built. */
-export type ScanResult = { kind: 'patient'; patient: Patient };
+export interface Product {
+  id: string;
+  name: string;
+  kind: string;
+  rate: string;
+  gst_rate: string;
+}
+/** What the server says a scanned code is. */
+export type ScanResult = { kind: 'patient'; patient: Patient } | { kind: 'product'; product: Product };
 
 export const looksLikePatientCode = (text: string) => /^(PAT-)?[2-9A-HJKMNP-TV-Z]{10}$/i.test(text.replace(/\s/g, ''));
 
@@ -55,4 +62,30 @@ export function useScanner(active: boolean, onScan: (code: string) => void) {
     window.addEventListener('keydown', onKeyDown, true);
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [active]);
+}
+
+/*
+ * Where a scanned product goes depends on what is open. A screen that can take products (an open
+ * bill, an open visit) claims them while it is on screen; with nothing claiming, a new bill starts.
+ */
+type ProductTaker = (product: Product) => void;
+let productTaker: ProductTaker | null = null;
+
+export const takeScannedProduct = (product: Product) => {
+  if (!productTaker) return false;
+  productTaker(product);
+  return true;
+};
+
+/** While the calling screen is open, scanned products are handed to it. */
+export function useProductScans(take: ProductTaker) {
+  const latest = useRef(take);
+  latest.current = take;
+  useEffect(() => {
+    const taker: ProductTaker = (product) => latest.current(product);
+    productTaker = taker;
+    return () => {
+      if (productTaker === taker) productTaker = null;
+    };
+  }, []);
 }

@@ -28,6 +28,25 @@ APPEND_ONLY_TABLES = [
 # Rows may change, but never their identity.
 IDENTITY_TABLES = ["records_patient", "records_patientaddress", "records_patientphoto", "records_patientidentifier"]
 
+# Other parts of the application (billing, appointments, messages, printing) add their own tables
+# and their own SQLite triggers here from their AppConfig.ready(); their PostgreSQL triggers come
+# from their own migrations.
+EXTRA_APPEND_ONLY = []
+EXTRA_SQLITE = []
+
+
+def register(append_only=(), sqlite=None):
+    for table in append_only:
+        if table not in EXTRA_APPEND_ONLY:
+            EXTRA_APPEND_ONLY.append(table)
+    if sqlite and sqlite not in EXTRA_SQLITE:
+        EXTRA_SQLITE.append(sqlite)
+
+
+def all_append_only_tables():
+    return APPEND_ONLY_TABLES + EXTRA_APPEND_ONLY
+
+
 APPEND_ONLY_MESSAGE = "Clinical records and audit events are append-only"
 IDENTITY_MESSAGE = "Record identity is immutable"
 CLINIC_MESSAGE = "Patient clinic is immutable"
@@ -35,7 +54,9 @@ OBSERVATION_MESSAGE = "Observation must match its encounter and use the right un
 
 
 def _sqlite_statements(existing):
-    for table in APPEND_ONLY_TABLES:
+    for extra in EXTRA_SQLITE:
+        yield from extra(existing)
+    for table in all_append_only_tables():
         if table in existing:
             for event in ("UPDATE", "DELETE"):
                 yield (

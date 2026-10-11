@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "records",
     "audit",
     "vault",
+    "billing",
 ]
 MIDDLEWARE = [
     "config.middleware.RequestIdMiddleware",
