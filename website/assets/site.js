@@ -194,7 +194,9 @@
       const row = make("div", "credit");
       const body = make("div");
       body.append(make("strong", "", item.what), make("br"));
-      if (item.src && item.author) {
+      if (item.src && item.generated) {
+        body.append(`Generated for Jivni with ${item.generated}. Not a photograph of real people or a real place.`);
+      } else if (item.src && item.author) {
         body.append(`By ${item.author}`);
         if (item.license) body.append(`, ${item.license}`);
         if (item.source) {

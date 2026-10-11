@@ -38,12 +38,15 @@ window.JIVNI = {
     { sample: true, quote: "A third, from a clinic with more than one branch.", name: "Doctor's name", place: "Clinic, city" },
   ],
 
-  // Stock photographs. Pages refer to them by id with data-media="id".
-  // While src is null the slot shows a labelled placeholder.
+  // Photographs. Pages refer to them by id with data-media="id". With no src
+  // the slot shows a labelled placeholder. An entry marked generated was made
+  // with that image model and is credited as such; a stock photograph has
+  // author, source and license instead.
   images: [
     {
       id: "clinic-desk",
-      src: null,
+      src: "assets/media/clinic-desk.jpg",
+      generated: "Z-Image Turbo",
       alt: "A doctor's desk with a laptop, remedy bottles and paper envelopes",
       brief: "Doctor's desk: laptop, remedy bottles, paper envelopes",
       author: null,
@@ -52,7 +55,8 @@ window.JIVNI = {
     },
     {
       id: "reception",
-      src: null,
+      src: "assets/media/reception.jpg",
+      generated: "Z-Image Turbo",
       alt: "A small clinic reception with a patient being greeted",
       brief: "Small clinic reception, a patient being greeted",
       author: null,
@@ -61,7 +65,8 @@ window.JIVNI = {
     },
     {
       id: "remedies",
-      src: null,
+      src: "assets/media/remedies.jpg",
+      generated: "Z-Image Turbo",
       alt: "Glass vials of homeopathic globules on a shelf",
       brief: "Glass vials of globules on a shelf, close up",
       author: null,

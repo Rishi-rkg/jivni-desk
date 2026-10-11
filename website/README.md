@@ -12,7 +12,8 @@ as it is (Cloudflare Pages: no build command, output directory `website`).
 | `pricing.html` | Free and Enterprise plans for the hosted app at jivnidesk.app |
 | `credits.html` | Every attribution on one page, built from `assets/config.js` |
 | `assets/config.js` | Release repository, app address, and every video and photograph with its attribution |
-| `assets/demo.js`, `assets/demo.css` | The scripted pointer and the floating app sample in the hero |
+| `assets/demo.js`, `assets/demo.css` | The scripted pointer and the large floating app sample |
+| `assets/scenes.js`, `assets/scenes.css` | The four smaller animated samples: patients, calendar, WhatsApp, bills |
 
 ## Preview
 
@@ -36,6 +37,12 @@ Pexels clips, crossfaded, at 1280 x 720 with no sound (about 1.6 MB and
 1.1 MB). The clips and their authors are listed under `clips` in
 `assets/config.js`, which is what the credits page shows. Visitors who ask
 for reduced motion or data saving get the poster image instead.
+
+## Photographs
+
+The three photographs in `assets/media/` were generated on the owner's local
+ComfyUI with Z-Image Turbo (1536 x 1024) and are credited as generated
+images. Replace one by changing its entry in `assets/config.js`.
 
 ## Testimonials
 
