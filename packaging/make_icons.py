@@ -87,7 +87,8 @@ def svg(mono=False):
         f'fill="none" stroke="{j}" stroke-width="{STROKE}" stroke-linecap="round" stroke-linejoin="round"/>'
         f'<path d="M{base[0]:.1f} {base[1]:.1f}Q{outer[0]:.1f} {outer[1]:.1f} {tip[0]:.1f} {tip[1]:.1f}'
         f'Q{inner[0]:.1f} {inner[1]:.1f} {base[0]:.1f} {base[1]:.1f}Z" fill="{green}"/>'
-        f'<path d="M{base[0]:.1f} {base[1]:.1f}L{vein[0]:.1f} {vein[1]:.1f}" stroke="{vein_colour}" stroke-width="{LEAF_VEIN}" stroke-linecap="round"/>'
+        f'<path d="M{base[0]:.1f} {base[1]:.1f}L{vein[0]:.1f} {vein[1]:.1f}" '
+        f'stroke="{vein_colour}" stroke-width="{LEAF_VEIN}" stroke-linecap="round"/>'
         f'<rect x="{PLUS_CX - PLUS_ARM}" y="{PLUS_CY - half}" width="{PLUS_ARM * 2}" height="{PLUS_THICK}" rx="{half}" fill="{plus}"/>'
         f'<rect x="{PLUS_CX - half}" y="{PLUS_CY - PLUS_ARM}" width="{PLUS_THICK}" height="{PLUS_ARM * 2}" rx="{half}" fill="{plus}"/>'
         "</svg>\n"
