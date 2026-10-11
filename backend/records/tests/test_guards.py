@@ -16,6 +16,8 @@ from records import guards
 from records.models import (
     AppendOnlyRecord,
     Encounter,
+    EncounterAmendment,
+    EncounterProduct,
     Observation,
     Patient,
     PatientIdentifier,
@@ -52,6 +54,8 @@ class DatabaseGuardTests(TestCase):
             prescription,
             PrescriptionItem.objects.create(prescription=prescription, medicine_name_snapshot="Synthetic", dose="1", frequency="daily"),
             PatientRevision.objects.create(patient=self.patient, changed_by=self.user, changes={"phone": {"from": "", "to": "1"}}),
+            EncounterProduct.objects.create(encounter=self.encounter, name="Synthetic product", rate=1),
+            EncounterAmendment.objects.create(encounter=self.encounter, author=self.user, section="other", correction="x", reason="y"),
             AuditEvent.objects.create(clinic=self.clinic, actor=self.user, action="test"),
         ]
         self.assertEqual({row._meta.db_table for row in rows}, set(guards.APPEND_ONLY_TABLES))

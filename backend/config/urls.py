@@ -11,7 +11,16 @@ from accounts.api import ClinicLogoView, ClinicSettingsView
 from billing.views import BillingReportViewSet, InvoiceViewSet, PaymentViewSet, PriceItemViewSet
 from modules.contracts import MODULES
 from printing.views import PrintDataViewSet, PrintJobViewSet, PrintTemplateViewSet
-from records.views import AuditViewSet, EncounterViewSet, NoteViewSet, PatientViewSet, PhotoViewSet, ScanViewSet
+from records.views import (
+    AuditViewSet,
+    EncounterViewSet,
+    NoteViewSet,
+    PatientViewSet,
+    PhotoViewSet,
+    PrescriptionSetViewSet,
+    ScanViewSet,
+    VisitDraftViewSet,
+)
 from vault import api as backups
 
 router = DefaultRouter()
@@ -21,6 +30,8 @@ router.register("encounters", EncounterViewSet, basename="encounter")
 router.register("photos", PhotoViewSet, basename="photo")
 router.register("audit-events", AuditViewSet, basename="audit")
 router.register("scan", ScanViewSet, basename="scan")
+router.register("visit-drafts", VisitDraftViewSet, basename="visit-draft")
+router.register("prescription-sets", PrescriptionSetViewSet, basename="prescription-set")
 router.register("price-items", PriceItemViewSet, basename="price-item")
 router.register("invoices", InvoiceViewSet, basename="invoice")
 router.register("payments", PaymentViewSet, basename="payment")

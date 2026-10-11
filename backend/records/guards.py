@@ -23,8 +23,12 @@ APPEND_ONLY_TABLES = [
     "records_prescription",
     "records_prescriptionitem",
     "records_patientrevision",
+    "records_encounterproduct",
+    "records_encounteramendment",
     "audit_auditevent",
 ]
+# What is measured at a visit and its unit; kept in step with records.models.OBSERVATION_UNITS by a test.
+OBSERVATION_UNITS = {"height": "cm", "weight": "kg", "systolic": "mmHg", "diastolic": "mmHg", "pulse": "bpm"}
 # Rows may change, but never their identity.
 IDENTITY_TABLES = ["records_patient", "records_patientaddress", "records_patientphoto", "records_patientidentifier"]
 
@@ -75,10 +79,11 @@ def _sqlite_statements(existing):
             f"WHEN NEW.clinic_id IS NOT OLD.clinic_id BEGIN SELECT RAISE(ABORT, '{CLINIC_MESSAGE}'); END"
         )
     if {"records_observation", "records_encounter"} <= existing:
+        pairs = [f"(NEW.kind = '{kind}' AND NEW.unit = '{unit}')" for kind, unit in OBSERVATION_UNITS.items()]
         yield (
             "CREATE TRIGGER IF NOT EXISTS guard_observation BEFORE INSERT ON records_observation "
             "WHEN NEW.patient_id IS NOT (SELECT patient_id FROM records_encounter WHERE id = NEW.encounter_id) "
-            "OR NOT ((NEW.kind = 'height' AND NEW.unit = 'cm') OR (NEW.kind = 'weight' AND NEW.unit = 'kg')) "
+            f"OR NOT ({' OR '.join(pairs)}) "
             f"BEGIN SELECT RAISE(ABORT, '{OBSERVATION_MESSAGE}'); END"
         )
 

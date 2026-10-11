@@ -251,7 +251,7 @@ class InvoiceViewSet(
             encounter = (
                 Encounter.objects.filter(patient__clinic=self.member.clinic)
                 .select_related("patient", "clinician")
-                .prefetch_related("prescriptions")
+                .prefetch_related("prescriptions", "products")
                 .get(pk=uuid.UUID(str(request.data.get("encounter"))))
             )
         except (Encounter.DoesNotExist, ValueError):
@@ -283,6 +283,20 @@ class InvoiceViewSet(
                     "gst_rate": item.gst_rate if item else ZERO,
                 }
             )
+        # Products advised at the visit are separate lines, at the price written down that day.
+        if feature_on(clinic, "product_sales"):
+            listed = {item.pk: item for item in PriceItem.objects.filter(clinic=clinic)}
+            for product in encounter.products.all():
+                lines.append(
+                    {
+                        "price_item": listed.get(product.price_item_id),
+                        "kind": product.kind,
+                        "description": product.name,
+                        "quantity": product.quantity,
+                        "rate": product.rate,
+                        "gst_rate": product.gst_rate,
+                    }
+                )
         with transaction.atomic():
             invoice = Invoice.objects.create(clinic=clinic, patient=encounter.patient, encounter=encounter, created_by=request.user)
             for position, line in enumerate(lines):

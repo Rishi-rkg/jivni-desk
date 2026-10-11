@@ -29,25 +29,51 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
 
   await page.getByRole('link', { name: 'New visit' }).click();
   // Something to remember about the person, kept apart from the clinical record.
+  await page.getByRole('button', { name: '+ Add', exact: true }).click();
   await page.getByLabel('Add something to remember').fill('Synthetic: teaches dance on weekends');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
   await expect(page.getByText('Synthetic: teaches dance on weekends')).toBeVisible();
   await page.getByLabel("Complaint, in the patient's words").fill('Synthetic complaint for the smoke test');
   await page.getByLabel("Doctor's notes for this visit").fill('Synthetic internal note');
+  await page.getByText('Measurements (optional)').click();
+  await page.getByLabel('BP', { exact: true }).fill('118/76');
   // One envelope: a mix of two medicines with one dosage line.
-  await page.getByRole('button', { name: 'Add an envelope' }).click();
+  await page.getByRole('button', { name: '+ Add an envelope' }).click();
   await page.getByLabel('Medicine name').fill('Synthetic remedy');
-  await page.getByRole('button', { name: 'Add a medicine to this mix' }).click();
+  await page.getByRole('button', { name: '+ Add a medicine to this mix' }).click();
   await page.getByLabel('Medicine name').nth(1).fill('Second synthetic remedy');
   await page.getByLabel('Amount', { exact: true }).fill('4');
   await page.getByLabel('When', { exact: true }).selectOption('before meals');
   await page.getByLabel('For', { exact: true }).fill('14');
-  await expect(page.getByText('Label will read: 4 tabs, twice daily before meals · 14 days')).toBeVisible();
-  await page.getByRole('button', { name: '2 weeks' }).click();
-  await page.getByRole('button', { name: 'Save visit' }).click();
-  await expect(page.getByText('Visit saved.')).toBeVisible();
+  await expect(page.getByLabel('Label will read: 4 tabs, twice daily before meals · 14 days')).toBeVisible();
+  await page.getByRole('radio', { name: '2 wk' }).click();
+  await shot(page, '01-visit');
+  // The draft saves itself; closing the page and coming back finds the work as it was left.
+  await expect(page.getByText(/Draft saved \d\d:\d\d\./).first()).toBeVisible({ timeout: 15_000 });
+  await page.reload();
+  await expect(page.getByLabel("Complaint, in the patient's words")).toHaveValue(
+    'Synthetic complaint for the smoke test',
+  );
+  await expect(page.getByLabel('Medicine name').nth(1)).toHaveValue('Second synthetic remedy');
+  // Labels and the bill have their own tests; here the visit is simply made final.
+  await page.getByLabel('Print envelope label').uncheck();
+  await page.getByLabel(/Create the bill/).uncheck();
+  await page.getByRole('button', { name: 'Finalise visit' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Finalise this visit?' })
+    .getByRole('button', { name: 'Finalise' })
+    .click();
+  await expect(page.getByText('Visit finalised.')).toBeVisible();
   await expect(page.getByText('Synthetic complaint for the smoke test').first()).toBeVisible();
   await expect(page.getByText('Envelope: 4 tabs, twice daily before meals · 14 days')).toBeVisible();
+  // A finalised visit is corrected by adding beside it.
+  await page.getByRole('button', { name: 'Amend' }).click();
+  const amending = page.getByRole('dialog', { name: /Amend visit/ });
+  await amending.getByLabel('Correction').fill('Synthetic correction to the prescription');
+  await amending.getByLabel('Reason').fill('Typing mistake');
+  await amending.getByRole('button', { name: 'Add amendment' }).click();
+  await expect(page.getByText('Synthetic correction to the prescription')).toBeVisible();
+  await expect(page.getByText('Amended')).toBeVisible();
 
   // A barcode scanner types the card code very fast and presses Enter; that opens the patient from anywhere.
   const code = (await page.getByText(/^PAT-[2-9A-Z]{10}$/).textContent()) ?? '';

@@ -4,7 +4,11 @@ from rest_framework import serializers
 from accounts.access import CLINICAL_WRITE
 
 from .models import (
+    OBSERVATION_UNITS,
     Encounter,
+    EncounterAmendment,
+    EncounterDraft,
+    EncounterProduct,
     Observation,
     Patient,
     PatientAddress,
@@ -14,6 +18,7 @@ from .models import (
     PatientRevision,
     Prescription,
     PrescriptionItem,
+    PrescriptionSet,
 )
 
 
@@ -168,8 +173,8 @@ class ObservationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def validate(self, attrs):
-        if attrs["unit"] != {"height": "cm", "weight": "kg"}[attrs["kind"]]:
-            raise serializers.ValidationError("Height uses cm; weight uses kg.")
+        if attrs["unit"] != OBSERVATION_UNITS[attrs["kind"]]:
+            raise serializers.ValidationError(f"{attrs['kind'].capitalize()} is written in {OBSERVATION_UNITS[attrs['kind']]}.")
         return attrs
 
 
@@ -194,10 +199,39 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         return value
 
 
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EncounterProduct
+        fields = ["id", "price_item_id", "name", "kind", "quantity", "rate", "gst_rate", "note"]
+        read_only_fields = ["id"]
+
+    def validate_kind(self, value):
+        if value not in {"supplement", "shelf", "consumable"}:
+            raise serializers.ValidationError("A visit product is a supplement, a shelf medicine or a consumable.")
+        return value
+
+
+class AmendmentSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EncounterAmendment
+        fields = ["id", "section", "correction", "reason", "author_name", "created_at"]
+        read_only_fields = ["id", "author_name", "created_at"]
+
+    def get_author_name(self, amendment):
+        return amendment.author.get_full_name() or amendment.author.username
+
+
 class EncounterSerializer(serializers.ModelSerializer):
     observations = ObservationSerializer(many=True, required=False)
     prescriptions = PrescriptionSerializer(many=True, required=False)
+    products = ProductSerializer(many=True, required=False)
+    amendments = AmendmentSerializer(many=True, read_only=True)
     clinician_name = serializers.CharField(source="clinician.get_full_name", read_only=True)
+    # The draft this visit was written in; it is removed in the same step that makes the visit final.
+    draft = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    invoice = serializers.SerializerMethodField()
 
     class Meta:
         model = Encounter
@@ -216,9 +250,28 @@ class EncounterSerializer(serializers.ModelSerializer):
             "progress",
             "observations",
             "prescriptions",
+            "products",
+            "amendments",
+            "draft",
+            "invoice",
             "created_at",
         ]
         read_only_fields = ["id", "clinician_name", "created_at"]
+
+    def get_invoice(self, encounter):
+        """The bill made from this visit, if there is one: enough to link to it and show its state."""
+        bills = [bill for bill in encounter.invoices.all() if bill.status != "void"]
+        return {"id": str(bills[0].pk), "number": bills[0].number, "state": bills[0].state} if bills else None
+
+    def validate_products(self, value):
+        if len(value) > 30:
+            raise serializers.ValidationError("A visit holds at most 30 products.")
+        return value
+
+    def validate_prescriptions(self, value):
+        if len(value) > 12:
+            raise serializers.ValidationError("A visit holds at most 12 envelopes.")
+        return value
 
     def get_fields(self):
         fields = super().get_fields()
@@ -239,7 +292,14 @@ class EncounterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         observations = validated_data.pop("observations", [])
         prescriptions = validated_data.pop("prescriptions", [])
+        products = validated_data.pop("products", [])
+        draft = validated_data.pop("draft", None)
         encounter = Encounter.objects.create(**validated_data)
+        for position, data in enumerate(products):
+            EncounterProduct.objects.create(encounter=encounter, position=position, **data)
+        if draft:
+            # Only the draft of this patient in this clinic; anything else is quietly left alone.
+            EncounterDraft.objects.filter(pk=draft, patient=encounter.patient).delete()
         for data in observations:
             Observation.objects.create(patient=encounter.patient, encounter=encounter, **data)
         for position, data in enumerate(prescriptions):
@@ -248,3 +308,68 @@ class EncounterSerializer(serializers.ModelSerializer):
             for at, item in enumerate(items):
                 PrescriptionItem.objects.create(prescription=prescription, position=at, **item)
         return encounter
+
+
+MAX_DRAFT_BYTES = 200_000
+
+
+def bounded_json(value, limit=MAX_DRAFT_BYTES):
+    import json
+
+    if not isinstance(value, dict | list):
+        raise serializers.ValidationError("Send the contents as named values.")
+    if len(json.dumps(value)) > limit:
+        raise serializers.ValidationError("This is too large to save.")
+    return value
+
+
+class DraftSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    mine = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EncounterDraft
+        fields = ["id", "patient", "patient_name", "author_name", "mine", "data", "created_at", "updated_at"]
+        read_only_fields = ["id", "patient_name", "author_name", "mine", "created_at", "updated_at"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        member = self.context.get("member")
+        if member:
+            fields["patient"].queryset = Patient.objects.filter(clinic=member.clinic, archived_at__isnull=True)
+        return fields
+
+    def get_author_name(self, draft):
+        return draft.author.get_full_name() or draft.author.username
+
+    def get_patient_name(self, draft):
+        patient = draft.patient
+        return " ".join(part for part in [patient.first_name, patient.middle_name, patient.last_name] if part)
+
+    def get_mine(self, draft):
+        return draft.author_id == self.context["request"].user.pk
+
+    def validate_data(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Send the draft as named values.")
+        return bounded_json(value)
+
+
+class PrescriptionSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescriptionSet
+        fields = ["id", "name", "envelopes", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+    def validate_name(self, value):
+        value = value.strip()
+        clinic = self.context["member"].clinic
+        if PrescriptionSet.objects.filter(clinic=clinic, name__iexact=value).exists():
+            raise serializers.ValidationError("A set with this name already exists.")
+        return value
+
+    def validate_envelopes(self, value):
+        if not isinstance(value, list) or not 1 <= len(value) <= 12:
+            raise serializers.ValidationError("A set holds between 1 and 12 envelopes.")
+        return bounded_json(value, 20_000)

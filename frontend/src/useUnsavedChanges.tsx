@@ -1,10 +1,16 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useBeforeUnload, useBlocker } from 'react-router-dom';
+import { Modal } from './ui';
 
 export const DraftStateContext = createContext<(dirty: boolean) => void>(() => {});
 
-export function useUnsavedChanges(dirty: boolean) {
+/**
+ * Warns before unsaved work is left behind (W13). With `saveDraft`, the warning also offers
+ * "Save draft and leave".
+ */
+export function useUnsavedChanges(dirty: boolean, saveDraft?: () => Promise<void>) {
   const reportDirty = useContext(DraftStateContext);
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
     reportDirty(dirty);
     return () => reportDirty(false);
@@ -22,34 +28,38 @@ export function useUnsavedChanges(dirty: boolean) {
   });
   const prompt =
     blocker.state === 'blocked' ? (
-      <div className="modal-backdrop">
-        <section
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="unsaved-title"
-          className="panel discard-dialog"
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') blocker.reset();
-            if (event.key === 'Tab') {
-              const buttons = Array.from(event.currentTarget.querySelectorAll('button'));
-              const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
-              event.preventDefault();
-              buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
-            }
-          }}
-        >
-          <h2 id="unsaved-title">Leave without saving?</h2>
-          <p>Your changes have not been saved.</p>
-          <div className="actions">
-            <button type="button" autoFocus onClick={() => blocker.reset()}>
+      <Modal
+        alert
+        title="Leave without saving?"
+        onClose={() => blocker.reset()}
+        footer={
+          <>
+            <button type="button" data-autofocus className="secondary" onClick={() => blocker.reset()}>
               Keep editing
             </button>
-            <button type="button" className="secondary" onClick={() => blocker.proceed()}>
+            {saveDraft && (
+              <button
+                type="button"
+                className="secondary"
+                disabled={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  await saveDraft();
+                  setSaving(false);
+                  blocker.proceed();
+                }}
+              >
+                Save draft and leave
+              </button>
+            )}
+            <button type="button" className="danger" onClick={() => blocker.proceed()}>
               Discard changes
             </button>
-          </div>
-        </section>
-      </div>
+          </>
+        }
+      >
+        <p>Your changes have not been saved.</p>
+      </Modal>
     ) : null;
   return { allowNavigation, prompt };
 }

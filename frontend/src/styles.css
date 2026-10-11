@@ -1676,3 +1676,101 @@ input.copies {
 fieldset[disabled] {
   opacity: 0.85;
 }
+
+/* Visit */
+.remember {
+  background: #fffaf0;
+  border: 1px solid #ead9b0;
+  border-radius: 5px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+.remember ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.remember-head {
+  margin: 0;
+}
+.remember > p {
+  margin: 6px 0 0;
+}
+.remember-add {
+  margin: 10px 0 0;
+}
+.visit-banner {
+  position: static;
+  padding-bottom: 6px;
+}
+.visit-banner p {
+  margin: 0;
+}
+.envelope {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: var(--soft);
+}
+.envelope-head {
+  margin-bottom: 6px;
+}
+.med-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 28px;
+  gap: 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.dose-title {
+  margin-top: 10px;
+}
+.dose-grid {
+  display: grid;
+  grid-template-columns: 64px 1fr 1.3fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.dose-grid2 {
+  display: grid;
+  grid-template-columns: 1.3fr 64px 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.dose-preview {
+  margin-top: 10px;
+  background: white;
+  border: 1px dashed #acbbc3;
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+.dose-preview strong {
+  font-size: 1.05rem;
+}
+.measurements {
+  margin-top: 10px;
+}
+.visit-when {
+  max-width: 260px;
+}
+.visit-product > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.product-note {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+}
+.next-step {
+  margin-top: 10px;
+}
+.scanned-product {
+  font-size: 1.05rem;
+}
+.drawer .heading {
+  margin-bottom: 12px;
+}
+.drawer.wide {
+  width: 520px;
+}

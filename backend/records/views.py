@@ -14,13 +14,26 @@ from accounts.access import BILLING_READ, CLINIC_ADMIN, CLINICAL_READ, CLINICAL_
 from accounts.features import feature_on
 from audit.models import AuditEvent, record_event
 
-from .models import Encounter, Patient, PatientIdentifier, PatientNote, PatientPhoto, normalize_patient_code
+from .models import (
+    Encounter,
+    EncounterAmendment,
+    EncounterDraft,
+    Patient,
+    PatientIdentifier,
+    PatientNote,
+    PatientPhoto,
+    PrescriptionSet,
+    normalize_patient_code,
+)
 from .serializers import (
+    AmendmentSerializer,
+    DraftSerializer,
     DuplicateCheckSerializer,
     EncounterSerializer,
     NoteSerializer,
     PatientSerializer,
     PhotoSerializer,
+    PrescriptionSetSerializer,
     RevisionSerializer,
 )
 from .storage import photo_store
@@ -121,7 +134,7 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         require_role(request, CLINICAL_READ)
         patient = self.get_object()
         # Timeline summary is bounded; full collections have paginated endpoints.
-        encounters = patient.encounters.select_related("clinician").prefetch_related("observations", "prescriptions__items")[:50]
+        encounters = patient.encounters.select_related("clinician").prefetch_related(*VISIT_PARTS)[:50]
         notes = patient.notes.select_related("author").order_by("-created_at", "id")
         if self.member.role_id not in CLINICAL_WRITE:
             notes = notes.exclude(kind=PatientNote.Kind.REMEMBER)
@@ -349,11 +362,7 @@ class EncounterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
         require_role(request, CLINICAL_READ if request.method in {"GET", "HEAD", "OPTIONS"} else CLINICAL_WRITE)
 
     def get_queryset(self):
-        queryset = (
-            Encounter.objects.filter(patient__clinic=self.member.clinic)
-            .select_related("clinician")
-            .prefetch_related("observations", "prescriptions__items")
-        )
+        queryset = Encounter.objects.filter(patient__clinic=self.member.clinic).select_related("clinician").prefetch_related(*VISIT_PARTS)
         if self.request.query_params.get("patient"):
             try:
                 patient_id = uuid.UUID(self.request.query_params["patient"])
@@ -376,6 +385,105 @@ class EncounterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
     def perform_create(self, serializer):
         encounter = serializer.save(clinician=self.request.user)
         self.event("encounter.create", encounter)
+
+    @action(detail=True, methods=["post"])
+    def amendments(self, request, pk=None):
+        """Correct a finalised visit by adding beside it. The visit itself is never rewritten."""
+        encounter = self.get_object()
+        serializer = AmendmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            amendment = EncounterAmendment.objects.create(encounter=encounter, author=request.user, **serializer.validated_data)
+            self.event("encounter.amend", encounter)
+        return Response(AmendmentSerializer(amendment).data, status=201)
+
+
+# Everything a visit is shown with, fetched together.
+VISIT_PARTS = ["observations", "prescriptions__items", "products", "amendments__author", "invoices__payments", "invoices__credit_notes"]
+
+
+class DoctorsOnlyViewSet(ClinicViewSet):
+    """Working material of the doctors: nobody else reads or writes it."""
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        require_role(request, CLINICAL_WRITE)
+
+
+class VisitDraftViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, DoctorsOnlyViewSet
+):
+    """Visits being written. A draft can be changed and thrown away; finalising it is `POST encounters/` with its ID."""
+
+    serializer_class = DraftSerializer
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = EncounterDraft.objects.filter(patient__clinic=self.member.clinic).select_related("patient", "author")
+        if self.action == "list" and self.request.query_params.get("patient"):
+            try:
+                queryset = queryset.filter(patient_id=uuid.UUID(self.request.query_params["patient"]))
+            except ValueError:
+                raise serializers.ValidationError({"patient": "Invalid patient ID."}) from None
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        self.event("visit_draft.list")
+        return response
+
+    def create(self, request):
+        """Save the signed-in doctor's draft for a patient, replacing their earlier one."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            draft, created = EncounterDraft.objects.get_or_create(
+                patient=serializer.validated_data["patient"],
+                author=request.user,
+                defaults={"data": serializer.validated_data.get("data", {})},
+            )
+            if not created:
+                draft.data = serializer.validated_data.get("data", {})
+                draft.save()
+            self.event("visit_draft.save", draft)
+        return Response(self.get_serializer(draft).data, status=201 if created else 200)
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        if serializer.instance.author_id != self.request.user.pk:
+            raise PermissionDenied("Another doctor is writing this draft.")
+        if "patient" in serializer.validated_data and serializer.validated_data["patient"].pk != serializer.instance.patient_id:
+            raise serializers.ValidationError({"patient": "A draft stays with its patient."})
+        draft = serializer.save()
+        self.event("visit_draft.save", draft)
+
+    def perform_destroy(self, instance):
+        if instance.author_id != self.request.user.pk and self.member.role_id != "owner":
+            raise PermissionDenied("Another doctor is writing this draft.")
+        with transaction.atomic():
+            self.event("visit_draft.discard", instance)
+            instance.delete()
+
+
+class PrescriptionSetViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, DoctorsOnlyViewSet):
+    """Saved starting points for a prescription. They hold no patient data."""
+
+    serializer_class = PrescriptionSetSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return PrescriptionSet.objects.filter(clinic=self.member.clinic)
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        saved = serializer.save(clinic=self.member.clinic, created_by=self.request.user)
+        self.event("prescription_set.create", saved)
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            self.event("prescription_set.delete", instance)
+            instance.delete()
 
 
 class AuditSerializer(serializers.ModelSerializer):

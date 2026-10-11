@@ -68,10 +68,28 @@ export interface Note {
 }
 export interface Observation {
   id?: string;
-  kind: 'height' | 'weight';
+  kind: 'height' | 'weight' | 'systolic' | 'diastolic' | 'pulse';
   value: string;
-  unit: 'cm' | 'kg';
+  unit: 'cm' | 'kg' | 'mmHg' | 'bpm';
   measured_at?: string;
+}
+export interface VisitProductLine {
+  id: string;
+  price_item_id: string | null;
+  name: string;
+  kind: string;
+  quantity: string;
+  rate: string;
+  gst_rate: string;
+  note: string;
+}
+export interface Amendment {
+  id: string;
+  section: string;
+  correction: string;
+  reason: string;
+  author_name: string;
+  created_at: string;
 }
 export interface PrescriptionItem {
   id?: string;
@@ -87,6 +105,7 @@ export interface Prescription {
   id?: string;
   instructions: string;
   dosage_line?: string;
+  dosage?: Record<string, string>;
   items: PrescriptionItem[];
 }
 export interface Encounter {
@@ -104,6 +123,10 @@ export interface Encounter {
   progress?: string;
   observations: Observation[];
   prescriptions: Prescription[];
+  products?: VisitProductLine[];
+  amendments?: Amendment[];
+  /** The bill made from this visit, if there is one. */
+  invoice?: { id: string; number: string; state: string } | null;
 }
 export interface Timeline {
   encounters: Encounter[];

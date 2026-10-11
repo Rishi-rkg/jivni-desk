@@ -346,7 +346,10 @@ export default function App() {
                 element={canWriteDemographics(role) ? <NewPatient /> : <Navigate to="/patients" replace />}
               />
               <Route path="/patients/:id" element={<PatientProfile role={role} billingOn={allowed('/billing')} />} />
-              <Route path="/patients/:id/encounters/new" element={<NewEncounter role={role} />} />
+              <Route
+                path="/patients/:id/encounters/new"
+                element={<NewEncounter role={role} billingOn={allowed('/billing')} libraryOn={allowed('/library')} />}
+              />
               <Route path="/appointments" element={guarded('/appointments', <ComingSoon title="Appointments" />)} />
               <Route path="/messages" element={guarded('/messages', <ComingSoon title="Messages" />)} />
               <Route path="/billing/new" element={guarded('/billing', <NewBill features={member.features} />)} />

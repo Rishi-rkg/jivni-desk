@@ -256,16 +256,24 @@ class Encounter(AppendOnlyRecord):
             raise ValidationError({"follow_up_date": "Follow-up must be on or after the encounter."})
 
 
+# What is measured at a visit, and the unit each is written in. The database checks the same pairs.
+OBSERVATION_UNITS = {"height": "cm", "weight": "kg", "systolic": "mmHg", "diastolic": "mmHg", "pulse": "bpm"}
+
+
 class Observation(AppendOnlyRecord):
     class Kind(models.TextChoices):
         HEIGHT = "height", "Height"
         WEIGHT = "weight", "Weight"
+        # Blood pressure is two readings, the upper and the lower.
+        SYSTOLIC = "systolic", "Blood pressure, upper"
+        DIASTOLIC = "diastolic", "Blood pressure, lower"
+        PULSE = "pulse", "Pulse"
 
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="observations")
     encounter = models.ForeignKey(Encounter, on_delete=models.PROTECT, related_name="observations")
     kind = models.CharField(max_length=10, choices=Kind.choices)
     value = models.DecimalField(max_digits=7, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
-    unit = models.CharField(max_length=5, choices=[("cm", "cm"), ("kg", "kg")])
+    unit = models.CharField(max_length=5, choices=[(unit, unit) for unit in ["cm", "kg", "mmHg", "bpm"]])
     measured_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -274,8 +282,8 @@ class Observation(AppendOnlyRecord):
     def clean(self):
         if self.encounter_id and self.encounter.patient_id != self.patient_id:
             raise ValidationError("Observation and encounter must refer to the same patient.")
-        if self.unit != {"height": "cm", "weight": "kg"}.get(self.kind):
-            raise ValidationError("Height uses cm; weight uses kg.")
+        if self.unit != OBSERVATION_UNITS.get(self.kind):
+            raise ValidationError("That measurement is written in a different unit.")
 
 
 class Prescription(AppendOnlyRecord):
@@ -313,3 +321,77 @@ class PrescriptionItem(AppendOnlyRecord):
 
     class Meta:
         ordering = ["position", "created_at", "id"]
+
+
+class EncounterProduct(AppendOnlyRecord):
+    """A shelf medicine, supplement or consumable advised at a visit. It is not labelled; it goes on the bill.
+
+    The name and price are kept as they were that day. `price_item_id` only remembers which price list
+    item was picked, by ID, so the bill can link back to it.
+    """
+
+    encounter = models.ForeignKey(Encounter, on_delete=models.PROTECT, related_name="products")
+    price_item_id = models.UUIDField(null=True, blank=True)
+    name = models.CharField(max_length=200)
+    kind = models.CharField(max_length=12, default="supplement")
+    quantity = models.DecimalField(max_digits=8, decimal_places=2, default=1, validators=[MinValueValidator(Decimal("0.01"))])
+    rate = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(Decimal("0"))])
+    gst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, validators=[MinValueValidator(Decimal("0"))])
+    note = models.CharField(max_length=200, blank=True)
+    position = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position", "created_at", "id"]
+
+    def clean(self):
+        if self.kind not in {"supplement", "shelf", "consumable"}:
+            raise ValidationError({"kind": "A visit product is a supplement, a shelf medicine or a consumable."})
+
+
+class EncounterAmendment(AppendOnlyRecord):
+    """A correction to a finalised visit. The visit stays as it was written; this is added beside it."""
+
+    class Section(models.TextChoices):
+        PRESCRIPTION = "prescription", "Prescription"
+        COMPLAINT = "complaint", "Complaint and symptoms"
+        MEASUREMENTS = "measurements", "Measurements"
+        FOLLOW_UP = "follow_up", "Follow-up date"
+        OTHER = "other", "Something else"
+
+    encounter = models.ForeignKey(Encounter, on_delete=models.PROTECT, related_name="amendments")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    section = models.CharField(max_length=14, choices=Section.choices)
+    correction = models.TextField()
+    reason = models.CharField(max_length=300)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+
+class EncounterDraft(StableRecord):
+    """A visit being written. It can be changed and thrown away; finalising turns it into a visit that cannot.
+
+    One draft per patient per doctor. Its contents are as clinical as the visit and are seen by doctors only.
+    """
+
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="visit_drafts")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    data = models.JSONField(default=dict, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "id"]
+        constraints = [models.UniqueConstraint(fields=["patient", "author"], name="one_draft_per_patient_and_doctor")]
+
+
+class PrescriptionSet(StableRecord):
+    """A doctor's saved starting point: envelopes with their medicines and dosage, under a name such as "Teething"."""
+
+    clinic = models.ForeignKey("accounts.Clinic", on_delete=models.PROTECT)
+    name = models.CharField(max_length=100)
+    envelopes = models.JSONField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        ordering = ["name", "id"]
+        constraints = [models.UniqueConstraint(fields=["clinic", "name"], name="unique_prescription_set_name")]

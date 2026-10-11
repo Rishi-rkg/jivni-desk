@@ -43,7 +43,7 @@ test('the library answers from the shipped book, explains itself and learns a ch
     .first()
     .click();
   await page.getByRole('link', { name: 'New visit' }).click();
-  await page.getByText('Look up a remedy in the library').click();
+  await page.getByRole('button', { name: 'Library ▸' }).click();
   await page.getByLabel('Symptoms or remedy').fill('bruised');
   await page
     .getByRole('button', { name: /^Add to prescription: / })

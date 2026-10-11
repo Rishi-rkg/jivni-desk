@@ -15,6 +15,8 @@ import {
 } from './types';
 import { PatientBilling } from './BillingScreen';
 import { PrintLabelsWindow } from './PrintingScreen';
+import { AmendVisit } from './VisitScreen';
+import { money, shortDate } from './format';
 import { useUnsavedChanges } from './useUnsavedChanges';
 
 export function NewPatient() {
@@ -161,14 +163,38 @@ export function NewPatient() {
   );
 }
 
-function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounter; expanded?: boolean }) {
+const SECTION_LABELS: Record<string, string> = {
+  prescription: 'Prescription',
+  complaint: 'Complaint and symptoms',
+  measurements: 'Measurements',
+  follow_up: 'Follow-up date',
+  other: 'Other',
+};
+
+function EncounterCard({
+  encounter: e,
+  expanded = false,
+  canAmend = false,
+  onChanged,
+}: {
+  encounter: Encounter;
+  expanded?: boolean;
+  canAmend?: boolean;
+  onChanged?: () => void;
+}) {
   const [labelling, setLabelling] = useState(false);
+  const [amending, setAmending] = useState(false);
   return (
     <details className="timeline-card panel" open={expanded}>
       <summary>
         <span>
           <strong>{e.chief_complaint}</strong>
-          <span className="muted">{e.clinician_name || 'Clinic clinician'}</span>
+          <span className="muted">
+            {e.clinician_name || 'Clinic clinician'} ·{' '}
+            <span className={`badge ${e.amendments?.length ? 'b-amber' : 'b-green'}`}>
+              {e.amendments?.length ? 'Amended' : 'Final'}
+            </span>
+          </span>
         </span>
         <time>{new Date(e.occurred_at).toLocaleString()}</time>
       </summary>
@@ -219,12 +245,44 @@ function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounte
             {rx.instructions && <p className="prewrap">{rx.instructions}</p>}
           </div>
         ))}
+        {!!e.products?.length && (
+          <div className="prescription">
+            <h4>Products and supplements</h4>
+            {e.products.map((product) => (
+              <p key={product.id}>
+                {product.name} × {Number(product.quantity)} · {money(product.rate)}
+                {product.note && <span className="muted"> · {product.note}</span>}
+              </p>
+            ))}
+          </div>
+        )}
         {e.follow_up_date && (
           <p>
-            <strong>Follow-up:</strong> {e.follow_up_date}
+            <strong>Follow-up:</strong> {shortDate(e.follow_up_date)}
+          </p>
+        )}
+        {e.amendments?.map((amendment) => (
+          <div className="warning" key={amendment.id}>
+            <strong>Amendment · {SECTION_LABELS[amendment.section] ?? amendment.section}</strong>
+            <p className="prewrap">{amendment.correction}</p>
+            <span className="muted">
+              {amendment.author_name} · {shortDate(amendment.created_at)} · Reason: {amendment.reason}
+            </span>
+          </div>
+        ))}
+        {e.invoice && (
+          <p>
+            <Link to={`/billing/invoices/${e.invoice.id}`}>
+              {e.invoice.state === 'draft' ? 'Draft bill for this visit' : `Bill ${e.invoice.number}`}
+            </Link>
           </p>
         )}
         <p className="actions">
+          {canAmend && (
+            <button type="button" className="secondary btn-sm" onClick={() => setAmending(true)}>
+              Amend
+            </button>
+          )}
           {!!e.prescriptions.length && (
             <button type="button" className="secondary btn-sm" onClick={() => setLabelling(true)}>
               Print labels
@@ -235,6 +293,16 @@ function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounte
           </Link>
         </p>
         {labelling && <PrintLabelsWindow encounterId={e.id} onClose={() => setLabelling(false)} />}
+        {amending && (
+          <AmendVisit
+            visit={e}
+            onClose={() => setAmending(false)}
+            onSaved={() => {
+              setAmending(false);
+              onChanged?.();
+            }}
+          />
+        )}
       </div>
     </details>
   );
@@ -256,6 +324,9 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
   const [loading, setLoading] = useState(true);
   const [noteDraft, setNoteDraft] = useState('');
   const [success, setSuccess] = useState('');
+  const [turn, setTurn] = useState(0);
+  // A visit that was just finalised with "Print envelope label" ticked opens the label window once.
+  const [labelsFor, setLabelsFor] = useState<string>(location.state?.labels ?? '');
   const { prompt } = useUnsavedChanges(!!noteDraft.trim());
   const readClinical = canReadClinical(role);
   const allowedTabs = readClinical
@@ -296,7 +367,7 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [id, readClinical]);
+  }, [id, readClinical, turn]);
   async function addNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -392,6 +463,7 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
   return (
     <>
       {prompt}
+      {labelsFor && <PrintLabelsWindow encounterId={labelsFor} onClose={() => setLabelsFor('')} />}
       <Link to={location.state?.returnTo || '/patients'}>← Patient list</Link>
       <ErrorMessage message={error} />
       {(success || location.state?.message) && (
@@ -573,7 +645,13 @@ export function PatientProfile({ role, billingOn = true }: { role: Role; billing
                 <p className="panel muted">No visits yet. Start a new visit to record this consultation.</p>
               )}
               {encounters.map((e, i) => (
-                <EncounterCard key={e.id} encounter={e} expanded={i === 0} />
+                <EncounterCard
+                  key={e.id}
+                  encounter={e}
+                  expanded={i === 0}
+                  canAmend={canWriteClinical(role)}
+                  onChanged={() => setTurn((value) => value + 1)}
+                />
               ))}
               {moreVisits}
             </>
