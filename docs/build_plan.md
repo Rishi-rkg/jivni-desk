@@ -8,7 +8,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks: 70 backend tests (67 pass on SQLite, 3 PostgreSQL-only trigger tests skipped because this PC has no PostgreSQL) and 13 frontend tests.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks: 72 backend tests (69 pass on SQLite, 3 PostgreSQL-only trigger tests skipped because this PC has no PostgreSQL) and 13 frontend tests.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -60,17 +60,28 @@ These come from reading the code. Each is small now and expensive later.
 16. **Python versions differ**: the local virtual environment is 3.11, Docker and CI use 3.12. *Addressed 2026-10-10:* CI now tests both.
 17. **CI has never run** because nothing has been pushed.
 
-## 3. Decisions the owner needs to make
+## 3. Decisions
+
+### Made by the owner on 2026-10-11
+
+- **The clinic is in India** (answers D1). Working defaults: time zone `Asia/Kolkata`, currency INR, financial year 1 April to 31 March for invoice numbering, UPI among the payment methods. Legal points to confirm with a qualified adviser and the clinic's accountant before real data and before billing: obligations under the Digital Personal Data Protection Act 2023 and its rules (notice, consent, breach reporting, patient requests), how long patient records must be kept, the practitioner's registration details on printed documents, and GST treatment of consultation, of medicines the doctor dispenses, and of shelf products sold.
+- **Medicine names are hidden from the patient.** Labels and bills show dosage instructions only, for example "twice, 4 tabs before meals". The remedy and potency stay in the clinical record.
+- **The medication label** carries the clinic logo, clinic address, patient name, dosage instructions, the patient's barcode, the date and the next advised date. It is pasted on an envelope, not a bottle, and is printed on the 2 × 2 inch black-and-white thermal printer.
+- **Billing lines.** Medicines the doctor prescribes are made and mixed by the doctor and billed as one single item. Over-the-shelf medicines, consumables and supplements are sold as separate line items. Shelf products appear only on the bill, never on a label.
+- **The visit page records more than the complaint.** Alongside the complaint and clinical notes, the doctor keeps personal notes that help remember the patient and build a relationship, such as a hobby, a family member or a story. The page also covers medicines prescribed, medicine search and dosage units.
+- **Navigation** is up to eight flat tabs, fewer for roles with less access, with no nested menu. The screen list and mockups live in `mockups/` (`mockups/ui-inventory.md`).
+
+### Still open
 
 Each has a default so work is not blocked.
 
 | # | Decision | Default until answered | Affects |
 | --- | --- | --- | --- |
-| D1 | Country and applicable privacy, medical-records and tax rules | None assumed. Needed before real data and before billing | Consent, retention, invoice format, tax, WhatsApp rules |
+| D1 | ~~Country~~ India, decided. The legal points listed above still need professional confirmation | Follow the working defaults above | Consent, retention, invoice format, tax, WhatsApp rules |
 | D2 | Where it runs: a PC inside the clinic, or a hosted server | Hosted server with a managed database, because backups and remote access come almost free | Phase 1 deployment, print agent, outage behaviour |
 | D3 | How unattended work reads patient data (see below) | Password-unlocked clinic key as the original plan specifies, plus a narrow messaging key | Phase 1, Phase 5 |
 | D4 | One clinic per installation, or many clinics on one server | Keep the multi-clinic data model already built; deploy one clinic per installation at first | Isolation testing, operations |
-| D5 | Does the clinic dispense its own medicines and need stock control now | No, as the original plan says. Labels are printed from prescriptions; inventory stays optional | Phase 4 scope |
+| D5 | The clinic dispenses its own medicines and sells shelf products (decided). Still open: does it need stock counts now | No stock control yet; a product list with prices is enough for billing | Phase 4 scope |
 | D6 | WhatsApp route for the first release | Staff-sent drafts first, automated sending through the official Business Platform second | Phase 5 cost and consent |
 | D7 | Languages for the interface, printouts and messages | English first, with all user-facing text kept translatable | Every screen and template |
 | D8 | Existing records to bring in: paper, spreadsheet or another program | A spreadsheet import with a dry run | Phase 2, go-live date |
@@ -148,10 +159,12 @@ Exit: staff can register, find by name, phone or scan, open and update patient r
 - **Homeopathic case-taking.** Sections for the presenting complaint, mentals, physical generals, particulars with modalities, past and family history, and a follow-up form that records the response to the previous prescription. Free text stays available in every section.
 - **Structured symptoms** (`Symptom`, `EncounterSymptom`) alongside free text, so later phases can search and link to rubrics.
 - **Medicine catalogue, minimal**: the `Medicine` and `MedicineAlias` tables with name, abbreviation and potency scales, used for prescription autocomplete and the `medicine_id` link. Prescriptions still store the snapshot. The full library stays in Phase 6.
+- **Personal notes about the patient**: a doctor-only place, visible while taking the visit, for what helps the doctor remember the person, kept apart from clinical notes so it is never mistaken for history or printed.
+- **Dosage instructions as their own field** on each prescription, written for the patient ("twice, 4 tabs before meals") with dosage units, because this is the only prescription text that leaves the clinic.
 - **`doctor_notes`** on prescription items, and doctor-only visibility for internal notes (finding 6).
 - **More observations**: pulse, blood pressure, temperature, with units.
 - **Attachments** such as lab reports, through the protected store.
-- **Prescription PDF** from a versioned template, printed through the browser.
+- ~~**Prescription PDF**~~ Dropped as a patient document: medicine names are not given to the patient. An internal visit summary for the clinic's own file can be added if the doctor wants one.
 - **Follow-ups due** list driven by the follow-up date already captured.
 - **Keyboard-first entry** tested with clinic staff on the 1366 × 768 laptop target.
 
@@ -162,12 +175,12 @@ Exit: the doctor completes a full day of synthetic consultations without leaving
 ### Phase 4: Billing and printing
 
 - **Job queue and outbox**, built once here and reused by Phases 5 to 7.
-- **Billing data**: price list, invoice drafted from a finalised visit without choosing the patient again, line items, discounts, tax from clinic settings and D1.
+- **Billing data**: invoice drafted from a finalised visit without choosing the patient again. The doctor's dispensed medicines are one line with no remedy names. Shelf medicines, consumables and supplements come from a product list with prices and are separate lines. Discounts, and tax from clinic settings once the GST treatment is confirmed.
 - **Invoice lifecycle** exactly as the original section 19: draft, issued, partially paid, paid, void, refunded. Issued invoices are immutable snapshots with gapless numbering per clinic and financial year. Corrections are credit notes, never edits.
 - **Payments** are recorded, not processed: cash, card, bank transfer or local instant payment, including part payments.
 - **Templates separate from data**: invoice, prescription and label templates are versioned, and each issued document records which version rendered it.
 - **A4 printing** through the browser from the rendered PDF.
-- **Label printing through the print agent**, with one change from the original design. The original has the browser call the agent on `localhost`. Browsers increasingly block a secure page from calling a local address, and any other website open on that PC could call the same port. Instead, the agent connects outward to the server, is paired to the clinic with a revocable device token, pulls finished print files rather than patient data, and reports each job's result once. The clinic's printer is a 2 × 2 inch (about 51 × 51 mm) black-and-white thermal label printer, so that is the first and required label format; design labels in pure black and white with no greys.
+- **Label printing through the print agent**, with one change from the original design. The original has the browser call the agent on `localhost`. Browsers increasingly block a secure page from calling a local address, and any other website open on that PC could call the same port. Instead, the agent connects outward to the server, is paired to the clinic with a revocable device token, pulls finished print files rather than patient data, and reports each job's result once. The clinic's printer is a 2 × 2 inch (about 51 × 51 mm) black-and-white thermal label printer, so that is the first and required label format; design labels in pure black and white with no greys. Label content is fixed by the owner's decision in section 3: logo, clinic address, patient name, dosage instructions, patient barcode, date and next advised date, and never a medicine name. A clinic logo upload is therefore needed in clinic settings before labels.
 - **Reports**: day-end collections, outstanding balances, export for the accountant.
 - The billing role sees invoices and demographics but no clinical text.
 
@@ -244,7 +257,7 @@ The original section 30 asks for five documents before development. Their state:
 | Encryption is built but subtly wrong | Independent review and the test list in `docs/encryption.md` are exit conditions |
 | Passwords and recovery key are all lost | Recovery procedure rehearsed in Phase 1; the consequence is stated to the owner in writing |
 | Real data entered too early | Startup guard stays until the Phase 1 exit; development banner stays in the UI |
-| Legal obligations discovered late | D1 answered before the Phase 1 exit, with qualified advice |
+| Legal obligations discovered late | The country is known (India); the points listed in section 3 are confirmed with qualified advice before the Phase 1 exit |
 | Scope grows faster than a small team can test | "Left out" lists per phase; modules stay behind interfaces |
 | WhatsApp number banned or costs rise | Staff-sent drafts first; official platform only; campaigns last |
 | Copyrighted reference texts | D9; attribution on every entry |
@@ -267,4 +280,6 @@ The original section 30 asks for five documents before development. Their state:
 | WhatsApp integration as one item | Staff-sent drafts, then the official platform, campaigns last | Useful early at no cost; lowest risk to the clinic's number |
 | One communication consent | Separate care and promotional consents | Promotional messages have different rules almost everywhere |
 | No data import | Spreadsheet import in Phase 2 | A working clinic already has patients |
+| Prescription PDF and labels show the medicine and potency | Patient documents show dosage instructions only | Owner's decision, 2026-10-11 |
+| Inventory optional; billing lines unspecified | Doctor's medicines as one bill line, shelf products as separate lines from a product list | Owner's decision, 2026-10-11 |
 | Five design documents before development | Scheduled against phases in section 6 | Development has already started; the ERD and security architecture are the two that cannot wait |

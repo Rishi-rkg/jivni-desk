@@ -36,10 +36,10 @@ The configuration generator creates ignored `.env` secrets without printing them
 In another terminal, create the first clinic and its owner:
 
 ```sh
-docker compose exec backend python manage.py bootstrap_clinic --clinic "Synthetic Demo Clinic" --username owner --time-zone Asia/Kolkata
+docker compose exec backend python manage.py bootstrap_clinic --clinic "Synthetic Demo Clinic" --username owner
 ```
 
-Enter a password at the prompt (12 characters minimum). Open **http://localhost:5173** and sign in. The API runs at **http://localhost:8000/api/v1/**. Both host ports bind to loopback; the database has no published host port. Use `localhost` consistently for the browser session.
+A new clinic defaults to the `Asia/Kolkata` time zone and INR (`--time-zone`, `--currency` to override). Enter a password at the prompt (12 characters minimum). Open **http://localhost:5173** and sign in. The API runs at **http://localhost:8000/api/v1/**. Both host ports bind to loopback; the database has no published host port. Use `localhost` consistently for the browser session.
 
 Add another user by copying the clinic UUID printed at bootstrap:
 
