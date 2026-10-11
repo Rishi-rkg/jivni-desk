@@ -63,10 +63,19 @@ class PatientCodeModelTests(TestCase):
         if connection.vendor != "postgresql":
             self.skipTest("PostgreSQL trigger test; run CI or TEST_DATABASE=postgres.")
         user = User.objects.create_user(username="doctor", password="synthetic-password")
-        revision = PatientRevision.objects.create(patient=self.patient, changed_by=user, changes={})
+        revision = PatientRevision.objects.create(patient=self.patient, changed_by=user, changes={"phone": {"from": "", "to": "1"}})
         with self.assertRaises(DatabaseError), transaction.atomic():
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM records_patientrevision WHERE id = %s", [revision.pk])
+
+
+    def test_postgres_identifier_identity_trigger(self):
+        if connection.vendor != "postgresql":
+            self.skipTest("PostgreSQL trigger test; run CI or TEST_DATABASE=postgres.")
+        import uuid
+        identifier = PatientIdentifier.issue(self.patient)
+        with self.assertRaises(DatabaseError), transaction.atomic():
+            PatientIdentifier.objects.filter(pk=identifier.pk).update(id=uuid.uuid4())
 
 
 class PatientIdentityAPITests(TestCase):
