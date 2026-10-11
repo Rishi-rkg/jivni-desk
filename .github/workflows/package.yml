@@ -51,3 +51,20 @@ jobs:
           name: Jivni-${{ matrix.name }}
           path: dist/release
           if-no-files-found: error
+  # When the run was started by a version tag (v0.1.0), collect every installer and portable build into a
+  # draft release. A person reviews the draft on GitHub and presses Publish. Unverified until it has run once.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Create the draft release with every build attached
+        run: gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --draft --prerelease --generate-notes --title "Jivni $GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}
