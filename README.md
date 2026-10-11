@@ -240,6 +240,10 @@ Read [the security architecture](docs/security-architecture.md), [the envelope-e
 5. Smaller pieces left from the screen designs: a PIN for unlocking, a Dispense page for the assistant, stock control.
 6. AI drafting, only if the owner wants it, and only with a provider agreement and a view of exactly what is sent.
 
+## Licence
+
+Jivni is source available under the [Elastic License 2.0](LICENSE). You may read, use and change the code. You may not offer it to others as a hosted or managed service, and you may not remove or get around its licence limits. It is not an open-source licence. The reference texts in `knowledge/` (Boericke's Materia Medica and Kent's Repertory) are in the public domain.
+
 ## Technical references
 
 - [Django 5.2 LTS release notes](https://docs.djangoproject.com/en/5.2/releases/5.2/)

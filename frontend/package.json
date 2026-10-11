@@ -1,6 +1,7 @@
 {
   "name": "jivni-web",
   "private": true,
+  "license": "Elastic-2.0",
   "version": "0.2.3",
   "type": "module",
   "scripts": {
