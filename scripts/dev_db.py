@@ -82,6 +82,8 @@ def start(env):
         raise SystemExit("PostgreSQL did not start. See .tools/postgres.log.")
     child = connection_env(env)
     name = env.get("POSTGRES_DB", "clinic")
+    if not name.replace("_", "").isalnum():
+        raise SystemExit("POSTGRES_DB must contain only letters, digits and underscores.")
     exists = subprocess.run([binary("psql"), "-d", "postgres", "-tAc", f"SELECT 1 FROM pg_database WHERE datname = '{name}'"],
                             env=child, capture_output=True, text=True).stdout.strip()
     if exists != "1":
