@@ -2,99 +2,110 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Invoice, A4 · DocHP mockup</title>
+<title>Bill, A4 · DocHP prototype</title>
 <link rel="stylesheet" href="mockup.css">
 <style>
   @page { size: A4; margin: 0; }
   body { background: #cfd8dc; }
-  .sheet { width: 210mm; min-height: 297mm; margin: 0 auto 24px; background: #fff; color: #111; padding: 16mm 16mm 14mm; box-shadow: 0 2px 10px #0003; display: flex; flex-direction: column; font-size: 10.5pt; line-height: 1.4; }
+  .sheet { width: 210mm; min-height: 297mm; margin: 0 auto 24px; background: #fff; color: #111; padding: 15mm 16mm 12mm; box-shadow: 0 2px 10px #0003; display: flex; flex-direction: column; font-size: 10.5pt; line-height: 1.4; }
   .sheet .muted { color: #555; font-size: 9pt; }
-  .b-head { display: flex; justify-content: space-between; gap: 10mm; border-bottom: 1.5pt solid #111; padding-bottom: 6mm; }
+  .b-head { display: flex; justify-content: space-between; gap: 10mm; border-bottom: 1.5pt solid #111; padding-bottom: 5mm; }
   .b-clinic { display: flex; gap: 5mm; }
-  .b-logo { width: 18mm; height: 18mm; border: 1pt solid #111; display: grid; place-items: center; font-weight: 700; font-size: 12pt; flex: none; }
+  .b-logo { width: 18mm; height: 18mm; border: 1pt solid #111; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 12pt; flex: none; }
   .b-clinic h1 { font-size: 16pt; margin: 0 0 1mm; }
-  .b-title { text-align: right; }
+  .b-title { text-align: right; white-space: nowrap; }
   .b-title h2 { font-size: 20pt; letter-spacing: .08em; margin: 0 0 1mm; font-weight: 650; }
   .b-status { display: inline-block; border: 1.2pt solid #111; padding: .5mm 3mm; font-weight: 700; font-size: 9pt; letter-spacing: .06em; margin-top: 1.5mm; }
-  .b-meta { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8mm; padding: 6mm 0; }
-  .b-meta h3 { font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: #555; margin: 0 0 1.5mm; font-weight: 600; }
+  .b-meta { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8mm; padding: 5mm 0; }
+  .cap { font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: #555; margin: 0 0 1.5mm; font-weight: 600; }
   .sheet table { border-collapse: collapse; width: 100%; }
-  .sheet th { background: none; color: #111; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .05em; border-top: 1pt solid #111; border-bottom: 1pt solid #111; padding: 2mm 2mm; }
-  .sheet td { padding: 2.5mm 2mm; border-bottom: .5pt solid #bbb; }
-  .b-totals { display: grid; grid-template-columns: 1fr 78mm; gap: 10mm; margin-top: 5mm; align-items: start; }
-  .b-totals td { border: 0; padding: 1.2mm 2mm; }
+  .sheet th { background: none; color: #111; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .05em; border-top: 1pt solid #111; border-bottom: 1pt solid #111; padding: 2mm; }
+  .sheet td { padding: 2.2mm 2mm; border-bottom: .5pt solid #bbb; }
+  .sheet .group td { font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: #555; padding: 3mm 2mm 1mm; border-bottom: 0; }
+  .b-totals { display: grid; grid-template-columns: 1fr 76mm; gap: 10mm; margin-top: 5mm; align-items: start; }
+  .b-totals td { border: 0; padding: 1.1mm 2mm; }
   .b-totals .grand td { border-top: 1pt solid #111; border-bottom: 1pt solid #111; font-weight: 700; font-size: 12pt; padding: 2mm; }
   .b-totals .due td { font-weight: 700; }
-  .b-foot { margin-top: auto; display: grid; grid-template-columns: 1fr 55mm; gap: 10mm; border-top: .5pt solid #bbb; padding-top: 5mm; align-items: end; }
+  .b-gst td, .b-gst th { font-size: 8.5pt; padding: 1.2mm 2mm; }
+  .b-foot { margin-top: auto; display: grid; grid-template-columns: 26mm 1fr 50mm; gap: 6mm; border-top: .5pt solid #bbb; padding-top: 5mm; align-items: end; }
+  .b-qr { width: 24mm; height: 24mm; border: 1pt solid #111; display: grid; place-items: center; font-size: 7pt; text-align: center; background: repeating-conic-gradient(#111 0 25%, #fff 0 50%) 0 0 / 3mm 3mm; }
+  .b-qr span { background: #fff; padding: 1mm; }
   .b-sign { border-top: .75pt solid #111; text-align: center; padding-top: 1.5mm; font-size: 9pt; }
-  .b-small { display: flex; justify-content: space-between; font-size: 7.5pt; color: #555; margin-top: 5mm; }
+  .b-small { display: flex; justify-content: space-between; font-size: 7.5pt; color: #555; margin-top: 4mm; }
   @media print { body { background: #fff; } .screen-only, .mock-bar { display: none !important; } .sheet { margin: 0; box-shadow: none; } }
 </style>
 </head>
 <body data-bare>
 <div class="content screen-only" style="padding-bottom: 14px">
-  <div class="heading" style="margin: 0"><div><h1>Invoice · A4</h1><p class="muted">The printed bill. Printed from the browser on any A4 printer; the same layout is saved as a PDF.</p></div>
+  <div class="heading" style="margin: 0"><div><h1>Bill · A4</h1><p class="muted">Printed from the browser on any A4 printer; the same layout is saved as a PDF and can be sent on WhatsApp.</p></div>
     <div class="actions"><button onclick="window.print()">Print</button><a class="button secondary" href="invoice.html">Back to the invoice screen</a></div></div>
 </div>
 
 <div class="sheet">
   <div class="b-head">
     <div class="b-clinic"><div class="b-logo">SC</div>
-      <div><h1>Sunrise Clinic</h1>Homeopathy<br><span class="muted">4 Garden Street, Example City<br>+00 5550 0100 · hello@sunrise.example<br>Tax or registration no.: (from clinic settings)</span></div></div>
-    <div class="b-title"><h2>INVOICE</h2><strong>INV-2026-1042</strong><br><span class="muted">Issued 06 Oct 2026</span><br><span class="b-status">PARTIALLY PAID</span></div>
+      <div><h1>Sunrise Clinic</h1>Homeopathy<br><span class="muted">4 Garden Street, Pune 411001, Maharashtra<br>+91 90000 00100 · hello@sunrise.example<br>Dr. R. Patel, BHMS · Reg. no. (from settings) · GSTIN (if registered)</span></div></div>
+    <div class="b-title"><h2>INVOICE</h2><strong>INV/26-27/1042</strong><br><span class="muted">Date 06 Oct 2026</span><br><span class="b-status">PARTIALLY PAID</span></div>
   </div>
 
   <div class="b-meta">
-    <div><h3>Billed to</h3><strong>Anita Rao</strong><br>12 Lake Road<br>Example City<br><span class="muted">Patient ID PAT-W8KQ3G7DP9</span></div>
-    <div><h3>Visit</h3>06 Oct 2026<br>Dr. R. Patel<br><span class="muted">Follow-up consultation</span></div>
-    <div><h3>Payment</h3>Due on receipt<br><span class="muted">Cash, card, bank transfer or instant payment</span></div>
+    <div><p class="cap">Billed to</p><strong>Anita Rao</strong><br>12 Lake Road<br>Pune 411001<br><span class="muted">+91 90000 00142 · PAT-W8KQ3G7DP9</span></div>
+    <div><p class="cap">Visit</p>06 Oct 2026<br>Dr. R. Patel<br><span class="muted">Follow-up consultation</span></div>
+    <div><p class="cap">Next visit advised</p>20 Oct 2026<br><span class="muted">10:15, booked</span></div>
   </div>
 
   <table>
-    <thead><tr><th style="width: 9mm">#</th><th>Description</th><th class="num" style="width: 16mm">Qty</th><th class="num" style="width: 26mm">Unit price</th><th class="num" style="width: 16mm">Tax</th><th class="num" style="width: 28mm">Amount</th></tr></thead>
+    <thead><tr><th style="width: 9mm">#</th><th>Description</th><th class="num" style="width: 14mm">Qty</th><th class="num" style="width: 24mm">Rate (₹)</th><th class="num" style="width: 16mm">GST</th><th class="num" style="width: 28mm">Amount (₹)</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td>Consultation, follow-up</td><td class="num">1</td><td class="num">500.00</td><td class="num">0%</td><td class="num">500.00</td></tr>
-      <tr><td>2</td><td>Medicines dispensed</td><td class="num">2</td><td class="num">150.00</td><td class="num">0%</td><td class="num">300.00</td></tr>
+      <tr class="group"><td colspan="6">Consultation and prescribed medicines</td></tr>
+      <tr><td>1</td><td>Consultation, follow-up</td><td class="num">1</td><td class="num">500.00</td><td class="num">Exempt</td><td class="num">500.00</td></tr>
+      <tr><td>2</td><td>Prescribed medicines, 14 days</td><td class="num">1</td><td class="num">300.00</td><td class="num">5%</td><td class="num">300.00</td></tr>
+      <tr class="group"><td colspan="6">Products and supplements</td></tr>
+      <tr><td>3</td><td>Vitamin D3 capsules, 60</td><td class="num">1</td><td class="num">450.00</td><td class="num">18%</td><td class="num">450.00</td></tr>
+      <tr><td>4</td><td>Calendula cream 30 g</td><td class="num">1</td><td class="num">120.00</td><td class="num">18%</td><td class="num">120.00</td></tr>
     </tbody>
   </table>
 
   <div class="b-totals">
     <div>
-      <h3 style="font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: #555; font-weight: 600">Payments received</h3>
-      <table>
-        <tr><td style="padding-left: 0">06 Oct 2026</td><td>Cash</td><td>Receipt R-2026-0871</td><td class="num">500.00</td></tr>
+      <p class="cap">Payments received</p>
+      <table><tr><td style="padding-left: 0">06 Oct 2026</td><td>UPI</td><td>Receipt R/26-27/0871</td><td class="num">1,000.00</td></tr></table>
+      <p class="cap" style="margin-top: 5mm">GST included in the amounts above</p>
+      <table class="b-gst">
+        <tr><th>Rate</th><th class="num">Taxable value</th><th class="num">CGST</th><th class="num">SGST</th></tr>
+        <tr><td>5%</td><td class="num">285.71</td><td class="num">7.15</td><td class="num">7.14</td></tr>
+        <tr><td>18%</td><td class="num">483.05</td><td class="num">43.48</td><td class="num">43.47</td></tr>
       </table>
-      <p class="muted" style="margin-top: 4mm">Note: Balance to be paid at the follow-up visit on 20 Oct 2026.</p>
     </div>
-    <table>
-      <tr><td>Subtotal</td><td class="num">800.00</td></tr>
-      <tr><td>Discount (returning patient)</td><td class="num">−50.00</td></tr>
-      <tr><td>Tax</td><td class="num">0.00</td></tr>
-      <tr class="grand"><td>Total</td><td class="num">750.00</td></tr>
-      <tr><td>Paid</td><td class="num">500.00</td></tr>
-      <tr class="due"><td>Balance due</td><td class="num">250.00</td></tr>
-    </table>
+    <div>
+      <table>
+        <tr><td>Subtotal</td><td class="num">1,370.00</td></tr>
+        <tr><td>Discount on consultation</td><td class="num">−50.00</td></tr>
+        <tr class="grand"><td>Total</td><td class="num">₹1,320.00</td></tr>
+        <tr><td>Paid</td><td class="num">1,000.00</td></tr>
+        <tr class="due"><td>Balance due</td><td class="num">₹320.00</td></tr>
+      </table>
+      <p class="muted" style="margin: 2mm 2mm 0">Rupees one thousand three hundred twenty only. All prices include GST.</p>
+    </div>
   </div>
 
   <div class="b-foot">
-    <div class="muted">
-      <strong style="color: #111">How to pay</strong><br>Pay at the front desk, or by transfer to the account shown here (from clinic settings). Please quote the invoice number.<br><br>
-      Thank you for visiting Sunrise Clinic. Next appointment: 20 Oct 2026, 10:15.
-    </div>
+    <div class="b-qr"><span>UPI QR</span></div>
+    <div class="muted"><strong style="color: #111">Pay the balance</strong><br>Scan to pay ₹320.00 by UPI, or pay at the front desk by cash or card. Please mention the invoice number.<br><br>Thank you for visiting Sunrise Clinic.</div>
     <div class="b-sign">For Sunrise Clinic</div>
   </div>
-  <div class="b-small"><span>Amounts in (clinic currency) · Template: Invoice v3</span><span>Printed 06 Oct 2026 10:03 · Page 1 of 1</span></div>
+  <div class="b-small"><span>Template: Invoice v3 · Computer-generated bill</span><span>Printed 06 Oct 2026 10:03 · Page 1 of 1</span></div>
 </div>
 
 <div class="content screen-only">
   <section class="panel">
     <h2>Choices made on this bill</h2>
     <ul style="margin: 0; padding-left: 18px">
-      <li>Medicines appear as one line, "Medicines dispensed". Medicine names and symptoms are never printed on a bill.</li>
-      <li>The patient's name and address, and the clinic's details, are fixed as they were on the day of issue.</li>
-      <li>The status box reads ISSUED, PARTIALLY PAID, PAID, VOID or REFUNDED. A void bill prints with VOID across the page.</li>
-      <li>No currency sign and 0% tax for now: both come from clinic settings once the country is decided.</li>
-      <li>A receipt uses the same header with the payment lines only, and can be printed half-page.</li>
+      <li>Everything the doctor prescribed and mixed is <strong>one line</strong>, "Prescribed medicines", with no medicine names.</li>
+      <li>Shelf medicines, supplements and consumables are <strong>separate lines</strong> under their own heading, each with its name, quantity and rate.</li>
+      <li>The GST rates and the GST box are <strong>examples only</strong>. Your accountant confirms the real rates, and whether the clinic is GST-registered at all; if it is not, the GST column and box are left off and the title can read "Bill of Supply".</li>
+      <li>The patient's and clinic's details are fixed as they were on the day of issue. Invoice numbers run in order within the financial year (April to March).</li>
+      <li>The status box reads ISSUED, PARTIALLY PAID, PAID, VOID or REFUNDED. The UPI code appears only while a balance is due.</li>
     </ul>
   </section>
 </div>

@@ -14,14 +14,17 @@
       <div class="heading"><h2>Details</h2><a href="patient-register.html">Edit</a></div>
       <dl>
         <dt>Date of birth</dt><dd>14 Mar 1984</dd>
-        <dt>Phone · WhatsApp</dt><dd>+00 5550 0142</dd>
+        <dt>Phone · WhatsApp</dt><dd>+91 90000 00142</dd>
         <dt>Email</dt><dd class="muted">Not recorded</dd>
-        <dt>Address</dt><dd>12 Lake Road, Example City</dd>
+        <dt>Address</dt><dd>12 Lake Road, Pune 411001</dd>
         <dt>Family</dt><dd><a href="#">Sunita Rao-Mehta</a> (daughter)</dd>
         <dt>Latest measurements</dt><dd>162 cm · 64.5 kg · BP 118/76<br><span class="muted small">06 Oct 2026 · <a href="#">history</a></span></dd>
         <dt>Registered</dt><dd>09 Jun 2026</dd>
       </dl>
-      <div class="warning" style="margin-bottom: 0"><strong>Alert</strong><br>Sensitive to camphor. <a href="#">Edit alerts</a></div>
+      <div class="warning"><strong>Alert</strong><br>Sensitive to camphor. <a href="#">Edit alerts</a></div>
+      <div class="remember clinical-only" style="margin-bottom: 0"><strong>Remember about Anita</strong>
+        <ul><li>Teaches Kathak on weekends; recital in December.</li><li>Daughter Sunita (8) is also a patient.</li><li>Likes things explained slowly.</li></ul>
+        <p class="small" style="margin: 6px 0 0"><a href="visit.html">Add</a> · doctors only</p></div>
     </aside>
 
     <div>
@@ -39,31 +42,33 @@
         <li><time>06 Oct 2026</time><span class="dot">V</span>
           <div class="card">
             <div class="heading" style="margin-bottom: 8px"><span><strong>Follow-up visit</strong> · Dr. R. Patel <span class="badge b-green">Final</span></span><span class="actions small"><a href="#">Open</a><a href="#">Amend</a><a href="#">Print prescription</a></span></div>
-            <p><span class="muted">Complaint</span> Recurring headache, right-sided, worse in sunlight. About 50% better since last visit.</p>
+            <div class="clinical-only">
+            <p><span class="muted">Complaint</span> Headache now about once a week. Still worse in sunlight. Sleeping better.</p>
             <p style="margin-bottom: 4px"><span class="muted">Prescription</span></p>
             <table class="small">
-              <tr><td style="padding: 4px 0">Arnica montana 30C</td><td style="padding: 4px 8px">4 pills, twice daily</td><td style="padding: 4px 0">14 days</td><td class="right" style="padding: 4px 0"><a href="print-label.html">Label</a></td></tr>
-              <tr><td style="padding: 4px 0">Nux vomica 200C</td><td style="padding: 4px 8px">1 dose at bedtime, weekly</td><td style="padding: 4px 0">2 doses</td><td class="right" style="padding: 4px 0"><a href="print-label.html">Label</a></td></tr>
-            </table>
+              <tr><td style="padding: 4px 0">Envelope 1 · Arnica montana 30C, Bryonia alba 30C</td><td style="padding: 4px 8px">4 tabs, twice daily, before meals</td><td style="padding: 4px 0">14 days</td><td class="right" style="padding: 4px 0"><a href="#">Label</a></td></tr>
+              <tr><td style="padding: 4px 0">Product · Vitamin D3 capsules, 60</td><td style="padding: 4px 8px">1 capsule daily</td><td style="padding: 4px 0"></td><td class="right muted" style="padding: 4px 0">On bill</td></tr>
+            </table></div>
+            <p class="nonclinical-note muted" style="margin: 0">Clinical details are visible to doctors only.</p>
           </div></li>
         <li><time>06 Oct 2026</time><span class="dot">B</span>
-          <div class="card"><strong>Invoice INV-2026-1042</strong> · 750.00 <span class="badge b-amber">Partially paid</span> · 500.00 cash received
+          <div class="card"><strong>Invoice INV/26-27/1042</strong> · ₹1,320.00 <span class="badge b-amber">Partially paid</span> · ₹1,000.00 received by UPI
             <div class="actions small" style="margin-top: 6px"><a href="invoice.html">Open</a><a href="#">Record payment</a><a href="print-bill.html">Print</a></div></div></li>
         <li><time>04 Sep 2026</time><span class="dot">M</span>
           <div class="card"><strong>WhatsApp · 30 day check-in</strong> <span class="badge b-green">Delivered · read</span><p class="muted" style="margin: 4px 0 0">"Hello Anita, we hope you are doing well. It has been about a month since your visit…" · Reply received: "Much better, thank you."</p></div></li>
         <li><time>30 Aug 2026</time><span class="dot">N</span>
           <div class="card"><strong>Note</strong> · Reception<p style="margin: 4px 0 0">Prefers morning appointments. Call before 6 pm only.</p></div></li>
         <li><time>06 Aug 2026</time><span class="dot">V</span>
-          <div class="card"><strong>Follow-up visit</strong> · Dr. R. Patel <span class="badge b-green">Final</span> <span class="badge">Amended 07 Aug</span><p class="muted" style="margin: 4px 0 0">Headache less frequent. Arnica montana 30C continued. <a href="#">Show details</a></p></div></li>
+          <div class="card"><strong>Follow-up visit</strong> · Dr. R. Patel <span class="badge b-green">Final</span> <span class="badge">Amended 07 Aug</span><p class="muted clinical-only" style="margin: 4px 0 0">Headache less frequent. Same envelope repeated. <a href="#">Show details</a></p></div></li>
         <li><time>22 Jul 2026</time><span class="dot">D</span>
           <div class="card"><strong>Document</strong> · Blood report, 2 pages (PDF) <a href="#">View</a></div></li>
         <li><time>09 Jun 2026</time><span class="dot">V</span>
-          <div class="card"><strong>First consultation</strong> · Dr. R. Patel <span class="badge b-green">Final</span><p class="muted" style="margin: 4px 0 0">Full case taken. <a href="#">Show details</a></p></div></li>
+          <div class="card"><strong>First consultation</strong> · Dr. R. Patel <span class="badge b-green">Final</span><p class="muted clinical-only" style="margin: 4px 0 0">First meeting; long conversation about work and family. <a href="#">Show details</a></p></div></li>
       </ul>
       <p class="right"><button class="secondary">Load earlier</button></p>
     </div>
   </div>
-  <p class="muted small">Reception and billing staff see this page without the clinical text: visits show only date, doctor and status.</p>
+  <p class="muted small">Use "View as" at the top to see this page as Reception or Billing: the clinical text and the "Remember" notes disappear.</p>
 </main>
 <script src="shell.js"></script>
 </body>

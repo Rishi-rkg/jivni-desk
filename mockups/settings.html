@@ -34,16 +34,16 @@
         <h2>Clinic details</h2>
         <div class="form-grid">
           <label>Clinic name <input value="Sunrise Clinic"></label>
-          <label>Phone <input value="+00 5550 0100"></label>
+          <label>Phone <input value="+91 90000 00100"></label>
           <label>Email <input value="hello@sunrise.example"></label>
-          <label class="span-2">Address <input value="4 Garden Street, Example City"></label>
-          <label>Tax or registration number <input placeholder="Printed on invoices"></label>
-          <label>Time zone <select><option>Choose…</option></select></label>
-          <label>Currency <select><option>Choose…</option></select></label>
+          <label class="span-2">Address <input value="4 Garden Street, Pune 411001"></label>
+          <label>GSTIN <input placeholder="Leave empty if not registered"></label>
+          <label>Doctor registration no. <input placeholder="Printed on bills and prescriptions"></label>
+          <label>Currency and time <input value="₹ INR · India time (IST)" disabled></label>
           <label>Language <select><option>English</option></select></label>
           <label>Logo <span class="actions"><span class="photo" style="width: 40px; height: 40px; font-size: .8rem">SC</span><button class="secondary btn-sm">Change</button></span></label>
-          <label>Invoice numbers start at <input value="INV-2026-1001"></label>
-          <label>Financial year starts <select><option>Choose…</option></select></label>
+          <label>Invoice number style <input value="INV/26-27/0001"></label>
+          <label>Financial year <input value="1 April to 31 March" disabled></label>
         </div>
         <p class="right" style="margin: 14px 0 0"><button>Save changes</button></p>
       </section>
@@ -71,7 +71,8 @@
           <div class="setting"><span class="toggle on"></span><div><strong>Homeopathy library</strong></div></div>
           <div class="setting"><span class="toggle"></span><div><strong>Stock control</strong><span class="muted">Batches, expiry and stock counts for dispensed medicines.</span></div></div>
           <div class="setting"><span class="toggle"></span><div><strong>AI drafting</strong><span class="muted">Off by default. Drafts messages and summaries; a person approves every one.</span></div></div>
-          <div class="setting"><span class="toggle"></span><div><strong>Hide medicine names on printouts</strong><span class="muted">Clinic-wide default; can be changed per prescription.</span></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>Product sales</strong><span class="muted">Shelf medicines, supplements and consumables on the bill.</span></div></div>
+          <div class="setting"><span class="toggle"></span><div><strong>Show GST on bills</strong><span class="muted">Only if the clinic is GST-registered.</span></div></div>
         </section>
         <section class="panel">
           <h2>Security and backups</h2>

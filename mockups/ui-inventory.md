@@ -1,6 +1,6 @@
 # DocHP UI inventory
 
-Every page, floating window, menu, switch and printed item the application is planned to have, drawn from `docs/build_plan.md` and the owner's `docs/build_plan_original.md`. This is a proposal for the owner to mark up: no code is written from it yet, and the mockups are static pictures.
+Every page, floating window, menu, switch and printed item the application is planned to have, drawn from `docs/build_plan.md` and the owner's `docs/build_plan_original.md`. The mockups are a clickable prototype: tabs, floating windows, menus, switches and the "View as" role picker work, but nothing is saved, sent or printed. The owner's decisions of 11 Oct 2026 are recorded in section 8 and are already reflected in the screens.
 
 - **Mockup** column: a link means the item is drawn. "Listed" means it is described here but not drawn yet.
 - **Phase** is the build-plan phase the item belongs to. "Built" means a working version already exists in `frontend/src/` and the mockup shows where it is heading.
@@ -52,7 +52,7 @@ The original plan's navigation (section 29) groups Visits, Prescriptions and Lib
 | P12 | Edit patient details | Same form; every change kept | Same | 2 | [register](patient-register.html) |
 | P13 | Patient: Overview | Details panel, alerts, timeline of everything | All; clinical text hidden from Reception and Billing | 2, built | [patient record](patient-overview.html) |
 | P14 | Patient: Visits | List of visits, newest first, expandable | Clinical roles | 3, built | Listed |
-| P15 | New or draft visit | Case-taking sections, measurements, prescription, next steps | Doctor, Owner | 3, built in simpler form | [visit](visit.html) |
+| P15 | New or draft visit | "Remember about the patient" notes, complaint, doctor's notes, envelopes with medicines and a dosage builder, products, next visit | Doctor, Owner | 3, built in simpler form | [visit](visit.html) |
 | P16 | Finalised visit | Read-only view with amendments beside it | Clinical roles | 3 | Listed |
 | P17 | Patient: Prescriptions | Every prescription, search by medicine, repeat, print, label | Clinical roles | 3, built | Listed |
 | P18 | Patient: Notes | Add and read general notes | By role | 2, built | Listed |
@@ -141,9 +141,10 @@ All drawn on [overlays.html](overlays.html) unless marked.
 | # | Window | Opens from | Phase |
 | --- | --- | --- | --- |
 | W1 | Find a patient | Search box, `Ctrl K`, a scan | 2 |
-| W2 | Card scanned (found, or card no longer valid) | Scanning while other work is open | 2 |
+| W2 | Card or envelope label scanned (found, or card no longer valid) | Scanning while other work is open | 2 |
 | W3 | Record payment | Invoice, billing list, patient banner | 4 |
-| W4 | Print medicine labels | Finalising a visit, any prescription | 4 |
+| W4 | Print envelope labels | Finalising a visit, any prescription | 4 |
+| W4b | Add a product to the bill | Draft invoice, visit page | 4 |
 | W5 | Book appointment | Free slot, patient record, visit | 5 |
 | W6 | Take patient photo, with crop | Registration, details panel | 2 |
 | W7 | Amend a finalised visit | Visit view, timeline | 3 |
@@ -199,15 +200,15 @@ All drawn on [overlays.html](overlays.html) unless marked.
 
 ## 5. Switches and other choices
 
-**Clinic-wide switches** ([settings](settings.html)): Appointments · Billing · WhatsApp messages · Send reminders without approval · Homeopathy library · Stock control · AI drafting (off by default) · Hide medicine names on printouts · Two-step sign-in for owners and doctors.
+**Clinic-wide switches** ([settings](settings.html)): Appointments · Billing · Product sales · Show GST on bills · WhatsApp messages · Send reminders without approval · Homeopathy library · Stock control · AI drafting (off by default) · Two-step sign-in for owners and doctors.
 
 **Per patient**: Care messages consent · Greetings and clinic news consent · WhatsApp number same as phone · Print card after saving · Active or archived.
 
-**Per visit**: Visit type (First, Follow-up, Acute) · Response to last prescription (five choices) · Follow-up quick picks · Hide medicine names for this prescription · Book the follow-up · Print labels · Create invoice.
+**Per visit**: Visit type (First visit, Follow-up, Medicine only) · Since last visit (five choices) · Dosage builder per envelope (amount, unit, how often, when, how long) · Next visit quick picks · Add notes to "Remember" · Book the appointment · Print envelope label · Create the bill.
 
 **Per rule, template, price item, user**: an on/off switch on each row.
 
-**Label settings** ([printing](printing.html)): label size · layout A or B · show clinic phone · show patient ID · hide medicine names by default · show "1 of 2".
+**Label settings** ([printing](printing.html)): label size · dosage text size · show clinic phone · show clinic logo · show patient barcode · show next visit date. There is no switch for medicine names: they are never printed.
 
 **List filters** (chips): patients by Active, Archived, Follow-up due, Balance due, Seen this month; invoices by status; timeline by type; print queue by state; library by source.
 
@@ -217,8 +218,8 @@ All drawn on [overlays.html](overlays.html) unless marked.
 
 | # | Item | Size | Printer | Mockup |
 | --- | --- | --- | --- | --- |
-| D1 | Invoice (bill) | A4 | Any, through the browser | [print-bill](print-bill.html) |
-| D2 | Medicine label | 2 × 2 in, black and white thermal | Label printer | [print-label](print-label.html), three layouts |
+| D1 | Invoice (bill): prescribed medicines as one line, products as separate lines, ₹, optional GST | A4 | Any, through the browser | [print-bill](print-bill.html) |
+| D2 | Envelope label: logo, clinic address, patient name, dosage, patient barcode, date, next visit | 2 × 2 in, black and white thermal | Label printer | [print-label](print-label.html) |
 | D3 | Receipt | A4 half page | Any | Listed |
 | D4 | Prescription | A4 or A5 | Any | Listed |
 | D5 | Patient card with barcode | Card size | Any, or label printer | Listed |
@@ -230,12 +231,22 @@ All drawn on [overlays.html](overlays.html) unless marked.
 
 Drawn at the bottom of [overlays.html](overlays.html): main, secondary, destructive and text buttons; on/off switch; choice strip; filter chip; shortcut key; status labels for invoices, appointments and messages; success, information, warning and error bars; empty-list message. Also: tables with a sticky header and Previous/Next, form fields with the label above, date fields that accept typing, and the sticky save bar.
 
-## 8. Questions for the owner
+## 8. Decisions and open questions
 
-1. **Navigation**: eight flat tabs as drawn, or the grouped menu from the original plan?
-2. **Medicine names**: should labels and prescriptions be able to hide the medicine name ("Medicine 1")? The mockups offer it as a switch, off by default.
-3. **Bill detail**: medicines as one line on the bill (drawn), or each medicine listed with its name?
-4. **Label layout**: A (text only), B (with barcode) or C (name hidden) as the clinic's default?
-5. **Label content**: is anything missing that the clinic writes on bottles today, such as an expiry date or a batch number?
-6. **Case-taking sections**: are Complaint, Mind, Generals, Particulars, History and Assessment the right headings for the visit page?
-7. **Currency and tax** on bills wait for the country decision (D1 in the build plan).
+**Decided by the owner on 11 Oct 2026**
+
+1. Navigation is eight flat tabs, fewer for roles with less access.
+2. Medicine names are never printed for the patient. Labels carry dosage instructions only, such as "4 tabs, twice daily, before meals".
+3. On the bill, everything the doctor prescribed and mixed is one line. Shelf medicines, supplements and other consumables are separate lines.
+4. The label carries the clinic logo and address, patient name, dosage instructions, patient barcode, the date and the next advised date.
+5. Labels are pasted on the medicine envelope. Products and supplements are not labelled; they appear only on the bill.
+6. The visit page is built around the complaint and free notes, including personal details that help the doctor remember the patient (a hobby, family, a story), plus prescribing with medicine search and dosage units.
+7. The clinic is in India: rupees, GST, UPI, April to March financial year.
+
+**Still open**
+
+1. Is the clinic GST-registered? If not, bills show no GST column and can be titled "Bill of Supply". The rates in the mockups are examples for the accountant to confirm.
+2. "Remember about the patient" notes are shown to doctors only. Should reception see them too?
+3. One envelope holds one mix with one dosage line; a visit can have several envelopes. Does that match how medicines are handed over?
+4. Should product stock be counted (stock control), or only sold from a price list?
+5. Is the prescribed-medicines charge per week, per envelope, or typed in each time?

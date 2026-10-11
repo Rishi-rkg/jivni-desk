@@ -16,7 +16,7 @@
       <a href="print-bill.html">Invoice (A4)</a>
       <a href="#">Receipt</a>
       <a href="#">Prescription (A4)</a>
-      <a href="print-label.html">Medicine label (2 × 2 in)</a>
+      <a href="print-label.html">Envelope label (2 × 2 in)</a>
       <a href="#">Patient card</a>
       <span class="group">Documents</span>
       <a href="#">All patient documents</a>
@@ -28,9 +28,9 @@
         <table>
           <thead><tr><th>Time</th><th>Document</th><th>Patient</th><th>Printer</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            <tr><td>09:58</td><td>Medicine label × 2</td><td>Anita Rao</td><td>Label printer, dispensary</td><td><span class="badge b-amber">Waiting · printer offline</span></td><td class="right"><a href="#">Retry</a> · <a href="#">Cancel</a></td></tr>
-            <tr><td>09:20</td><td>Invoice INV-2026-1041</td><td>Leela Nair</td><td>Office A4</td><td><span class="badge b-green">Printed</span></td><td class="right"><a href="#">Reprint</a></td></tr>
-            <tr><td>09:18</td><td>Medicine label × 1</td><td>Leela Nair</td><td>Label printer, dispensary</td><td><span class="badge b-green">Printed</span></td><td class="right"><a href="#">Reprint</a></td></tr>
+            <tr><td>09:58</td><td>Envelope label × 2</td><td>Anita Rao</td><td>Label printer, dispensary</td><td><span class="badge b-amber">Waiting · printer offline</span></td><td class="right"><a href="#">Retry</a> · <a href="#">Cancel</a></td></tr>
+            <tr><td>09:20</td><td>Invoice INV/26-27/1041</td><td>Leela Nair</td><td>Office A4</td><td><span class="badge b-green">Printed</span></td><td class="right"><a href="#">Reprint</a></td></tr>
+            <tr><td>09:18</td><td>Envelope label × 1</td><td>Leela Nair</td><td>Label printer, dispensary</td><td><span class="badge b-green">Printed</span></td><td class="right"><a href="#">Reprint</a></td></tr>
             <tr><td>09:05</td><td>Patient card</td><td>John Smith</td><td>Office A4</td><td><span class="badge b-red">Failed · out of paper</span></td><td class="right"><a href="#">Retry</a></td></tr>
           </tbody>
         </table>
@@ -45,15 +45,16 @@
         </section>
 
         <section class="panel">
-          <div class="heading"><h2>Medicine label template</h2><span class="badge">Version 2 · in use</span></div>
+          <div class="heading"><h2>Envelope label</h2><span class="badge">Version 2 · in use</span></div>
           <div class="form-grid two">
             <label>Label size <select><option>2 × 2 in (50.8 mm square)</option><option>50 × 25 mm</option><option>58 mm roll</option><option>Custom…</option></select></label>
-            <label>Layout <select><option>A: text only</option><option>B: with patient barcode</option></select></label>
+            <label>Dosage text size <select><option>Large</option><option>Medium</option></select></label>
           </div>
           <div class="setting" style="margin-top: 8px"><span class="toggle on"></span><div><strong>Show clinic phone</strong></div></div>
-          <div class="setting"><span class="toggle on"></span><div><strong>Show patient ID</strong></div></div>
-          <div class="setting"><span class="toggle"></span><div><strong>Hide medicine names by default</strong><span class="muted">Print "Medicine 1" instead of the name.</span></div></div>
-          <div class="setting"><span class="toggle on"></span><div><strong>Show "1 of 2" counter</strong></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>Show clinic logo</strong></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>Show patient barcode</strong></div></div>
+          <div class="setting"><span class="toggle on"></span><div><strong>Show next visit date</strong></div></div>
+          <p class="small muted" style="margin: 8px 0 0">Medicine names are never printed on labels. There is no switch for this.</p>
           <div class="actions" style="margin-top: 10px"><a class="button secondary" href="print-label.html">Preview</a><button>Save as version 3</button></div>
         </section>
       </div>

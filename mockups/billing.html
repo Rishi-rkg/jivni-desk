@@ -11,9 +11,9 @@
   <nav class="sub-tabs"><a class="active" href="#">Invoices</a><a href="#">Payments</a><a href="#">Outstanding <span class="count">2</span></a><a href="#">Day-end report</a><a href="#">Price list</a></nav>
 
   <div class="metrics">
-    <div><strong>4,250.00</strong><span>billed today · 7 invoices</span></div>
-    <div><strong>3,600.00</strong><span>collected today</span></div>
-    <div><strong>650.00</strong><span>outstanding · 2 patients</span></div>
+    <div><strong>₹4,820</strong><span>billed today · 7 invoices</span></div>
+    <div><strong>₹4,100</strong><span>collected today</span></div>
+    <div><strong>₹720</strong><span>outstanding · 2 patients</span></div>
     <div><strong>1</strong><span>draft not yet issued</span></div>
   </div>
 
@@ -25,14 +25,14 @@
 
   <section class="panel flush">
     <table>
-      <thead><tr><th>Number</th><th>Date</th><th>Patient</th><th>Status</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th></th></tr></thead>
+      <thead><tr><th>Number</th><th>Date</th><th>Patient</th><th>Status</th><th class="num">Total (₹)</th><th class="num">Paid (₹)</th><th class="num">Balance (₹)</th><th></th></tr></thead>
       <tbody>
         <tr><td class="muted">Draft</td><td>06 Oct</td><td><a href="#">John Smith</a></td><td><span class="badge b-grey">Draft</span></td><td class="num">900.00</td><td class="num">0.00</td><td class="num">900.00</td><td class="right"><a href="invoice.html">Continue</a></td></tr>
-        <tr><td><a href="invoice.html">INV-2026-1042</a></td><td>06 Oct</td><td><a href="patient-overview.html">Anita Rao</a></td><td><span class="badge b-amber">Partially paid</span></td><td class="num">750.00</td><td class="num">500.00</td><td class="num">250.00</td><td class="right"><a href="#">Record payment</a></td></tr>
-        <tr><td><a href="#">INV-2026-1041</a></td><td>06 Oct</td><td><a href="#">Leela Nair</a></td><td><span class="badge b-green">Paid</span></td><td class="num">650.00</td><td class="num">650.00</td><td class="num">0.00</td><td class="right"><a href="print-bill.html">Print</a></td></tr>
-        <tr><td><a href="#">INV-2026-1040</a></td><td>05 Oct</td><td><a href="#">Farid Khan</a></td><td><span class="badge">Issued</span></td><td class="num">400.00</td><td class="num">0.00</td><td class="num">400.00</td><td class="right"><a href="#">Record payment</a></td></tr>
-        <tr><td><a href="#">INV-2026-1039</a></td><td>05 Oct</td><td><a href="#">Mary Jones</a></td><td><span class="badge b-red">Void</span></td><td class="num muted">500.00</td><td class="num">0.00</td><td class="num">0.00</td><td class="right"><a href="#">View</a></td></tr>
-        <tr><td><a href="#">INV-2026-1038</a></td><td>03 Oct</td><td><a href="#">Mary Jones</a></td><td><span class="badge b-grey">Refunded</span></td><td class="num">300.00</td><td class="num">0.00</td><td class="num">0.00</td><td class="right"><a href="#">Credit note</a></td></tr>
+        <tr><td><a href="invoice.html">INV/26-27/1042</a></td><td>06 Oct</td><td><a href="patient-overview.html">Anita Rao</a></td><td><span class="badge b-amber">Partially paid</span></td><td class="num">1,320.00</td><td class="num">1,000.00</td><td class="num">320.00</td><td class="right"><a href="#">Record payment</a></td></tr>
+        <tr><td><a href="#">INV/26-27/1041</a></td><td>06 Oct</td><td><a href="#">Leela Nair</a></td><td><span class="badge b-green">Paid</span></td><td class="num">650.00</td><td class="num">650.00</td><td class="num">0.00</td><td class="right"><a href="print-bill.html">Print</a></td></tr>
+        <tr><td><a href="#">INV/26-27/1040</a></td><td>05 Oct</td><td><a href="#">Farid Khan</a></td><td><span class="badge">Issued</span></td><td class="num">400.00</td><td class="num">0.00</td><td class="num">400.00</td><td class="right"><a href="#">Record payment</a></td></tr>
+        <tr><td><a href="#">INV/26-27/1039</a></td><td>05 Oct</td><td><a href="#">Mary Jones</a></td><td><span class="badge b-red">Void</span></td><td class="num muted">500.00</td><td class="num">0.00</td><td class="num">0.00</td><td class="right"><a href="#">View</a></td></tr>
+        <tr><td><a href="#">INV/26-27/1038</a></td><td>03 Oct</td><td><a href="#">Mary Jones</a></td><td><span class="badge b-grey">Refunded</span></td><td class="num">300.00</td><td class="num">0.00</td><td class="num">0.00</td><td class="right"><a href="#">Credit note</a></td></tr>
       </tbody>
     </table>
     <div class="pagination"><span class="muted">6 invoices</span><button class="secondary btn-sm" disabled>Previous</button><button class="secondary btn-sm" disabled>Next</button></div>
@@ -43,9 +43,10 @@
       <div class="heading"><h2>Day-end report · 06 Oct 2026</h2><button class="secondary btn-sm">Print</button></div>
       <table class="small">
         <tr><td>Cash</td><td class="num">2,400.00</td></tr>
+        <tr><td>UPI</td><td class="num">1,000.00</td></tr>
         <tr><td>Card</td><td class="num">700.00</td></tr>
-        <tr><td>Bank transfer or instant payment</td><td class="num">500.00</td></tr>
-        <tr><td><strong>Collected</strong></td><td class="num"><strong>3,600.00</strong></td></tr>
+        <tr><td>Bank transfer</td><td class="num">0.00</td></tr>
+        <tr><td><strong>Collected</strong></td><td class="num"><strong>4,100.00</strong></td></tr>
         <tr><td>Cash counted in drawer</td><td class="num"><input class="num" value="2,400.00" style="width: 110px"></td></tr>
         <tr><td>Difference</td><td class="num"><span class="badge b-green">0.00</span></td></tr>
       </table>
@@ -53,15 +54,17 @@
     <section class="panel">
       <div class="heading"><h2>Price list</h2><button class="secondary btn-sm">Add item</button></div>
       <table class="small">
-        <tr><th>Item</th><th class="num">Price</th><th class="num">Tax</th><th>Active</th></tr>
-        <tr><td>Consultation, first</td><td class="num">800.00</td><td class="num">0%</td><td><span class="toggle on"></span></td></tr>
-        <tr><td>Consultation, follow-up</td><td class="num">500.00</td><td class="num">0%</td><td><span class="toggle on"></span></td></tr>
-        <tr><td>Medicines dispensed (per item)</td><td class="num">150.00</td><td class="num">0%</td><td><span class="toggle on"></span></td></tr>
-        <tr><td>Courier charge</td><td class="num">100.00</td><td class="num">0%</td><td><span class="toggle"></span></td></tr>
+        <tr><th>Item</th><th>Kind</th><th class="num">Rate (₹)</th><th class="num">GST</th><th>Active</th></tr>
+        <tr><td>Consultation, first visit</td><td>Service</td><td class="num">800.00</td><td class="num">Exempt</td><td><span class="toggle on"></span></td></tr>
+        <tr><td>Consultation, follow-up</td><td>Service</td><td class="num">500.00</td><td class="num">Exempt</td><td><span class="toggle on"></span></td></tr>
+        <tr><td>Prescribed medicines, per week</td><td>Prescribed</td><td class="num">150.00</td><td class="num">5%</td><td><span class="toggle on"></span></td></tr>
+        <tr><td>Vitamin D3 capsules, 60</td><td>Supplement</td><td class="num">450.00</td><td class="num">18%</td><td><span class="toggle on"></span></td></tr>
+        <tr><td>Calendula cream 30 g</td><td>Shelf medicine</td><td class="num">120.00</td><td class="num">18%</td><td><span class="toggle on"></span></td></tr>
+        <tr><td>Sugar-of-milk globules, 25 g</td><td>Consumable</td><td class="num">60.00</td><td class="num">18%</td><td><span class="toggle"></span></td></tr>
       </table>
     </section>
   </div>
-  <p class="muted small">Amounts are shown without a currency sign and tax is 0% until the clinic's country is decided.</p>
+  <p class="muted small">GST rates here are examples; the real ones are set once in the price list after your accountant confirms them.</p>
 </main>
 <script src="shell.js"></script>
 </body>
