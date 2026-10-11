@@ -6,10 +6,12 @@ Writes the vector master (SVG, colour and one-colour), PNGs, the Windows .ico an
 into packaging/icons, and the browser icon into frontend/public. The geometry lives in SHAPES below,
 on a 1024-unit square, and is used for both the SVG text and the Pillow drawing, so they cannot drift apart.
 
-The mark: a bold J with a round-ended hook, and a plus set high on its right like a superscript.
+The mark: a bold J whose hook ends in a leaf, as a stem does, and a plus set high on its right like a
+superscript. The leaf is for homeopathy; the plus is for care.
 The one-colour version is for the black-and-white thermal label printer.
 """
 
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -20,28 +22,54 @@ PUBLIC = ROOT / "frontend" / "public"
 
 SIZE = 1024
 TEAL_TOP, TEAL_BOTTOM = (47, 111, 132), (27, 70, 86)
-WHITE, GOLD, BLACK = (255, 255, 255), (246, 196, 83), (0, 0, 0)
+WHITE, GOLD, BLACK, LEAF = (255, 255, 255), (246, 196, 83), (0, 0, 0), (146, 214, 130)
 
 STROKE = 124  # thickness of the J
 STEM_X, STEM_TOP, STEM_BOTTOM = 566, 262, 628  # centre line of the J's upright
 HOOK_RADIUS = 168  # centre line of the hook
 HOOK_CX, HOOK_CY = STEM_X - HOOK_RADIUS, STEM_BOTTOM
-HOOK_END_DEGREES = 168  # the hook runs from the upright (0 degrees) round the bottom to here
+HOOK_END_DEGREES = 138  # the hook runs from the upright (0 degrees) round the bottom to here, where the leaf begins
 BAR_LEFT = 356  # the J's top bar reaches left from the upright
 PLUS_CX, PLUS_CY, PLUS_ARM, PLUS_THICK = 772, 262, 96, 66
 TILE_RADIUS = 228
+# The leaf grows from the end of the hook: how far its tip is from there, how full each side is, and its vein.
+LEAF_TIP_OFFSET = (-108, -296)
+LEAF_BULGE_OUTER, LEAF_BULGE_INNER = 176, 118
+LEAF_VEIN, LEAF_VEIN_REACH = 15, 0.74
 
 
 def hook_end():
-    import math
-
     angle = math.radians(HOOK_END_DEGREES)
     return HOOK_CX + HOOK_RADIUS * math.cos(angle), HOOK_CY + HOOK_RADIUS * math.sin(angle)
 
 
+def leaf():
+    """Base, tip, the two control points of its curved sides, and the end of its vein."""
+    base = hook_end()
+    tip = (base[0] + LEAF_TIP_OFFSET[0], base[1] + LEAF_TIP_OFFSET[1])
+    middle = ((base[0] + tip[0]) / 2, (base[1] + tip[1]) / 2)
+    length = math.hypot(tip[0] - base[0], tip[1] - base[1])
+    across = ((tip[1] - base[1]) / length, -(tip[0] - base[0]) / length)  # unit vector pointing to the leaf's outer side
+    outer = (middle[0] + across[0] * LEAF_BULGE_OUTER, middle[1] + across[1] * LEAF_BULGE_OUTER)
+    inner = (middle[0] - across[0] * LEAF_BULGE_INNER, middle[1] - across[1] * LEAF_BULGE_INNER)
+    vein = (base[0] + (tip[0] - base[0]) * LEAF_VEIN_REACH, base[1] + (tip[1] - base[1]) * LEAF_VEIN_REACH)
+    return base, tip, outer, inner, vein
+
+
+def curve(start, control, end, steps=48):
+    """Points along a quadratic curve, for drawing the leaf with Pillow."""
+    for step in range(steps + 1):
+        t = step / steps
+        yield (
+            (1 - t) ** 2 * start[0] + 2 * (1 - t) * t * control[0] + t**2 * end[0],
+            (1 - t) ** 2 * start[1] + 2 * (1 - t) * t * control[1] + t**2 * end[1],
+        )
+
+
 def svg(mono=False):
-    j, plus = ("#000", "#000") if mono else ("#fff", "#f6c453")
+    j, plus, green, vein_colour = ("#000", "#000", "#000", "#fff") if mono else ("#fff", "#f6c453", "#92d682", "#1f5062")
     end_x, end_y = hook_end()
+    base, tip, outer, inner, vein = leaf()
     tile = (
         ""
         if mono
@@ -57,6 +85,9 @@ def svg(mono=False):
         f"{tile}"
         f'<path d="M{BAR_LEFT} {STEM_TOP}H{STEM_X}V{STEM_BOTTOM}A{HOOK_RADIUS} {HOOK_RADIUS} 0 0 1 {end_x:.1f} {end_y:.1f}" '
         f'fill="none" stroke="{j}" stroke-width="{STROKE}" stroke-linecap="round" stroke-linejoin="round"/>'
+        f'<path d="M{base[0]:.1f} {base[1]:.1f}Q{outer[0]:.1f} {outer[1]:.1f} {tip[0]:.1f} {tip[1]:.1f}'
+        f'Q{inner[0]:.1f} {inner[1]:.1f} {base[0]:.1f} {base[1]:.1f}Z" fill="{green}"/>'
+        f'<path d="M{base[0]:.1f} {base[1]:.1f}L{vein[0]:.1f} {vein[1]:.1f}" stroke="{vein_colour}" stroke-width="{LEAF_VEIN}" stroke-linecap="round"/>'
         f'<rect x="{PLUS_CX - PLUS_ARM}" y="{PLUS_CY - half}" width="{PLUS_ARM * 2}" height="{PLUS_THICK}" rx="{half}" fill="{plus}"/>'
         f'<rect x="{PLUS_CX - half}" y="{PLUS_CY - PLUS_ARM}" width="{PLUS_THICK}" height="{PLUS_ARM * 2}" rx="{half}" fill="{plus}"/>'
         "</svg>\n"
@@ -72,7 +103,7 @@ def draw(mono=False, scale=4):
 
     if mono:
         image = Image.new("RGBA", (size, size), (255, 255, 255, 0))
-        j_colour, plus_colour = BLACK, BLACK
+        j_colour, plus_colour, leaf_colour, vein_colour = BLACK, BLACK, BLACK, WHITE
     else:
         gradient = Image.new("RGBA", (1, size))
         for y in range(size):
@@ -83,7 +114,7 @@ def draw(mono=False, scale=4):
         ImageDraw.Draw(mask).rounded_rectangle([0, 0, size - 1, size - 1], radius=s(TILE_RADIUS), fill=255)
         image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         image.paste(gradient, (0, 0), mask)
-        j_colour, plus_colour = WHITE, GOLD
+        j_colour, plus_colour, leaf_colour, vein_colour = WHITE, GOLD, LEAF, (31, 80, 98)
     pen = ImageDraw.Draw(image)
     half = STROKE / 2
 
@@ -100,10 +131,21 @@ def draw(mono=False, scale=4):
     box = [s(HOOK_CX - outer), s(HOOK_CY - outer), s(HOOK_CX + outer), s(HOOK_CY + outer)]
     pen.arc(box, start=0, end=HOOK_END_DEGREES, fill=j_colour, width=s(STROKE))
     dot(*hook_end())
+    # Leaf, over the end of the hook, with its vein.
+    base, tip, outer, inner, vein = leaf()
+    outline = list(curve(base, outer, tip)) + list(curve(tip, inner, base))
+    pen.polygon([(s(x), s(y)) for x, y in outline], fill=leaf_colour)
+    pen.line([s(base[0]), s(base[1]), s(vein[0]), s(vein[1])], fill=vein_colour, width=s(LEAF_VEIN))
+    for x, y in (base, vein):
+        pen.ellipse([s(x - LEAF_VEIN / 2), s(y - LEAF_VEIN / 2), s(x + LEAF_VEIN / 2), s(y + LEAF_VEIN / 2)], fill=vein_colour)
     # Plus.
     thick = PLUS_THICK / 2
-    pen.rounded_rectangle([s(PLUS_CX - PLUS_ARM), s(PLUS_CY - thick), s(PLUS_CX + PLUS_ARM), s(PLUS_CY + thick)], radius=s(thick), fill=plus_colour)
-    pen.rounded_rectangle([s(PLUS_CX - thick), s(PLUS_CY - PLUS_ARM), s(PLUS_CX + thick), s(PLUS_CY + PLUS_ARM)], radius=s(thick), fill=plus_colour)
+    pen.rounded_rectangle(
+        [s(PLUS_CX - PLUS_ARM), s(PLUS_CY - thick), s(PLUS_CX + PLUS_ARM), s(PLUS_CY + thick)], radius=s(thick), fill=plus_colour
+    )
+    pen.rounded_rectangle(
+        [s(PLUS_CX - thick), s(PLUS_CY - PLUS_ARM), s(PLUS_CX + thick), s(PLUS_CY + PLUS_ARM)], radius=s(thick), fill=plus_colour
+    )
     return image.resize((SIZE, SIZE), Image.LANCZOS)
 
 
