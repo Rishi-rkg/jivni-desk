@@ -61,6 +61,14 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## Encryption key system (2026-10-11)
+
+105 backend tests pass on PostgreSQL 16 and on SQLite (4 PostgreSQL-only checks skipped there); Ruff clean; no migration drift; 13 frontend tests and the 2 browser end-to-end tests pass with a clinic key created by the real sign-up command and unlocked at sign-in with production Argon2id settings.
+
+The 32 new tests cover: a tampered cost setting locking instead of stalling the server; round trips for empty, Unicode and one-megabyte values; rejection of any changed byte, truncation, wrong clinic, wrong record, wrong field, wrong key and missing key version; moving a value to a new clinic key without changing its data ciphertext; password and recovery key opening the same clinic key; a grant copied onto another person's row opening nothing; revoking destroying the sealed copy; password change re-sealing the grant without touching data; a spent recovery key no longer working; the session needing both the cookie and the server half; another user's cookie not unlocking; and the four key-management commands.
+
+**Not done and not claimed:** no patient field or file is encrypted yet, and nobody independent has reviewed this code.
+
 ## Phase 2 groundwork (2026-10-10)
 
 Patient codes, scan lookup, reissue, WhatsApp number, duplicate check and demographic history: 70 backend tests, 67 passed and 3 PostgreSQL-only trigger checks skipped; 13 frontend tests passed; TypeScript build passed; no migration drift. The data migration that issues codes to existing patients was run forwards and backwards on a throwaway SQLite database. **Not verified on PostgreSQL:** migration `0005_patient_code_guards` attaches the two existing guard functions to the new tables with the same statement form as migration `0002`, but it had not been executed against PostgreSQL at that time. It passed on 2026-10-11; see above.

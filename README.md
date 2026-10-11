@@ -39,13 +39,15 @@ In another terminal, create the first clinic and its owner:
 docker compose exec backend python manage.py bootstrap_clinic --clinic "Synthetic Demo Clinic" --username owner
 ```
 
-A new clinic defaults to the `Asia/Kolkata` time zone and INR (`--time-zone`, `--currency` to override). Enter a password at the prompt (12 characters minimum). Open **http://localhost:5173** and sign in. The API runs at **http://localhost:8000/api/v1/**. Both host ports bind to loopback; the database has no published host port. Use `localhost` consistently for the browser session.
+A new clinic defaults to the `Asia/Kolkata` time zone and INR (`--time-zone`, `--currency` to override). Enter a password at the prompt (12 characters minimum). The command also creates the clinic's encryption key and prints a **recovery key once**; write it down. Open **http://localhost:5173** and sign in. The API runs at **http://localhost:8000/api/v1/**. Both host ports bind to loopback; the database has no published host port. Use `localhost` consistently for the browser session.
 
 Add another user by copying the clinic UUID printed at bootstrap:
 
 ```sh
-docker compose exec backend python manage.py add_clinic_user --clinic-id CLINIC_UUID --username reception --role reception
+docker compose exec backend python manage.py add_clinic_user --clinic-id CLINIC_UUID --username reception --role reception --authorized-by owner
 ```
+
+`--authorized-by` names someone who can already open the clinic's records; their password is asked for, because an operator alone cannot hand out access to encrypted records. Other key commands: `init_clinic_keys` (a clinic created before keys existed), `grant_clinic_access` (an existing member), `recover_clinic_access` (use the recovery key). See [the security architecture](docs/security-architecture.md).
 
 Provisioning is currently an operator command; there is no public signup or user-management UI. Bootstrap refuses to change existing accounts. Multiple memberships can be provisioned by a trusted operator through Django; the UI supports clinic selection. Django superuser status does not bypass clinic membership or clinical-role checks in the API.
 
@@ -90,7 +92,7 @@ This is a modular monolith. Each feature has a clear owner while transactions an
 | Clinical history | `records`: append-only notes, encounters, observations, prescriptions |
 | Audit | `audit`: append-only actor/action/resource/time; no clinical content or search text |
 | Files | `records.storage.PatientPhotoStore`: private opaque keys; no public media routes |
-| Encryption | `records.security`: envelope and key-manager contracts; implementation deliberately fails closed |
+| Encryption | `vault`: clinic keys, per-user password grants, recovery key, session unlock and value envelopes are built. Patient fields are not yet encrypted, so the startup guard remains |
 | Future modules | `modules.contracts`: independently replaceable providers accepting clinic/resource IDs |
 | Browser | `frontend`: typed API client, role-aware screens, no patient data in local storage |
 
@@ -123,6 +125,7 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | `/api/v1/auth/login/`, `/logout/` | POST | Create/destroy Django session |
 | `/api/v1/auth/me/` | GET | Current user, memberships and refreshed CSRF token |
 | `/api/v1/auth/clinic/` | POST | Select an active authorized clinic |
+| `/api/v1/auth/password/` | POST | Change your password; re-seals your access to the clinic's encryption key |
 | `/api/v1/patients/` | GET, POST | Paginated registry; `search`, `page`, `archived=true` |
 | `/api/v1/patients/{id}/` | GET, PATCH | Demographics; `archived_at` is read-only |
 | `/api/v1/patients/by-code/{code}/` | GET | Open a patient from a scanned or typed card code; active codes of this clinic only |
@@ -145,7 +148,7 @@ Unsafe requests require `X-CSRFToken` and the session cookie. Login is protected
 
 ## Before real patient data
 
-Read [the envelope-encryption design](docs/encryption.md) and [the deployment checklist](docs/deployment.md). Current startup accepts only `DJANGO_DEBUG=true` with `DATA_PROTECTION_MODE=development-only`; there is no setting that enables unimplemented encryption. The contracts do not protect fields by themselves. There is no compliance certification or production-readiness claim.
+Read [the security architecture](docs/security-architecture.md), [the envelope-encryption design](docs/encryption.md) and [the deployment checklist](docs/deployment.md). Current startup accepts only `DJANGO_DEBUG=true` with `DATA_PROTECTION_MODE=development-only`; there is no setting that enables unimplemented encryption. The contracts do not protect fields by themselves. There is no compliance certification or production-readiness claim.
 
 ## Next milestones
 

@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/v1/auth/logout/", auth.sign_out),
     path("api/v1/auth/me/", auth.me),
     path("api/v1/auth/clinic/", auth.select_clinic),
+    path("api/v1/auth/password/", auth.change_password),
     path("api/v1/clinic/", ClinicSettingsView.as_view()),
     path("api/v1/modules/", modules),
     path("api/v1/", include(router.urls)),

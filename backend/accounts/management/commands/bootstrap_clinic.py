@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from accounts.models import Clinic, Membership, Role, User, valid_currency, valid_time_zone
+from vault import services as vault
+from vault.management.prompts import RECOVERY_NOTICE
 
 
 class Command(BaseCommand):
@@ -30,4 +32,7 @@ class Command(BaseCommand):
         user.save()
         clinic = Clinic.objects.create(name=options["clinic"], time_zone=options["time_zone"], currency=options["currency"].upper())
         Membership.objects.create(clinic=clinic, user=user, role=Role.objects.get(pk="owner"))
+        # The same password seals the clinic encryption key for the owner; the recovery key is the offline spare.
+        recovery = vault.create_clinic_key(clinic, user, password)
         self.stdout.write(self.style.SUCCESS(f"Created clinic {clinic.id} and owner {user.username}."))
+        self.stdout.write(RECOVERY_NOTICE.format(key=recovery))

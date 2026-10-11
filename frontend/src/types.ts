@@ -1,5 +1,6 @@
 export type Role = 'owner' | 'admin' | 'clinician' | 'assistant' | 'reception' | 'billing';
 export interface Membership {
+  records_unlocked?: boolean;
   clinic_id: string;
   clinic_name: string;
   role: Role;

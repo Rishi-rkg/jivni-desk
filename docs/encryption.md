@@ -1,5 +1,7 @@
 # Envelope encryption: implementation gate
 
+**Status 2026-10-11:** the key hierarchy described here is implemented in `backend/vault/`, using the password-unlocked design. See [security-architecture.md](security-architecture.md) for what exists. The rest of this document is unchanged and still describes the conditions for removing the startup guard.
+
 This document describes the planned system. **None of the patient fields or files are encrypted by this MVP.** `RecordProtector`, `KeyManager` and `CiphertextEnvelope` define interfaces, and the unconfigured implementation raises rather than pretending to encrypt. Django password hashing, TLS and volume encryption are separate controls and do not implement these interfaces.
 
 ## Key hierarchy

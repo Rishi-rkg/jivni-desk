@@ -8,7 +8,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 73 backend tests pass on PostgreSQL 16 with none skipped, 13 frontend tests, 2 browser end-to-end tests, Ruff, ESLint and Prettier all clean.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 105 backend tests pass on PostgreSQL 16 with none skipped, 13 frontend tests, 2 browser end-to-end tests, Ruff, ESLint and Prettier all clean.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -124,11 +124,11 @@ Step 1, housekeeping, about a week of small changes:
 
 Step 2, the missing foundation:
 
-- **Threat model**, one page, agreed with the owner: lost laptop, stolen backup, curious staff, compromised server, and what each can read.
-- **Envelope encryption** as the original sections 10 and 11 and `docs/encryption.md` describe: AES-256-GCM, a data key per record or file, a clinic master key wrapped separately for each authorised user through Argon2id, and associated data binding every ciphertext to its clinic, record and field. Covers names, date of birth, contact details, address, all clinical text, observations, prescriptions and photos.
-- **Recovery key** shown once at clinic setup, with a written and rehearsed recovery procedure and a plain statement of what is lost if both passwords and the recovery key are gone.
+- **Threat model**, one page, agreed with the owner: lost laptop, stolen backup, curious staff, compromised server, and what each can read. *Drafted 2026-10-11 in `docs/security-architecture.md`; waiting for the owner to confirm.*
+- **Envelope encryption** as the original sections 10 and 11 and `docs/encryption.md` describe: AES-256-GCM, a data key per record or file, a clinic master key wrapped separately for each authorised user through Argon2id, and associated data binding every ciphertext to its clinic, record and field. Covers names, date of birth, contact details, address, all clinical text, observations, prescriptions and photos. *Key system built 2026-10-11 (`backend/vault/`): clinic keys, per-user grants, session unlock, value envelopes. Encrypting the actual fields and files is the next step.*
+- **Recovery key** shown once at clinic setup, with a written and rehearsed recovery procedure and a plain statement of what is lost if both passwords and the recovery key are gone. *Built 2026-10-11 as commands (`bootstrap_clinic`, `recover_clinic_access`); the setup and recovery screens and the rehearsed written procedure remain.*
 - **Search over encrypted data** (finding 11). Recommended for a clinic of this size: keyed hashes for exact matches on phone and patient identifier, plus a per-clinic name index decrypted into server memory only while a user has the clinic unlocked. Write down what someone holding only the database could learn.
-- **Key lifecycle**: password change rewraps one grant, removing a user revokes their grant, rotation works without re-encrypting every record.
+- **Key lifecycle**: password change rewraps one grant, removing a user revokes their grant, rotation works without re-encrypting every record. *Built 2026-10-11 except the procedure for replacing a clinic key across all stored values.*
 - **Backups**: nightly encrypted backup of database and files together, kept off the machine, with a restore drill that is performed and timed.
 - **Accounts**: second factor for owner and clinicians, password reset that respects key grants, idle lock, session revocation, shared-cache login throttling (finding 8), and a user-management screen for the owner.
 - **Audit**: outcome, source address and request ID on every event, denied access recorded, scheduled off-host export, retention policy (finding 9).
@@ -157,10 +157,10 @@ Exit: staff can register, find by name, phone or scan, open and update patient r
 
 - **Draft, finalise, amend** for visits (finding 5). Drafts are stored on the server under the same protection as records. A finalised visit is immutable; an amendment is a new record that points at it.
 - **The visit page, as the owner described it**: a "remember about the patient" box, the complaint, the doctor's notes, then prescribing. It is deliberately simpler than textbook case-taking sections (mentals, generals, particulars); those are not built unless the doctor asks for them.
-- **Prescribing by envelope** (model still being settled with the owner in the mockups work): one envelope is one mix with one dosage line, and a visit can have several envelopes. Each envelope gets one label. The current `Prescription` and `PrescriptionItem` tables will be reshaped to match once the owner confirms.
+- **Prescribing by envelope** (confirmed by the owner 2026-10-11): one envelope is one mix with one dosage line, and a visit can have several envelopes. Each envelope gets one label. The current `Prescription` and `PrescriptionItem` tables will be reshaped to match.
 - **Structured symptoms** (`Symptom`, `EncounterSymptom`) are deferred to Phase 6, where the library needs them; the visit page stays free text.
 - **Medicine catalogue, minimal**: the `Medicine` and `MedicineAlias` tables with name, abbreviation and potency scales, used for prescription autocomplete and the `medicine_id` link. Prescriptions still store the snapshot. The full library stays in Phase 6.
-- **Personal notes about the patient**: a doctor-only place, visible while taking the visit, for what helps the doctor remember the person, kept apart from clinical notes so it is never mistaken for history or printed.
+- **Personal notes about the patient** ("remember about the patient"; doctors only, confirmed by the owner 2026-10-11): a doctor-only place, visible while taking the visit, for what helps the doctor remember the person, kept apart from clinical notes so it is never mistaken for history or printed.
 - **Dosage instructions as their own field** on each prescription, written for the patient ("twice, 4 tabs before meals") with dosage units, because this is the only prescription text that leaves the clinic.
 - **`doctor_notes`** on prescription items, and doctor-only visibility for internal notes (finding 6).
 - **More observations**: pulse, blood pressure, temperature, with units.
@@ -176,7 +176,7 @@ Exit: the doctor completes a full day of synthetic consultations without leaving
 ### Phase 4: Billing and printing
 
 - **Job queue and outbox**, built once here and reused by Phases 5 to 7.
-- **Billing data**: invoice drafted from a finalised visit without choosing the patient again. The doctor's dispensed medicines are one line with no remedy names. Shelf medicines, consumables and supplements come from a product list with prices and are separate lines; product sales are in scope from the first billing release. Whether the clinic is GST-registered is still an open question with the owner. Discounts, and tax from clinic settings once the GST treatment is confirmed.
+- **Billing data**: invoice drafted from a finalised visit without choosing the patient again. The doctor's dispensed medicines are one line with no remedy names. Shelf medicines, consumables and supplements come from a product list with prices and are separate lines; product sales are in scope from the first billing release. The clinic is always GST-registered (owner, 2026-10-11); if no GST number is entered in clinic settings, the GST field is simply left off the printed bill. Discounts, and tax from clinic settings once the GST treatment is confirmed.
 - **Invoice lifecycle** exactly as the original section 19: draft, issued, partially paid, paid, void, refunded. Issued invoices are immutable snapshots with gapless numbering per clinic and financial year. Corrections are credit notes, never edits.
 - **Payments** are recorded, not processed: cash, card, bank transfer or local instant payment, including part payments.
 - **Templates separate from data**: invoice, prescription and label templates are versioned, and each issued document records which version rendered it.
@@ -227,6 +227,8 @@ Exit: search answers within a second on the clinic laptop, every result shows it
 Exit: with AI switched off no request leaves the server, and with it on every request appears in the audit log with the approving user.
 
 ### Later, optional
+
+Two patients open side by side, for a parent who brings a child who is also a patient (owner's idea, 2026-10-11; explicitly not needed now).
 
 Inventory with batch, expiry and stock reduction on dispensing, as the original section 22.
 

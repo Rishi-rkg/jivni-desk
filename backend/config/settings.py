@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "accounts",
     "records",
     "audit",
+    "vault",
 ]
 MIDDLEWARE = [
     "config.middleware.RequestIdMiddleware",
@@ -28,6 +29,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "config.middleware.IdleTimeoutMiddleware",
+    "vault.session.VaultMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "config.middleware.PrivateResponseMiddleware",
 ]
@@ -88,6 +90,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {"user": "300/min"},
 }
+# Argon2id cost for sealing a clinic key under a password (RFC 9106, second recommended setting).
+VAULT_KDF = {"time_cost": 3, "memory_cost": 64 * 1024, "parallelism": 4}
 # Intentionally fail closed: an encrypted provider is a future implementation,
 # not a flag that can falsely certify plaintext data as safe.
 DATA_PROTECTION_MODE = os.environ.get("DATA_PROTECTION_MODE", "")

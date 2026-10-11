@@ -1,3 +1,4 @@
+import io
 from unittest import mock
 
 from django.core.exceptions import ValidationError
@@ -11,7 +12,7 @@ from accounts.models import Clinic, Membership
 class BootstrapClinicTests(TestCase):
     def run_command(self, *args):
         with mock.patch.dict("os.environ", {"BOOTSTRAP_PASSWORD": "synthetic-bootstrap-password"}):
-            call_command("bootstrap_clinic", "--clinic", "Synthetic clinic", "--username", "owner", *args, verbosity=0)
+            call_command("bootstrap_clinic", "--clinic", "Synthetic clinic", "--username", "owner", *args, stdout=io.StringIO())
 
     def test_new_clinic_defaults_to_india(self):
         self.run_command()
