@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 import launcher
 
@@ -41,3 +41,128 @@ class LauncherTests(SimpleTestCase):
             self.assertEqual(os.environ["DJANGO_ALLOWED_HOSTS"], "127.0.0.1,localhost")
             self.assertEqual(os.environ["DJANGO_DEBUG"], "false")
             self.assertEqual(os.environ["DATA_PROTECTION_MODE"], "development-only")
+
+
+def free_port():
+    import socket
+
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
+@override_settings(ALLOWED_HOSTS=["127.0.0.1"])
+class ServerStartStopTests(SimpleTestCase):
+    databases = {"default"}
+
+    def test_the_application_can_be_started_stopped_and_started_again(self):
+        server = launcher.Server(free_port())
+        self.assertFalse(server.running)
+        self.assertFalse(launcher.already_running(server.port))
+        try:
+            server.start()
+            server.start()  # asking twice is harmless
+            self.assertTrue(server.running)
+            self.assertTrue(launcher.already_running(server.port))
+            server.stop()
+            self.assertFalse(server.running)
+            self.assertFalse(launcher.already_running(server.port))
+            server.stop()  # stopping twice is harmless
+            server.start()
+            self.assertTrue(launcher.already_running(server.port))
+        finally:
+            server.stop()
+        self.assertEqual(server.url("settings"), f"http://127.0.0.1:{server.port}/settings")
+
+    def test_it_listens_on_this_computer_only(self):
+        import socket
+
+        server = launcher.Server(free_port())
+        try:
+            server.start()
+            address = server._server.socket.getsockname()[0]
+            self.assertEqual(address, "127.0.0.1")
+            other = [
+                info[4][0] for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET) if not info[4][0].startswith("127.")
+            ]
+            for host in other[:1]:
+                with socket.socket() as probe:
+                    probe.settimeout(1)
+                    self.assertNotEqual(probe.connect_ex((host, server.port)), 0)
+        finally:
+            server.stop()
+
+
+class FakeTray:
+    """Just enough of the tray library to inspect the menu without a desktop."""
+
+    class Menu:
+        SEPARATOR = "---"
+
+        def __init__(self, *items):
+            self.items = items
+
+    class MenuItem:
+        def __init__(self, text, action, default=False, enabled=True, visible=True):
+            self.text, self.action, self.default, self.enabled, self.visible = text, action, default, enabled, visible
+
+        def label(self):
+            return self.text(self) if callable(self.text) else self.text
+
+        def shown(self):
+            return self.visible(self) if callable(self.visible) else self.visible
+
+        def usable(self):
+            return self.enabled(self) if callable(self.enabled) else self.enabled
+
+
+class TrayMenuTests(SimpleTestCase):
+    def setUp(self):
+        self.server = mock.Mock(port=8765, running=True)
+        self.notes, self.quit = [], mock.Mock()
+        self.menu = launcher.tray_menu(FakeTray, self.server, Path("data"), self.notes.append, self.quit)
+        self.items = {item.label(): item for item in self.menu.items if item != "---"}
+
+    def labels(self):
+        return [item.label() for item in self.menu.items if item != "---" and item.shown()]
+
+    def test_menu_while_running(self):
+        self.assertEqual(
+            self.labels(),
+            [
+                "Open Jivni",
+                "Open admin console",
+                "Open backups",
+                "Running on this computer (port 8765)",
+                "Stop Jivni",
+                "Restart Jivni",
+                "Back up now",
+                "Open data folder",
+                "Open log",
+                "Quit Jivni",
+            ],
+        )
+        self.assertTrue(self.items["Open Jivni"].default)
+        self.items["Open Jivni"].action()
+        self.items["Open admin console"].action()
+        self.items["Open backups"].action()
+        self.assertEqual([call.args for call in self.server.open.call_args_list], [(), ("settings",), ("backups",)])
+
+    def test_menu_while_stopped(self):
+        self.server.running = False
+        self.assertIn("Stopped", self.labels())
+        self.assertIn("Start Jivni", self.labels())
+        self.assertNotIn("Stop Jivni", self.labels())
+        self.assertFalse(self.items["Open Jivni"].usable())
+        self.assertFalse(self.items["Open admin console"].usable())
+
+    def test_quit_goes_through_the_callback(self):
+        self.items["Quit Jivni"].action()
+        self.quit.assert_called_once_with()
+
+    def test_back_up_now_reports_in_plain_words(self):
+        with mock.patch.object(launcher, "run_backup_now", return_value="Backup saved to 1 of 1 places."):
+            with mock.patch.object(launcher.threading, "Thread") as thread:
+                self.items["Back up now"].action()
+                thread.call_args.kwargs["target"]()
+        self.assertEqual(self.notes, ["Backup saved to 1 of 1 places."])

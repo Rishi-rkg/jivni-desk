@@ -24,7 +24,7 @@ export default defineConfig({
   reporter: [['list']],
   use: { baseURL: APP, viewport: { width: 1366, height: 768 }, trace: 'retain-on-failure' },
   webServer: {
-    command: `${program} --no-browser --port ${PORT} --data-dir "${dataDir}"`,
+    command: `${program} --no-browser --no-tray --port ${PORT} --data-dir "${dataDir}"`,
     url: `${APP}/health/`,
     timeout: 120_000,
     reuseExistingServer: false,

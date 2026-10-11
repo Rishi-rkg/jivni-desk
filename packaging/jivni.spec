@@ -3,13 +3,14 @@
 #     cd frontend && npm run build
 #     pyinstaller packaging/jivni.spec --noconfirm
 #
-# The result is the folder dist/Jivni with a Jivni program inside. PyInstaller builds for the system it
+# The result is the folder dist/Jivni with the Jivni program inside (and dist/Jivni.app on a Mac). PyInstaller builds for the system it
 # runs on, so the Mac, Linux and arm64 versions are built by running this same recipe on those systems.
 #
 # The application's own code is shipped as plain source and imported from the bundle folder at run time,
 # which keeps Django's discovery of apps, migrations and commands working exactly as in development.
 import ast
 import os
+import sys
 from pathlib import Path
 
 # PyInstaller's Django support imports the project settings while it analyses the program. These values
@@ -24,12 +25,13 @@ from PyInstaller.utils.hooks import collect_all
 root = Path(SPECPATH).parent
 backend = root / "backend"
 OWN = ["accounts", "audit", "config", "modules", "records", "vault"]
-THIRD_PARTY = ["django", "rest_framework", "whitenoise", "waitress", "argon2", "cryptography", "PIL", "tzdata"]
+THIRD_PARTY = ["django", "rest_framework", "whitenoise", "waitress", "argon2", "cryptography", "PIL", "tzdata", "pystray"]
 
 if not (root / "frontend" / "dist" / "index.html").is_file():
     raise SystemExit("Build the frontend first: cd frontend && npm run build")
 
-datas = [(str(root / "frontend" / "dist"), "frontend_dist")]
+icons = root / "packaging" / "icons"
+datas = [(str(root / "frontend" / "dist"), "frontend_dist"), (str(icons / "jivni-tray.png"), "icons")]
 imported = set()
 for package in OWN:
     for source in (backend / package).rglob("*.py"):
@@ -60,5 +62,23 @@ analysis = Analysis(
     excludes=OWN + ["psycopg", "psycopg_binary", "tkinter", "pytest"],
 )
 pyz = PYZ(analysis.pure)
-exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name="Jivni", console=True)
-COLLECT(exe, analysis.binaries, analysis.datas, name="Jivni")
+# A windowed program: no console window. It lives in the system tray (see backend/launcher.py).
+exe = EXE(
+    pyz,
+    analysis.scripts,
+    [],
+    exclude_binaries=True,
+    name="Jivni",
+    console=False,
+    icon=str(icons / ("jivni.icns" if sys.platform == "darwin" else "jivni.ico")),
+)
+collected = COLLECT(exe, analysis.binaries, analysis.datas, name="Jivni")
+if sys.platform == "darwin":
+    BUNDLE(
+        collected,
+        name="Jivni.app",
+        icon=str(icons / "jivni.icns"),
+        bundle_identifier="app.jivni.clinic",
+        # LSUIElement: a menu-bar application with no Dock icon.
+        info_plist={"LSUIElement": True, "CFBundleShortVersionString": "0.1.0", "NSHighResolutionCapable": True},
+    )
