@@ -1,4 +1,16 @@
-# Jivni
+<p align="center">
+  <a href="https://jivnidesk.com"><img src="packaging/icons/jivni-256.png" width="128" height="128" alt="Jivni logo: a white J with a green leaf and a yellow plus"></a>
+</p>
+
+<h1 align="center">Jivni</h1>
+
+<p align="center">
+  Everything you need to run your clinic.<br>
+  <a href="https://jivnidesk.com"><strong>jivnidesk.com</strong></a> ·
+  <a href="https://jivnidesk.com/features">Features</a> ·
+  <a href="https://jivnidesk.com/download">Download</a> ·
+  <a href="https://jivnidesk.com/pricing">Pricing</a>
+</p>
 
 Jivni is a clinic workspace for a small homeopathy practice, from one practitioner to a team of five: patients, visits and prescriptions by envelope, appointments, billing, printing, WhatsApp messages sent by staff, a reference library and encrypted backups, running on the clinic's own computer. Django 5.2 LTS and Django REST Framework own the data and the API; SQLite (the installed app) or PostgreSQL 16 (Docker) owns persistence; React and TypeScript provide the interface.
 
