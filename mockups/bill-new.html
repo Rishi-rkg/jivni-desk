@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New bill · DocHP prototype</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body data-page="billing">
+<main class="content">
+  <p><a href="billing.html">← Billing</a></p>
+  <div class="heading">
+    <div><h1>New bill <span class="badge b-grey" style="vertical-align: middle">Draft</span></h1><p class="muted">Opened by scanning a product while no visit was open. Keep scanning to add more; each scan adds a line.</p></div>
+    <div class="actions"><button class="secondary" data-scan="8901234567891">Simulate scanning another pack</button></div>
+  </div>
+
+  <div class="cols cols-2">
+    <section class="panel flush">
+      <table id="draft">
+        <thead><tr><th>Item</th><th class="num" style="width: 90px">Qty</th><th class="num" style="width: 120px">Rate (₹)</th><th style="width: 90px">GST</th><th class="num" style="width: 120px">Amount (₹)</th><th style="width: 40px"></th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="6">Products and supplements</td></tr>
+          <tr class="line"><td>Vitamin D3 capsules, 60 <span class="muted small">(scanned)</span></td><td><input class="num q" value="1"></td><td><input class="num r" value="450"></td><td>18%</td><td class="num a"></td><td class="x">✕</td></tr>
+          <tr id="add-row"><td colspan="6"><button class="link-button">+ Add product</button> · <button class="link-button">+ Add custom line</button></td></tr>
+        </tbody>
+      </table>
+      <div style="padding: 14px 16px; border-top: 1px solid var(--border)" class="form-grid four">
+        <label>Discount (₹) <input id="disc" value="0"></label>
+        <label class="span-2">Note on the bill <input placeholder="Optional"></label>
+        <label>Total (₹) <input id="total" disabled style="font-weight: 650; font-size: 1.1rem"></label>
+      </div>
+    </section>
+
+    <div>
+      <section class="panel">
+        <h2>Who is this for?</h2>
+        <span class="segmented"><span class="on">Walk-in customer</span><span>Patient on record</span></span>
+        <div class="form-grid two" style="margin-top: 12px">
+          <label>Name <input placeholder="Optional"></label>
+          <label>Phone <input placeholder="Optional"></label>
+        </div>
+        <p class="small muted" style="margin: 10px 0 0">A walk-in bill needs no patient record. Choose "Patient on record", or scan the patient's card, to put the bill on their record instead.</p>
+      </section>
+      <section class="panel">
+        <h2>Payment</h2>
+        <span class="segmented"><span class="on">Cash</span><span>UPI</span><span>Card</span></span>
+        <label class="check" style="margin-top: 12px"><input type="checkbox" checked> Print the bill</label>
+        <p class="small muted" style="margin: 10px 0 0">Walk-in bills print without a patient barcode, because there is no patient.</p>
+      </section>
+    </div>
+  </div>
+
+  <div class="save-bar"><span class="muted">Draft · not yet numbered · total ₹<span data-total></span></span><div class="actions"><button class="danger">Delete draft</button><button class="secondary">Save draft</button><button>Issue and take payment</button></div></div>
+</main>
+<script src="shell.js"></script>
+</body>
+</html>

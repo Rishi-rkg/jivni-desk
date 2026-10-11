@@ -30,6 +30,8 @@
   .b-foot { margin-top: auto; display: grid; grid-template-columns: 26mm 1fr 50mm; gap: 6mm; border-top: .5pt solid #bbb; padding-top: 5mm; align-items: end; }
   .b-qr { width: 24mm; height: 24mm; border: 1pt solid #111; display: grid; place-items: center; font-size: 7pt; text-align: center; background: repeating-conic-gradient(#111 0 25%, #fff 0 50%) 0 0 / 3mm 3mm; }
   .b-qr span { background: #fff; padding: 1mm; }
+  .b-code { width: 46mm; height: 8mm; margin-top: 2mm; background: repeating-linear-gradient(90deg, #000 0 .5mm, #fff .5mm .9mm, #000 .9mm 1.1mm, #fff 1.1mm 1.8mm, #000 1.8mm 2.6mm, #fff 2.6mm 2.9mm, #000 2.9mm 3.1mm, #fff 3.1mm 3.7mm); }
+  .b-codetext { font-family: Consolas, "Courier New", monospace; font-size: 8pt; letter-spacing: .08em; }
   .b-sign { border-top: .75pt solid #111; text-align: center; padding-top: 1.5mm; font-size: 9pt; }
   .b-small { display: flex; justify-content: space-between; font-size: 7.5pt; color: #555; margin-top: 4mm; }
   @media print { body { background: #fff; } .screen-only, .mock-bar { display: none !important; } .sheet { margin: 0; box-shadow: none; } }
@@ -49,7 +51,7 @@
   </div>
 
   <div class="b-meta">
-    <div><p class="cap">Billed to</p><strong>Anita Rao</strong><br>12 Lake Road<br>Pune 411001<br><span class="muted">+91 90000 00142 · PAT-W8KQ3G7DP9</span></div>
+    <div><p class="cap">Billed to</p><strong>Anita Rao</strong><br>12 Lake Road<br>Pune 411001<br><span class="muted">+91 90000 00142</span><div class="b-code"></div><span class="b-codetext">PAT-W8KQ3G7DP9</span></div>
     <div><p class="cap">Visit</p>06 Oct 2026<br>Dr. R. Patel<br><span class="muted">Follow-up consultation</span></div>
     <div><p class="cap">Next visit advised</p>20 Oct 2026<br><span class="muted">10:15, booked</span></div>
   </div>
@@ -105,6 +107,7 @@
       <li>Shelf medicines, supplements and consumables are <strong>separate lines</strong> under their own heading, each with its name, quantity and rate.</li>
       <li>The clinic is GST-registered, so the GSTIN, the GST column and the GST box are printed. If no GSTIN is entered in Settings, all three are left off. The rates shown are <strong>examples only</strong> for your accountant to confirm.</li>
       <li>The patient's and clinic's details are fixed as they were on the day of issue. Invoice numbers run in order within the financial year (April to March).</li>
+      <li>The patient's ID is printed as a barcode under the name, as on every item the patient takes home. Scanning it at the next visit opens their record without asking for a phone number.</li>
       <li>The status box reads ISSUED, PARTIALLY PAID, PAID, VOID or REFUNDED. The UPI code appears only while a balance is due.</li>
     </ul>
   </section>

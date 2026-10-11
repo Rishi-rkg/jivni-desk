@@ -72,6 +72,7 @@ The original plan's navigation (section 29) groups Visits, Prescriptions and Lib
 | # | Page | Purpose | Who | Phase | Mockup |
 | --- | --- | --- | --- | --- | --- |
 | P29 | Billing: Invoices | List with status filters and today's totals | Billing, Reception, Owner | 4 | [billing](billing.html) |
+| P29b | New bill (walk-in sale) | Where a product scan lands when no visit is open; no patient record needed | Billing, Reception, Owner | 4 | [new bill](bill-new.html) |
 | P30 | Invoice: draft | Edit lines, discount, note; Issue | Same | 4 | [invoice](invoice.html) |
 | P31 | Invoice: issued | Read-only, payments, history | Same | 4 | [invoice](invoice.html) |
 | P32 | Billing: Payments | Every payment received | Same | 4 | Listed |
@@ -116,7 +117,7 @@ The original plan's navigation (section 29) groups Visits, Prescriptions and Lib
 | # | Page | Purpose | Who | Phase | Mockup |
 | --- | --- | --- | --- | --- | --- |
 | P53 | Clinic details | Name, address, tax number, time zone, currency, logo, invoice numbering | Owner, Admin | 1 | [settings](settings.html) |
-| P54 | Opening hours | Working days, slot length, closed days | Owner, Admin | 5 | Listed |
+| P54 | Work week | Month and year pickers, tap dates on or off, quick-set buttons for regular and weekend times, up to 4 saved work weeks | Owner, Admin | 5 | [work week](work-week.html) |
 | P55 | Users and roles | Invite, change role, deactivate | Owner | 1 | [settings](settings.html) |
 | P56 | My account | Name, password, PIN, two-step sign-in | All | 1 | Listed |
 | P57 | Switches | Turn modules and features on or off | Owner | all | [settings](settings.html) |
@@ -141,12 +142,13 @@ All drawn on [overlays.html](overlays.html) unless marked.
 | # | Window | Opens from | Phase |
 | --- | --- | --- | --- |
 | W1 | Find a patient | Search box, `Ctrl K`, a scan | 2 |
-| W2 | Card or envelope label scanned (found, or card no longer valid) | Scanning while other work is open | 2 |
+| W2 | Product scanned during a visit: add to this patient, or new bill for someone else | Scanning a product while a visit is open | 4 |
+| W2b | Barcode not recognised, or card no longer valid | Any unknown scan | 2 |
 | W3 | Record payment | Invoice, billing list, patient banner | 4 |
 | W4 | Print envelope labels | Finalising a visit, any prescription | 4 |
 | W4b | Add a product to the bill | Draft invoice, visit page | 4 |
-| W5 | Book appointment | Free slot, patient record, visit | 5 |
-| W6 | Take patient photo, with crop | Registration, details panel | 2 |
+| W5 | New appointment: phone number lookup (or new patient), tap-a-day calendar, tap-a-time slots | Dashboard, free slot, patient record, visit | 5 |
+| W6 | Take patient photo, cropped to the face automatically | Registration, details panel | 2 |
 | W7 | Amend a finalised visit | Visit view, timeline | 3 |
 | W8 | Void invoice, credit note, refund | Invoice More menu | 4 |
 | W9 | Edit message before sending | Approval queue, patient Message button | 5 |
@@ -214,7 +216,21 @@ All drawn on [overlays.html](overlays.html) unless marked.
 
 **View choices**: appointments Day, Week, List; "This is a shared computer" at sign-in; lock time 2, 5 or 15 minutes.
 
+## 5b. Barcode scan routing
+
+One scan service listens on every screen. A scanner types quickly and ends with Enter, which is how a scan is told apart from typing. In the prototype, "Simulate a scan" at the top of every screen does the same, and a real scanner works too.
+
+| What is scanned | Where | What happens |
+| --- | --- | --- |
+| Patient ID (card, bill, envelope label, any take-home print) | Anywhere | Opens that patient's profile; the doctor starts a visit from there |
+| Product | A visit is open | Window W2: add to this patient's visit, or start a new bill for someone else |
+| Product | A bill is already open | Adds a line to that bill |
+| Product | Anywhere else | Opens a new bill (P29b) with the product on it |
+| Anything else | Anywhere | Window W2b: not recognised; nothing opens |
+
 ## 6. Printed items
+
+Every item a patient takes home carries the patient ID as a barcode, so anything brought back opens the right record without asking for a phone number (one number can belong to several people in a household).
 
 | # | Item | Size | Printer | Mockup |
 | --- | --- | --- | --- | --- |
@@ -250,6 +266,15 @@ Drawn at the bottom of [overlays.html](overlays.html): main, secondary, destruct
 10. "Remember about the patient" notes are for doctors only.
 11. Wanted later, not now: two patients open side by side, for a parent who brings a child who is also a patient.
 
+**Added on 11 Oct 2026 (third round)**
+
+12. Every printed item the patient takes home shows the patient ID barcode, the bill included.
+13. Scan routing as in section 5b.
+14. New appointments start from a phone number, which finds or adds the patient. Date and time are picked by tapping, as on a phone.
+15. "Opening hours" is called Work week: month and year dropdowns, tap dates on or off, quick-set buttons for regular and weekend times, at most 4 saved work weeks.
+16. The patient photo is cropped automatically around the detected face, using the lightest method that works, on the clinic's own computer.
+17. Recognising patients by face is a possible future plugin and is out of scope now.
+
 **Still open**
 
 1. GST rates per kind of item, for the accountant to confirm.
@@ -258,4 +283,4 @@ Drawn at the bottom of [overlays.html](overlays.html): main, secondary, destruct
 
 ## 9. Viewing the prototype
 
-Run `node mockups/serve.js` from the repository folder and open http://localhost:4173. Previous and Next at the top of each screen, or the left and right arrow keys, flip through all 16 screens.
+Run `node mockups/serve.js` from the repository folder and open http://localhost:4173. Previous and Next at the top of each screen, or the left and right arrow keys, flip through all 18 screens.
