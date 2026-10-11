@@ -199,6 +199,7 @@
       } else if (item.src && item.author) {
         body.append(`By ${item.author}`);
         if (item.license) body.append(`, ${item.license}`);
+        if (item.edited) body.append(`. Edited: ${item.edited}`);
         if (item.source) {
           const link = make("a", "", "Source");
           link.href = item.source;
