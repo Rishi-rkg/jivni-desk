@@ -16,6 +16,9 @@ PRICE_LIST_WRITE = {"owner", "admin"}
 DAY_END = {"owner", "billing"}
 # The diary: everyone who books patients or sees them.
 APPOINTMENTS = {"owner", "clinician", "assistant", "reception"}
+# WhatsApp messages: the front desk prepares and sends; a doctor or the owner approves the wording first.
+MESSAGES = {"owner", "clinician", "reception"}
+MESSAGE_APPROVE = {"owner", "clinician"}
 
 
 def membership(request):

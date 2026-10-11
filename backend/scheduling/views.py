@@ -13,7 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from accounts.access import APPOINTMENTS, BILLING_READ, CLINIC_ADMIN, CLINICAL_WRITE, DEMOGRAPHIC_WRITE
+from accounts.access import APPOINTMENTS, BILLING_READ, CLINIC_ADMIN, CLINICAL_WRITE, DEMOGRAPHIC_WRITE, MESSAGES
 from accounts.features import feature_on, require_feature
 from accounts.models import Membership
 from records import patient_extras
@@ -558,6 +558,13 @@ class DashboardViewSet(ClinicViewSet):
             owing = list(with_figures(Invoice.objects.filter(clinic=clinic)).filter(STATE_FILTERS["outstanding"]))
             total = sum((invoice.owed for invoice in owing), Decimal("0"))
             data["unpaid"] = {"count": len(owing), "total": str(total.quantize(Decimal("0.01")))}
+        if role in MESSAGES and feature_on(clinic, "messages"):
+            from messaging.models import Message
+            from messaging.rules import prepare
+
+            # Looking at the day is when today's reminders and check-ins are prepared.
+            prepare(clinic)
+            data["messages_waiting"] = Message.objects.filter(clinic=clinic, status__in=Message.OPEN).count()
         if role in CLINICAL_WRITE:
             drafts = EncounterDraft.objects.filter(patient__clinic=clinic).count()
             if drafts:

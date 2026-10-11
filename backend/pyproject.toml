@@ -19,4 +19,4 @@ ignore = [
 "billing/guards.py" = ["S608"]  # the same, for bills
 
 [tool.ruff.lint.isort]
-known-first-party = ["accounts", "audit", "billing", "config", "knowledge", "modules", "printing", "records", "scheduling", "vault"]
+known-first-party = ["accounts", "audit", "billing", "config", "knowledge", "messaging", "modules", "printing", "records", "scheduling", "vault"]

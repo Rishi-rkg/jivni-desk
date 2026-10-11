@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "billing",
     "printing",
     "scheduling",
+    "messaging",
 ]
 MIDDLEWARE = [
     "config.middleware.RequestIdMiddleware",

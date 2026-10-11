@@ -9,6 +9,7 @@ from rest_framework.routers import DefaultRouter
 from accounts import views as auth
 from accounts.api import ClinicLogoView, ClinicSettingsView
 from billing.views import BillingReportViewSet, InvoiceViewSet, PaymentViewSet, PriceItemViewSet
+from messaging.views import CampaignViewSet, MessageViewSet, RuleViewSet, TemplateViewSet
 from modules.contracts import MODULES
 from printing.views import PrintDataViewSet, PrintJobViewSet, PrintTemplateViewSet
 from records.views import (
@@ -45,6 +46,10 @@ router.register("print-data", PrintDataViewSet, basename="print-data")
 router.register("work-days", WorkWeekViewSet, basename="work-day")
 router.register("appointments", AppointmentViewSet, basename="appointment")
 router.register("dashboard", DashboardViewSet, basename="dashboard")
+router.register("messages", MessageViewSet, basename="message")
+router.register("message-templates", TemplateViewSet, basename="message-template")
+router.register("message-rules", RuleViewSet, basename="message-rule")
+router.register("message-campaigns", CampaignViewSet, basename="message-campaign")
 
 
 @api_view(["GET"])
