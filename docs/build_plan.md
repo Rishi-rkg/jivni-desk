@@ -99,6 +99,10 @@ What follows from this, as a packaging track inside Phase 1:
 4. **More than one computer in the clinic.** The app runs on one computer and the others use a browser. That needs an encrypted connection inside the clinic's network, which is not designed yet.
 5. **One clinic per installation** is now fixed (it was D4's default); backups refuse to run otherwise.
 
+### Labels are configurable (owner, 2026-10-11)
+
+The owner asked that labels be "configured how you like it", and no longer wants it stated as a rule that the label never carries the medicine name. So the label is a **layout the clinic sets up**: which items appear (logo, clinic address, patient name, dosage instructions, medicine name, patient barcode, date, next advised date), their order and size, for the 2 × 2 inch thermal printer. The layout decided earlier (everything except the medicine name) is the **default**, not a restriction. This replaces "medicine names are hidden from the patient" above as far as labels go; bills follow the same idea when their template is built. To build in Phase 4 with the label printing work.
+
 ### Still open
 
 Each has a default so work is not blocked.
