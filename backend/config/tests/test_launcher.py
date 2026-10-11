@@ -21,6 +21,17 @@ class LauncherTests(SimpleTestCase):
             with mock.patch.object(launcher.sys, "platform", "win32"), mock.patch.dict(os.environ, {"LOCALAPPDATA": "C:/Local"}):
                 self.assertEqual(launcher.default_data_dir(), Path("C:/Local") / "Jivni")
 
+    def test_a_portable_copy_keeps_its_data_beside_the_program(self):
+        folder = Path(tempfile.mkdtemp(prefix="jivni-launcher-test-")).resolve()
+        clean = {key: value for key, value in os.environ.items() if key != "JIVNI_DATA_DIR"}
+        with mock.patch.dict(os.environ, clean, clear=True), mock.patch.object(launcher.sys, "executable", str(folder / "Jivni.exe")):
+            self.assertIsNone(launcher.portable_data_dir())  # running from source is never portable
+            with mock.patch.object(launcher.sys, "frozen", True, create=True):
+                self.assertIsNone(launcher.portable_data_dir())  # an installed copy has no marker
+                (folder / "portable.txt").write_text("portable", encoding="utf-8")
+                self.assertEqual(launcher.portable_data_dir(), folder / "Jivni-Data")
+                self.assertEqual(launcher.default_data_dir(), folder / "Jivni-Data")
+
     def test_the_signing_secret_is_made_once_and_reused(self):
         folder = Path(tempfile.mkdtemp(prefix="jivni-launcher-test-"))
         first = launcher.secret_key(folder)

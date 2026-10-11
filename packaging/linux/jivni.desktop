@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Jivni
+Comment=Clinic workspace: patient records, visits, prescriptions and backups
+Exec=/opt/jivni/Jivni
+Icon=jivni
+Terminal=false
+Categories=Office;MedicalSoftware;
+StartupNotify=false

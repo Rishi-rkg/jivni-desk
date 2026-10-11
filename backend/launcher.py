@@ -37,9 +37,21 @@ def say(message):
         print(message, flush=True)
 
 
+def portable_data_dir():
+    """A portable copy (one with portable.txt beside the program) keeps its data beside itself, for a USB drive."""
+    if not getattr(sys, "frozen", False):
+        return None
+    program = Path(sys.executable).resolve().parent
+    if sys.platform == "darwin" and program.name == "MacOS":
+        program = program.parents[2]  # Jivni.app/Contents/MacOS -> the folder holding Jivni.app
+    return program / "Jivni-Data" if (program / "portable.txt").is_file() else None
+
+
 def default_data_dir():
     if os.environ.get("JIVNI_DATA_DIR"):
         return Path(os.environ["JIVNI_DATA_DIR"])
+    if portable_data_dir():
+        return portable_data_dir()
     if sys.platform == "win32":
         return Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / APP_NAME
     if sys.platform == "darwin":
