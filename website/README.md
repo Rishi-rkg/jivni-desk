@@ -7,7 +7,7 @@ as it is (Cloudflare Pages: no build command, output directory `website`).
 | File | What it is |
 | --- | --- |
 | `index.html` | Landing page: the background video and tagline, the animated sample of the app, photographs, testimonials |
-| `features.html` | What the app does, and the clinic-size picker |
+| `features.html` | One photo-led row per feature, then the clinic-size picker |
 | `download.html` | Reads the latest GitHub release and offers the right file for the visitor's computer |
 | `pricing.html` | Free and Enterprise plans for the hosted app at jivnidesk.app |
 | `credits.html` | Every attribution on one page, built from `assets/config.js` |
@@ -40,7 +40,7 @@ for reduced motion or data saving get the poster image instead.
 
 ## Photographs
 
-The three photographs in `assets/media/` were generated on the owner's local
+The photographs in `assets/media/` were generated on the owner's local
 ComfyUI with Z-Image Turbo (1536 x 1024) and are credited as generated
 images. Replace one by changing its entry in `assets/config.js`.
 
