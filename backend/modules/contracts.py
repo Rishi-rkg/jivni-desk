@@ -1,6 +1,7 @@
 """Future modules use IDs and explicit DTOs, never reach into React or each other's tables.
 No provider is enabled and no patient data is transmitted by these interfaces.
 """
+
 from typing import Protocol
 from uuid import UUID
 
@@ -32,8 +33,11 @@ class AIDrafting(Protocol):
 MODULES = [
     {"code": code, "label": label, "status": "planned"}
     for code, label in [
-        ("billing", "Billing"), ("correspondence", "WhatsApp correspondence"),
-        ("knowledge", "Medicine knowledge library"), ("printing", "Printing"),
-        ("barcodes", "Barcode scanning"), ("ai", "AI drafting"),
+        ("billing", "Billing"),
+        ("correspondence", "WhatsApp correspondence"),
+        ("knowledge", "Medicine knowledge library"),
+        ("printing", "Printing"),
+        ("barcodes", "Barcode scanning"),
+        ("ai", "AI drafting"),
     ]
 ]

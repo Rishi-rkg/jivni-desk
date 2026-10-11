@@ -1,4 +1,5 @@
 """Protected object storage; keys are internal and never public URLs."""
+
 import hashlib
 import io
 import uuid

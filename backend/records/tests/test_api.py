@@ -29,10 +29,35 @@ class APITests(TestCase):
         session.save()
 
     def patient_data(self):
-        return {"first_name": "Test", "middle_name": "Only", "last_name": "Patient", "date_of_birth": "2000-02-29", "gender": "female", "address": {"line1": "1 Synthetic St", "city": "Test City", "country": "us"}}
+        return {
+            "first_name": "Test",
+            "middle_name": "Only",
+            "last_name": "Patient",
+            "date_of_birth": "2000-02-29",
+            "gender": "female",
+            "address": {"line1": "1 Synthetic St", "city": "Test City", "country": "us"},
+        }
 
     def encounter_data(self):
-        return {"patient": str(self.patient.pk), "chief_complaint": "Synthetic complaint", "observations": [{"kind": "height", "value": "172.50", "unit": "cm"}, {"kind": "weight", "value": "70.25", "unit": "kg"}], "prescriptions": [{"instructions": "Synthetic only", "items": [{"medicine_name_snapshot": "Test medicine", "potency": "Test potency", "dose": "Test dose", "frequency": "Test frequency", "quantity": 1}]}]}
+        return {
+            "patient": str(self.patient.pk),
+            "chief_complaint": "Synthetic complaint",
+            "observations": [{"kind": "height", "value": "172.50", "unit": "cm"}, {"kind": "weight", "value": "70.25", "unit": "kg"}],
+            "prescriptions": [
+                {
+                    "instructions": "Synthetic only",
+                    "items": [
+                        {
+                            "medicine_name_snapshot": "Test medicine",
+                            "potency": "Test potency",
+                            "dose": "Test dose",
+                            "frequency": "Test frequency",
+                            "quantity": 1,
+                        }
+                    ],
+                }
+            ],
+        }
 
     def role(self, value):
         self.member.role_id = value
@@ -75,7 +100,11 @@ class APITests(TestCase):
         self.assertFalse(AuditEvent.objects.filter(action__icontains="Synthetic").exists())
 
     def test_demographic_update_preserves_identity(self):
-        response = self.client.patch(f"/api/v1/patients/{self.patient.pk}/", {"first_name": "Updated", "id": str(self.other.pk), "clinic": str(self.other_clinic.pk)}, format="json")
+        response = self.client.patch(
+            f"/api/v1/patients/{self.patient.pk}/",
+            {"first_name": "Updated", "id": str(self.other.pk), "clinic": str(self.other_clinic.pk)},
+            format="json",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], str(self.patient.pk))
         self.patient.refresh_from_db()
@@ -124,7 +153,9 @@ class APITests(TestCase):
     def test_billing_cannot_create_or_update_patient(self):
         self.role("billing")
         self.assertEqual(self.client.post("/api/v1/patients/", self.patient_data(), format="json").status_code, 403)
-        self.assertEqual(self.client.patch(f"/api/v1/patients/{self.patient.pk}/", {"first_name": "Changed"}, format="json").status_code, 403)
+        self.assertEqual(
+            self.client.patch(f"/api/v1/patients/{self.patient.pk}/", {"first_name": "Changed"}, format="json").status_code, 403
+        )
 
     def test_revoked_membership_denies_access(self):
         self.member.is_active = False
@@ -134,12 +165,16 @@ class APITests(TestCase):
     def test_records_cannot_be_deleted_or_encounters_overwritten(self):
         encounter = Encounter.objects.create(patient=self.patient, clinician=self.user, chief_complaint="Test")
         self.assertEqual(self.client.delete(f"/api/v1/patients/{self.patient.pk}/").status_code, 405)
-        self.assertEqual(self.client.patch(f"/api/v1/encounters/{encounter.pk}/", {"chief_complaint": "Overwrite"}, format="json").status_code, 405)
+        self.assertEqual(
+            self.client.patch(f"/api/v1/encounters/{encounter.pk}/", {"chief_complaint": "Overwrite"}, format="json").status_code, 405
+        )
 
     def test_notes_and_amendments_are_preserved(self):
         response = self.client.post("/api/v1/notes/", {"patient": str(self.patient.pk), "body": "Synthetic note"}, format="json")
         self.assertEqual(response.status_code, 201, response.data)
-        amendment = self.client.post("/api/v1/notes/", {"patient": str(self.patient.pk), "body": "Correction", "amends": response.data["id"]}, format="json")
+        amendment = self.client.post(
+            "/api/v1/notes/", {"patient": str(self.patient.pk), "body": "Correction", "amends": response.data["id"]}, format="json"
+        )
         self.assertEqual(amendment.status_code, 201)
         self.assertEqual(self.client.get("/api/v1/notes/").data["count"], 2)
 
@@ -165,7 +200,9 @@ class APITests(TestCase):
 
     def test_fake_photo_rejected(self):
         image = SimpleUploadedFile("bad.png", b"not an image", content_type="image/png")
-        self.assertEqual(self.client.post(f"/api/v1/patients/{self.patient.pk}/photos/", {"photo": image}, format="multipart").status_code, 400)
+        self.assertEqual(
+            self.client.post(f"/api/v1/patients/{self.patient.pk}/photos/", {"photo": image}, format="multipart").status_code, 400
+        )
 
     def test_invalid_patient_filter_is_400(self):
         self.assertEqual(self.client.get("/api/v1/encounters/?patient=not-uuid").status_code, 400)
@@ -190,18 +227,42 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.json()["clinic_id"], str(self.clinic.pk))
         self.assertEqual(self.client.get("/api/v1/auth/me/").status_code, 200)
         self.assertEqual(self.client.post("/api/v1/patients/", {}, format="json").status_code, 403)
-        self.assertEqual(self.client.post("/api/v1/auth/logout/", {}, format="json", HTTP_X_CSRFTOKEN=response.json()["csrf_token"]).status_code, 200)
+        self.assertEqual(
+            self.client.post("/api/v1/auth/logout/", {}, format="json", HTTP_X_CSRFTOKEN=response.json()["csrf_token"]).status_code, 200
+        )
         self.assertEqual(self.client.get("/api/v1/auth/me/").status_code, 401)
 
     def test_failed_login_is_generic_and_throttled(self):
         for _ in range(5):
-            self.assertEqual(self.client.post("/api/v1/auth/login/", {"username": "doctor", "password": "bad"}, format="json", HTTP_X_CSRFTOKEN=self.token()).status_code, 401)
-        self.assertEqual(self.client.post("/api/v1/auth/login/", {"username": "doctor", "password": "bad"}, format="json", HTTP_X_CSRFTOKEN=self.token()).status_code, 429)
+            self.assertEqual(
+                self.client.post(
+                    "/api/v1/auth/login/", {"username": "doctor", "password": "bad"}, format="json", HTTP_X_CSRFTOKEN=self.token()
+                ).status_code,
+                401,
+            )
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/login/", {"username": "doctor", "password": "bad"}, format="json", HTTP_X_CSRFTOKEN=self.token()
+            ).status_code,
+            429,
+        )
 
     def test_select_clinic_checks_membership(self):
         self.client.force_login(self.user)
         other = Clinic.objects.create(name="Other")
-        self.assertEqual(self.client.post("/api/v1/auth/clinic/", {"clinic_id": str(other.pk)}, format="json", HTTP_X_CSRFTOKEN=self.token()).status_code, 403)
-        self.assertEqual(self.client.post("/api/v1/auth/clinic/", {"clinic_id": "bad"}, format="json", HTTP_X_CSRFTOKEN=self.token()).status_code, 403)
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/clinic/", {"clinic_id": str(other.pk)}, format="json", HTTP_X_CSRFTOKEN=self.token()
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.client.post("/api/v1/auth/clinic/", {"clinic_id": "bad"}, format="json", HTTP_X_CSRFTOKEN=self.token()).status_code, 403
+        )
         Membership.objects.create(clinic=other, user=self.user, role_id="reception")
-        self.assertEqual(self.client.post("/api/v1/auth/clinic/", {"clinic_id": str(other.pk)}, format="json", HTTP_X_CSRFTOKEN=self.token()).status_code, 200)
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/clinic/", {"clinic_id": str(other.pk)}, format="json", HTTP_X_CSRFTOKEN=self.token()
+            ).status_code,
+            200,
+        )

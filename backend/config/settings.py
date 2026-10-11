@@ -10,9 +10,15 @@ if len(SECRET_KEY) < 32:
 DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 INSTALLED_APPS = [
-    "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
-    "django.contrib.messages", "django.contrib.staticfiles", "rest_framework",
-    "accounts", "records", "audit",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "accounts",
+    "records",
+    "audit",
 ]
 MIDDLEWARE = [
     "config.middleware.RequestIdMiddleware",
@@ -28,15 +34,17 @@ MIDDLEWARE = [
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 AUTH_USER_MODEL = "accounts.User"
-DATABASES = {"default": {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": os.environ.get("POSTGRES_DB", "clinic"),
-    "USER": os.environ.get("POSTGRES_USER", "clinic"),
-    "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
-    "HOST": os.environ.get("POSTGRES_HOST", "db"),
-    "PORT": os.environ.get("POSTGRES_PORT", "5432"),
-    "CONN_MAX_AGE": 60,
-}}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "clinic"),
+        "USER": os.environ.get("POSTGRES_USER", "clinic"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+        "HOST": os.environ.get("POSTGRES_HOST", "db"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "CONN_MAX_AGE": 60,
+    }
+}
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 12}},
@@ -84,4 +92,6 @@ REST_FRAMEWORK = {
 # not a flag that can falsely certify plaintext data as safe.
 DATA_PROTECTION_MODE = os.environ.get("DATA_PROTECTION_MODE", "")
 if DATA_PROTECTION_MODE != "development-only" or not DEBUG:
-    raise ImproperlyConfigured("Encrypted patient storage is not implemented. This MVP may run only with DEBUG=true and DATA_PROTECTION_MODE=development-only using synthetic data.")
+    raise ImproperlyConfigured(
+        "Encrypted patient storage is not implemented. This MVP may run only with DEBUG=true and DATA_PROTECTION_MODE=development-only using synthetic data."
+    )

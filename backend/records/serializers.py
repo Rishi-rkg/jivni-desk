@@ -55,7 +55,23 @@ class PatientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ["id", "identifier", "first_name", "middle_name", "last_name", "date_of_birth", "gender", "phone", "whatsapp_number", "email", "address", "photos", "archived_at", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "identifier",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "date_of_birth",
+            "gender",
+            "phone",
+            "whatsapp_number",
+            "email",
+            "address",
+            "photos",
+            "archived_at",
+            "created_at",
+            "updated_at",
+        ]
         # archived_at changes only through the archive and restore actions.
         read_only_fields = ["id", "archived_at", "created_at", "updated_at"]
 
@@ -122,6 +138,7 @@ class DuplicateCheckSerializer(serializers.Serializer):
 
 class NoteSerializer(serializers.ModelSerializer):
     author_name = serializers.CharField(source="author.get_full_name", read_only=True)
+
     class Meta:
         model = PatientNote
         fields = ["id", "patient", "body", "author_name", "amends", "created_at"]
@@ -165,6 +182,7 @@ class PrescriptionItemSerializer(serializers.ModelSerializer):
 
 class PrescriptionSerializer(serializers.ModelSerializer):
     items = PrescriptionItemSerializer(many=True, allow_empty=False)
+
     class Meta:
         model = Prescription
         fields = ["id", "instructions", "items", "created_at"]
@@ -178,7 +196,21 @@ class EncounterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Encounter
-        fields = ["id", "patient", "clinician_name", "occurred_at", "chief_complaint", "symptoms", "history", "assessment", "internal_notes", "follow_up_date", "observations", "prescriptions", "created_at"]
+        fields = [
+            "id",
+            "patient",
+            "clinician_name",
+            "occurred_at",
+            "chief_complaint",
+            "symptoms",
+            "history",
+            "assessment",
+            "internal_notes",
+            "follow_up_date",
+            "observations",
+            "prescriptions",
+            "created_at",
+        ]
         read_only_fields = ["id", "clinician_name", "created_at"]
 
     def get_fields(self):

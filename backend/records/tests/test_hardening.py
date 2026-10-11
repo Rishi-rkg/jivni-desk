@@ -1,4 +1,5 @@
 """Phase 1 close-out: clinic-local dates, archive actions, doctor-only notes, audit visibility, idle lock."""
+
 import time
 import uuid
 from datetime import UTC, date, datetime
@@ -115,7 +116,9 @@ class HardeningAPITests(TestCase):
     # --- internal notes
 
     def test_internal_notes_are_for_clinical_writers_only(self):
-        encounter = Encounter.objects.create(patient=self.patient, clinician=self.user, chief_complaint="Synthetic", internal_notes="Doctor only")
+        encounter = Encounter.objects.create(
+            patient=self.patient, clinician=self.user, chief_complaint="Synthetic", internal_notes="Doctor only"
+        )
         urls = ["/api/v1/encounters/", f"/api/v1/encounters/{encounter.pk}/", f"/api/v1/patients/{self.patient.pk}/timeline/"]
 
         def visible(url):
@@ -213,7 +216,10 @@ class LoginAuditTests(TestCase):
     def test_failed_login_is_recorded_against_the_account_clinic(self):
         self.assertEqual(self.login("doctor", "wrong-password").status_code, 401)
         event = AuditEvent.objects.get(action="auth.login_failed")
-        self.assertEqual((event.clinic, event.outcome, event.actor, event.resource_type, event.resource_id), (self.clinic, "failed", None, "User", self.user.pk))
+        self.assertEqual(
+            (event.clinic, event.outcome, event.actor, event.resource_type, event.resource_id),
+            (self.clinic, "failed", None, "User", self.user.pk),
+        )
 
     def test_failed_login_for_unknown_username_has_no_clinic_and_no_username(self):
         self.assertEqual(self.login("nobody-here", "wrong-password").status_code, 401)

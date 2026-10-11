@@ -1,4 +1,5 @@
 """Contracts for future envelope encryption. No plaintext fallback in encrypted mode."""
+
 from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID

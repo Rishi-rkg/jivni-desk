@@ -42,6 +42,7 @@ class Patient(StableRecord):
         FEMALE = "female", "Female"
         OTHER = "other", "Other"
         UNDISCLOSED = "undisclosed", "Not disclosed"
+
     clinic = models.ForeignKey("accounts.Clinic", on_delete=models.PROTECT)
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, blank=True)
@@ -133,7 +134,7 @@ def normalize_patient_code(text):
     """Accept a scanned or typed code with or without the prefix, in any case. None if it cannot be one."""
     value = "".join(str(text).split()).upper()
     if value.startswith(CODE_PREFIX):
-        value = value[len(CODE_PREFIX):]
+        value = value[len(CODE_PREFIX) :]
     if len(value) != CODE_LENGTH or any(char not in CODE_ALPHABET for char in value):
         return None
     return CODE_PREFIX + value
@@ -145,6 +146,7 @@ class PatientIdentifier(StableRecord):
     A patient has one active code. A lost card is handled by revoking the code and issuing another;
     the code and its patient never change.
     """
+
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="identifiers")
     code = models.CharField(max_length=20, unique=True, editable=False)
     issued_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="+")
@@ -153,7 +155,11 @@ class PatientIdentifier(StableRecord):
 
     class Meta:
         ordering = ["-created_at", "id"]
-        constraints = [models.UniqueConstraint(fields=["patient"], condition=models.Q(revoked_at__isnull=True), name="one_active_identifier_per_patient")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["patient"], condition=models.Q(revoked_at__isnull=True), name="one_active_identifier_per_patient"
+            )
+        ]
 
     @classmethod
     def from_db(cls, db, field_names, values):
@@ -186,6 +192,7 @@ class PatientIdentifier(StableRecord):
 class PatientRevision(AppendOnlyRecord):
     """What changed in a patient's demographics, by whom. Holds old and new values, so it is as
     sensitive as the patient record itself and must be encrypted with it."""
+
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="revisions")
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     changes = models.JSONField()
@@ -231,6 +238,7 @@ class Observation(AppendOnlyRecord):
     class Kind(models.TextChoices):
         HEIGHT = "height", "Height"
         WEIGHT = "weight", "Weight"
+
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="observations")
     encounter = models.ForeignKey(Encounter, on_delete=models.PROTECT, related_name="observations")
     kind = models.CharField(max_length=10, choices=Kind.choices)

@@ -1,4 +1,5 @@
 """Clinic settings. Any member may read them; only the owner or an administrator may change them."""
+
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
@@ -28,7 +29,9 @@ class ClinicSettingsView(APIView):
     def patch(self, request):
         member = membership(request)
         if member.role_id not in CLINIC_ADMIN:
-            record_event(request, "access.denied", clinic=member.clinic, outcome="denied", resource_type="Clinic", resource_id=member.clinic_id)
+            record_event(
+                request, "access.denied", clinic=member.clinic, outcome="denied", resource_type="Clinic", resource_id=member.clinic_id
+            )
             raise PermissionDenied("Your clinic role does not allow this action.")
         serializer = ClinicSerializer(member.clinic, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)

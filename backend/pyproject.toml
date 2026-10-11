@@ -1,7 +1,8 @@
 [tool.ruff]
 target-version = "py311"
 line-length = 140
-extend-exclude = ["*/migrations/0001_initial.py"]
+# Applied migrations are never rewritten, not even for formatting.
+extend-exclude = ["*/migrations/*"]
 
 [tool.ruff.lint]
 # pycodestyle, pyflakes, import order, likely bugs, modern syntax, and the security checks from bandit.

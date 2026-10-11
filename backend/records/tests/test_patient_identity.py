@@ -1,4 +1,5 @@
 """Phase 2 groundwork: patient codes and scan lookup, WhatsApp number, duplicate check, demographic history."""
+
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, connection, transaction
@@ -41,6 +42,7 @@ class PatientCodeModelTests(TestCase):
 
     def test_revoked_code_stays_revoked(self):
         from django.utils import timezone
+
         identifier = PatientIdentifier.issue(self.patient)
         identifier.revoked_at = timezone.now()
         identifier.save()
@@ -69,11 +71,11 @@ class PatientCodeModelTests(TestCase):
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM records_patientrevision WHERE id = %s", [revision.pk])
 
-
     def test_postgres_identifier_identity_trigger(self):
         if connection.vendor != "postgresql":
             self.skipTest("PostgreSQL trigger test; run CI or TEST_DATABASE=postgres.")
         import uuid
+
         identifier = PatientIdentifier.issue(self.patient)
         with self.assertRaises(DatabaseError), transaction.atomic():
             PatientIdentifier.objects.filter(pk=identifier.pk).update(id=uuid.uuid4())
@@ -92,7 +94,9 @@ class PatientIdentityAPITests(TestCase):
         session["clinic_id"] = str(self.clinic.pk)
         session.save()
         self.patient = self.register(first_name="Anita", last_name="Synthetic", date_of_birth="1984-03-02", phone="5550142")
-        self.other = Patient.objects.create(clinic=self.other_clinic, first_name="Anita", last_name="Synthetic", date_of_birth="1984-03-02", gender="other", phone="5550142")
+        self.other = Patient.objects.create(
+            clinic=self.other_clinic, first_name="Anita", last_name="Synthetic", date_of_birth="1984-03-02", gender="other", phone="5550142"
+        )
         self.other_code = PatientIdentifier.issue(self.other).code
 
     def register(self, **fields):
@@ -174,7 +178,9 @@ class PatientIdentityAPITests(TestCase):
 
     def test_edits_are_recorded_with_old_and_new_values(self):
         url = f"/api/v1/patients/{self.patient['id']}/"
-        self.client.patch(url, {"phone": "5550999", "address": {"line1": "1 Synthetic St", "city": "Test City", "country": "in"}}, format="json")
+        self.client.patch(
+            url, {"phone": "5550999", "address": {"line1": "1 Synthetic St", "city": "Test City", "country": "in"}}, format="json"
+        )
         self.client.patch(url, {"phone": "5550999"}, format="json")  # nothing changed: no revision
         self.client.patch(url, {"address": None, "last_name": "Renamed"}, format="json")
         revisions = self.client.get(url + "revisions/").data["revisions"]

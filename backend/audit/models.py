@@ -22,7 +22,9 @@ class AuditEvent(models.Model):
     resource_type = models.CharField(max_length=60, blank=True)
     resource_id = models.UUIDField(null=True)
     occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    outcome = models.CharField(max_length=10, choices=[("success", "Success"), ("denied", "Denied"), ("failed", "Failed")], default="success")
+    outcome = models.CharField(
+        max_length=10, choices=[("success", "Success"), ("denied", "Denied"), ("failed", "Failed")], default="success"
+    )
     source_ip = models.GenericIPAddressField(null=True)
     request_id = models.UUIDField(null=True)
     # Never persist symptoms, search strings, credentials, or other record content here.
@@ -49,8 +51,12 @@ def record_event(request, action, resource=None, clinic=None, outcome="success",
     if actor is None and request.user.is_authenticated:
         actor = request.user
     AuditEvent.objects.create(
-        actor=actor, clinic=clinic, action=action, outcome=outcome,
+        actor=actor,
+        clinic=clinic,
+        action=action,
+        outcome=outcome,
         resource_type=resource.__class__.__name__ if resource else resource_type,
         resource_id=resource.pk if resource else resource_id,
-        source_ip=source_address(request), request_id=getattr(request, "request_id", None),
+        source_ip=source_address(request),
+        request_id=getattr(request, "request_id", None),
     )

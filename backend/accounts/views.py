@@ -18,11 +18,16 @@ from .models import Membership
 
 def session_data(request):
     memberships = Membership.objects.filter(user=request.user, is_active=True).select_related("clinic", "role")
-    return {"user": {"id": str(request.user.id), "username": request.user.username, "name": request.user.get_full_name()},
-            "clinic_id": request.session.get("clinic_id"),
-            "memberships": [{"clinic_id": str(m.clinic_id), "clinic_name": m.clinic.name, "role": m.role_id, "time_zone": m.clinic.time_zone} for m in memberships],
-            "idle_timeout_seconds": settings.SESSION_IDLE_SECONDS,
-            "csrf_token": get_token(request)}
+    return {
+        "user": {"id": str(request.user.id), "username": request.user.username, "name": request.user.get_full_name()},
+        "clinic_id": request.session.get("clinic_id"),
+        "memberships": [
+            {"clinic_id": str(m.clinic_id), "clinic_name": m.clinic.name, "role": m.role_id, "time_zone": m.clinic.time_zone}
+            for m in memberships
+        ],
+        "idle_timeout_seconds": settings.SESSION_IDLE_SECONDS,
+        "csrf_token": get_token(request),
+    }
 
 
 @require_GET
@@ -67,8 +72,14 @@ def sign_in(request):
         # see it. One query whether or not the username exists.
         known = list(Membership.objects.filter(user__username=username).select_related("clinic"))
         for member in known or [None]:
-            record_event(request, "auth.login_failed", clinic=member.clinic if member else None, outcome="failed",
-                         resource_type="User" if member else "", resource_id=member.user_id if member else None)
+            record_event(
+                request,
+                "auth.login_failed",
+                clinic=member.clinic if member else None,
+                outcome="failed",
+                resource_type="User" if member else "",
+                resource_id=member.user_id if member else None,
+            )
         return JsonResponse({"detail": "Invalid username or password."}, status=401)
     memberships = list(Membership.objects.filter(user=user, is_active=True).select_related("clinic"))
     if not memberships:
@@ -88,7 +99,11 @@ def sign_in(request):
 @transaction.atomic
 def sign_out(request):
     if request.user.is_authenticated:
-        member = Membership.objects.filter(user=request.user, clinic_id=request.session.get("clinic_id"), is_active=True).select_related("clinic").first()
+        member = (
+            Membership.objects.filter(user=request.user, clinic_id=request.session.get("clinic_id"), is_active=True)
+            .select_related("clinic")
+            .first()
+        )
         record_event(request, "auth.logout", clinic=member.clinic if member else None)
     logout(request)
     return JsonResponse({"detail": "Logged out.", "csrf_token": get_token(request)})

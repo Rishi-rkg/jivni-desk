@@ -55,7 +55,9 @@ class ModelTests(TestCase):
     def test_prescription_snapshot_is_independent(self):
         encounter = Encounter.objects.create(patient=self.patient, clinician=self.user, chief_complaint="Synthetic symptom")
         rx = Prescription.objects.create(encounter=encounter, prescriber=self.user)
-        item = PrescriptionItem.objects.create(prescription=rx, medicine_name_snapshot="Synthetic medicine", dose="Recorded dose", frequency="Recorded frequency")
+        item = PrescriptionItem.objects.create(
+            prescription=rx, medicine_name_snapshot="Synthetic medicine", dose="Recorded dose", frequency="Recorded frequency"
+        )
         self.patient.first_name = "Changed"
         self.patient.save()
         item.refresh_from_db()

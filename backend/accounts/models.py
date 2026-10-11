@@ -58,6 +58,7 @@ class Role(models.Model):
         ASSISTANT = "assistant", "Clinical assistant"
         RECEPTION = "reception", "Reception"
         BILLING = "billing", "Billing"
+
     code = models.CharField(max_length=20, choices=Code.choices, primary_key=True)
     label = models.CharField(max_length=60)
 

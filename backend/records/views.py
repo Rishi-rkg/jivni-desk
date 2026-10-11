@@ -47,8 +47,14 @@ class ClinicViewSet(viewsets.GenericViewSet):
             resource_id = uuid.UUID(str(self.kwargs.get("pk")))
         except ValueError:
             resource_id = None
-        record_event(self.request, "access.denied", clinic=member.clinic if member else None, outcome="denied",
-                     resource_type=getattr(self, "basename", "") or "", resource_id=resource_id)
+        record_event(
+            self.request,
+            "access.denied",
+            clinic=member.clinic if member else None,
+            outcome="denied",
+            resource_type=getattr(self, "basename", "") or "",
+            resource_id=resource_id,
+        )
 
     def event(self, action_name, resource=None):
         record_event(self.request, action_name, resource, self.member.clinic)
@@ -59,14 +65,22 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
-        active_codes = Prefetch("identifiers", queryset=PatientIdentifier.objects.filter(revoked_at__isnull=True), to_attr="active_identifiers")
+        active_codes = Prefetch(
+            "identifiers", queryset=PatientIdentifier.objects.filter(revoked_at__isnull=True), to_attr="active_identifiers"
+        )
         queryset = Patient.objects.filter(clinic=self.member.clinic).select_related("address").prefetch_related("photos", active_codes)
         if self.action == "list":
             if self.request.query_params.get("archived") != "true":
                 queryset = queryset.filter(archived_at__isnull=True)
             search = self.request.query_params.get("search", "").strip()[:200]
             if search:
-                query = Q(first_name__icontains=search) | Q(middle_name__icontains=search) | Q(last_name__icontains=search) | Q(phone__icontains=search) | Q(whatsapp_number__icontains=search)
+                query = (
+                    Q(first_name__icontains=search)
+                    | Q(middle_name__icontains=search)
+                    | Q(last_name__icontains=search)
+                    | Q(phone__icontains=search)
+                    | Q(whatsapp_number__icontains=search)
+                )
                 code = normalize_patient_code(search)
                 if code:
                     query |= Q(identifiers__code=code, identifiers__revoked_at__isnull=True)
@@ -109,13 +123,21 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         encounters = patient.encounters.select_related("clinician").prefetch_related("observations", "prescriptions__items")[:50]
         notes = patient.notes.select_related("author").order_by("-created_at", "id")[:50]
         self.event("patient.timeline", patient)
-        return Response({"encounters": EncounterSerializer(encounters, many=True, context=self.get_serializer_context()).data, "notes": NoteSerializer(notes, many=True).data, "limit_per_type": 50})
+        return Response(
+            {
+                "encounters": EncounterSerializer(encounters, many=True, context=self.get_serializer_context()).data,
+                "notes": NoteSerializer(notes, many=True).data,
+                "limit_per_type": 50,
+            }
+        )
 
     @action(detail=False, methods=["get"], url_path=r"by-code/(?P<code>[^/]+)")
     def by_code(self, request, code=None):
         """Open the patient for a scanned or typed card code. Only an active code of this clinic resolves."""
         normalized = normalize_patient_code(code)
-        patient = self.get_queryset().filter(identifiers__code=normalized, identifiers__revoked_at__isnull=True).first() if normalized else None
+        patient = (
+            self.get_queryset().filter(identifiers__code=normalized, identifiers__revoked_at__isnull=True).first() if normalized else None
+        )
         if not patient:
             # The code itself is never written to the audit log.
             record_event(request, "patient.scan", clinic=self.member.clinic, outcome="failed")
@@ -204,7 +226,14 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         stored = photo_store.store(self.member.clinic_id, upload)
         try:
             with transaction.atomic():
-                photo = PatientPhoto.objects.create(patient=patient, uploaded_by=request.user, storage_key=stored.key, mime_type=stored.mime_type, byte_size=stored.byte_size, sha256=stored.sha256)
+                photo = PatientPhoto.objects.create(
+                    patient=patient,
+                    uploaded_by=request.user,
+                    storage_key=stored.key,
+                    mime_type=stored.mime_type,
+                    byte_size=stored.byte_size,
+                    sha256=stored.sha256,
+                )
                 self.event("photo.create", photo)
         except Exception:
             photo_store.delete(stored.key)
@@ -260,7 +289,11 @@ class EncounterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
         require_role(request, CLINICAL_READ if request.method in {"GET", "HEAD", "OPTIONS"} else CLINICAL_WRITE)
 
     def get_queryset(self):
-        queryset = Encounter.objects.filter(patient__clinic=self.member.clinic).select_related("clinician").prefetch_related("observations", "prescriptions__items")
+        queryset = (
+            Encounter.objects.filter(patient__clinic=self.member.clinic)
+            .select_related("clinician")
+            .prefetch_related("observations", "prescriptions__items")
+        )
         if self.request.query_params.get("patient"):
             try:
                 patient_id = uuid.UUID(self.request.query_params["patient"])
@@ -290,7 +323,18 @@ class AuditSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AuditEvent
-        fields = ["id", "actor", "actor_username", "action", "outcome", "resource_type", "resource_id", "source_ip", "request_id", "occurred_at"]
+        fields = [
+            "id",
+            "actor",
+            "actor_username",
+            "action",
+            "outcome",
+            "resource_type",
+            "resource_id",
+            "source_ip",
+            "request_id",
+            "occurred_at",
+        ]
         read_only_fields = fields
 
 

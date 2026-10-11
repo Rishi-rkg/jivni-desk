@@ -43,7 +43,12 @@ class IdleTimeoutMiddleware:
             if isinstance(last, int) and now - last > settings.SESSION_IDLE_SECONDS:
                 from accounts.models import Membership
                 from audit.models import record_event
-                member = Membership.objects.filter(user=request.user, clinic_id=request.session.get("clinic_id")).select_related("clinic").first()
+
+                member = (
+                    Membership.objects.filter(user=request.user, clinic_id=request.session.get("clinic_id"))
+                    .select_related("clinic")
+                    .first()
+                )
                 record_event(request, "auth.idle_timeout", clinic=member.clinic if member else None)
                 logout(request)
             elif not isinstance(last, int) or now - last >= 60:
