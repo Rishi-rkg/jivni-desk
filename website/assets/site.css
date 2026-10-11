@@ -113,6 +113,24 @@ a { color: inherit; text-underline-offset: 3px; }
 .rise > :nth-child(4) { animation-delay: 0.3s; }
 @keyframes rise { to { opacity: 1; transform: none; } }
 
+/* Home page: the video and one sentence */
+.hero-solo { min-height: calc(100svh - 76px); display: flex; align-items: flex-end; padding-bottom: clamp(40px, 9vh, 110px); }
+.hero-solo h1 { font-size: clamp(3.2rem, 10.5vw, 9.6rem); line-height: 0.94; max-width: 9.5em; text-shadow: 0 2px 40px rgba(5, 25, 32, 0.55); opacity: 0; transform: translateY(40px); animation: rise 1.2s var(--spring) 0.15s forwards; }
+.overview { padding-inline: 24px; }
+.overview-stage { width: min(1040px, 100%); margin-inline: auto; padding-bottom: 60px; }
+.caption { text-align: center; color: var(--text-soft); font-size: 1.05rem; margin-top: 10px; }
+.statement { max-width: 17em; margin-bottom: clamp(26px, 4vw, 48px); }
+.gallery { display: grid; grid-template-columns: 1.3fr 1fr; grid-template-rows: 1fr 1fr; gap: clamp(14px, 1.8vw, 22px); }
+.gallery .photo { min-height: 240px; }
+.gallery .tall { grid-row: span 2; }
+.voices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.8vw, 22px); }
+.voice { margin: 0; display: flex; flex-direction: column; gap: 18px; }
+.voice blockquote { margin: 0; font-family: var(--display); font-size: 1.3rem; line-height: 1.3; letter-spacing: -0.01em; }
+.voice figcaption { margin-top: auto; color: var(--text-soft); font-size: 0.92rem; }
+.voice figcaption strong { color: var(--text); }
+.voice .sample { align-self: flex-start; padding: 2px 11px; border-radius: 999px; border: 1px dashed var(--turmeric); color: var(--turmeric); font-size: 0.78rem; }
+.closing { display: grid; gap: 26px; justify-items: start; }
+
 /* ---------- Sections ---------- */
 section.band { padding: clamp(50px, 8vw, 110px) 0; }
 .band-head { max-width: 780px; margin-bottom: clamp(26px, 4vw, 48px); }
@@ -221,7 +239,9 @@ table.compare td:first-child, table.compare th:first-child { padding-left: 0; }
 /* ---------- Small screens ---------- */
 @media (max-width: 940px) {
   .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 50px; }
-  .split, .split.wide-left, .size-panel, .plans { grid-template-columns: 1fr; }
+  .split, .split.wide-left, .size-panel, .plans, .voices, .gallery { grid-template-columns: 1fr; }
+  .gallery { grid-template-rows: none; }
+  .gallery .tall { grid-row: auto; }
   .tiles { grid-template-columns: 1fr 1fr; }
   .tile, .tile.big { grid-column: span 1; }
   .platforms { grid-template-columns: 1fr; }
@@ -239,6 +259,6 @@ table.compare td:first-child, table.compare th:first-child { padding-left: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .aurora i, .rise > *, .seat { animation: none; opacity: 1; transform: none; }
+  .aurora i, .rise > *, .seat, .hero-solo h1 { animation: none; opacity: 1; transform: none; }
   .btn, .sizes .thumb { transition: none; }
 }

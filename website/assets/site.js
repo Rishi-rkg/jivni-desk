@@ -30,7 +30,11 @@
       video.append(source);
     }
     video.addEventListener("canplay", () => video.classList.add("ready"), { once: true });
-    backdrop.prepend(video);
+    backdrop.append(video); // above the placeholder, below the shade
+  } else if (backdrop && ready.length && ready[0].poster) {
+    // Reduced motion or data saver: a still frame instead of the video.
+    backdrop.style.background = `center / cover url("${ready[0].poster}")`;
+    backdrop.querySelector(".aurora").remove();
   } else if (backdrop && !ready.length) {
     document.body.append(make("div", "backdrop-note", "Placeholder background, video to come"));
   }
@@ -167,10 +171,25 @@
       });
   }
 
+  // ----- Testimonials -----
+  const voices = document.getElementById("voices");
+  if (voices) {
+    for (const item of config.testimonials) {
+      const card = make("figure", "glass pad voice");
+      if (item.sample) card.append(make("span", "sample", "Sample, not a real testimonial"));
+      card.append(make("blockquote", "", item.quote));
+      const who = make("figcaption");
+      who.append(make("strong", "", item.name), make("br"), item.place);
+      card.append(who);
+      voices.append(card);
+    }
+  }
+
   // ----- Credits -----
   const credits = document.getElementById("media-credits");
   if (credits) {
-    const rows = [...config.videos.map((v) => ({ ...v, kind: "Background video", what: v.title })), ...config.images.map((i) => ({ ...i, kind: "Photograph", what: i.brief }))];
+    const clips = config.videos.flatMap((v) => (v.clips || [v]).map((c) => ({ ...c, src: v.src, kind: "Background video", what: c.title })));
+    const rows = [...clips, ...config.images.map((i) => ({ ...i, kind: "Photograph", what: i.brief }))];
     for (const item of rows) {
       const row = make("div", "credit");
       const body = make("div");

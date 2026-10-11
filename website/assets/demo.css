@@ -8,6 +8,13 @@
   50% { transform: rotateX(5deg) rotateY(-10deg) rotateZ(0.6deg) translateY(-14px); }
   100% { transform: rotateX(10deg) rotateY(-19deg) rotateZ(2deg) translateY(6px); }
 }
+/* Centred on the home page: sway from side to side instead of leaning one way. */
+.overview .demo-float { animation-name: demo-sway; animation-duration: 13s; }
+@keyframes demo-sway {
+  0% { transform: rotateX(11deg) rotateY(-13deg) rotateZ(1deg) translateY(0); }
+  50% { transform: rotateX(6deg) rotateY(0deg) rotateZ(0deg) translateY(-16px); }
+  100% { transform: rotateX(10deg) rotateY(12deg) rotateZ(-1deg) translateY(0); }
+}
 .demo-tilt { transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.9s var(--spring); position: relative; height: calc(540px * var(--s, 1)); }
 .demo-stage { position: absolute; left: 0; top: 0; width: 860px; height: 540px; transform-origin: 0 0; transform: scale(var(--s, 1)); transform-style: preserve-3d; font: 13px/1.4 "Segoe UI", system-ui, sans-serif; color: #24343c; }
 
