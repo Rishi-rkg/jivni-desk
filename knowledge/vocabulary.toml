@@ -1,0 +1,39 @@
+# Words that search treats as the same. One list per idea; add freely.
+# These only widen what a typed word finds. They are not clinical statements.
+# Spelling pairs such as diarrhoea/diarrhea and haemorrhage/hemorrhage need no entry: search folds them itself.
+
+source = "jivni"
+
+same = [
+  ["worse", "aggravation", "aggravated", "agg"],
+  ["better", "amelioration", "ameliorated", "amel", "relieved", "relief"],
+  ["haemorrhage", "bleeding", "bleed", "bleeds"],
+  ["bruised", "bruise", "contusion", "contused", "ecchymosis"],
+  ["injury", "injuries", "trauma", "traumatic", "traumatism", "blow", "fall"],
+  ["headache", "cephalalgia", "migraine"],
+  ["sunlight", "sun"],
+  ["sleepless", "sleeplessness", "insomnia"],
+  ["vomiting", "vomit", "emesis"],
+  ["giddiness", "vertigo", "dizzy", "dizziness"],
+  ["itching", "itch", "pruritus"],
+  ["fever", "pyrexia", "febrile"],
+  ["cough", "tussis"],
+  ["coryza", "catarrh"],
+  ["constipation", "constipated", "costive"],
+  ["thirst", "thirsty"],
+  ["thirstless", "thirstlessness"],
+  ["anxiety", "anxious"],
+  ["fear", "fright", "afraid", "fears"],
+  ["grief", "sorrow"],
+  ["irritable", "irritability", "cross"],
+  ["weakness", "debility", "prostration", "weak"],
+  ["swelling", "swollen", "oedema", "dropsy"],
+  ["motion", "movement", "moving"],
+  ["touch", "touched", "contact"],
+  ["night", "nightly", "nocturnal"],
+  ["menses", "menstruation", "period", "periods", "menstrual"],
+  ["urine", "urination", "micturition"],
+  ["stool", "stools", "faeces"],
+  ["abscess", "abscesses", "boil", "boils"],
+  ["wart", "warts", "condylomata"],
+]

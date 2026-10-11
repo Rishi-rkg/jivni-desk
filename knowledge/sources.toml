@@ -1,0 +1,26 @@
+# Every book, website or person that library entries come from.
+# Each entry in a remedy or rubric file names one of these in its `source` field.
+
+[boericke-mm-9]
+title = "Pocket Manual of Homoeopathic Materia Medica"
+author = "William Boericke"
+edition = "9th edition"
+year = 1927
+kind = "materia medica"
+rights = "Public domain. The author died in 1929."
+url = "http://www.homeoint.org/books/boericmm/index.htm"
+transcription = "Médi-T, 1999 (homeoint.org)"
+imported_by = "knowledge.importers.boericke"
+note = "Symptom lines are sentences of the book, unaltered. Grade 2 marks what the book prints in italics."
+
+[jivni]
+title = "Jivni editorial"
+author = "Jivni"
+kind = "editorial"
+rights = "Part of Jivni."
+note = "Word lists that help search (vocabulary.toml). Never a clinical claim."
+
+[clinic]
+title = "This clinic"
+kind = "clinic"
+note = "Added or changed by the clinic's own doctors. Lives in the clinic layer, never in the shipped files."

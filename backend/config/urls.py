@@ -53,6 +53,7 @@ urlpatterns = [
     path("api/v1/backups/run/", backups.run),
     path("api/v1/backups/runs/<uuid:run_id>/verify/", backups.verify),
     path("api/v1/modules/", modules),
+    path("api/v1/", include("knowledge.urls")),
     path("api/v1/", include(router.urls)),
 ]
 
