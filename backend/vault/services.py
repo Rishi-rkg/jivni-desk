@@ -96,6 +96,9 @@ def create_clinic_key(clinic, owner, password):
     _seal_grant(clinic_key, master, KeyGrant.Kind.USER, password, user=owner, created_by=owner)
     recovery = new_recovery_key()
     _seal_grant(clinic_key, master, KeyGrant.Kind.RECOVERY, recovery_secret(recovery), created_by=owner)
+    from . import backup  # local import: backup builds on this module
+
+    backup.ensure_backup_key(clinic_key, master)
     return recovery
 
 

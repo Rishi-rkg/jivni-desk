@@ -18,7 +18,10 @@ from dataclasses import dataclass
 
 from argon2.low_level import Type, hash_secret_raw
 from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from django.views.decorators.debug import sensitive_variables
 
 KEY_BYTES = 32
@@ -168,3 +171,84 @@ def rewrap(clinic_keys, new_key, new_version, clinic_id, record_id, purpose, blo
     data_key = unseal(old_key, envelope.sealed_key, _key_aad(clinic_id, envelope.key_version, record_id, purpose))
     sealed_key = seal(new_key, data_key, _key_aad(clinic_id, new_version, record_id, purpose))
     return Envelope(new_version, sealed_key, envelope.sealed_data).to_bytes()
+
+
+# --- sealing to a public key, so something can be locked while the clinic key is not available
+
+
+def new_keypair():
+    """(private, public) X25519 keys as raw 32-byte strings."""
+    private = X25519PrivateKey.generate()
+    return (
+        private.private_bytes(serialization.Encoding.Raw, serialization.PrivateFormat.Raw, serialization.NoEncryption()),
+        private.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw),
+    )
+
+
+def _shared_key(shared, ephemeral_public, recipient_public):
+    info = b"dochp-seal-to-public" + ephemeral_public + recipient_public
+    return HKDF(algorithm=hashes.SHA256(), length=KEY_BYTES, salt=None, info=info).derive(shared)
+
+
+@sensitive_variables()
+def seal_to_public(recipient_public, plaintext, aad):
+    """Anyone can seal; only the holder of the private key can open. Returns ephemeral public key + sealed data."""
+    ephemeral = X25519PrivateKey.generate()
+    ephemeral_public = ephemeral.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    shared = ephemeral.exchange(X25519PublicKey.from_public_bytes(recipient_public))
+    return ephemeral_public + seal(_shared_key(shared, ephemeral_public, recipient_public), plaintext, aad)
+
+
+@sensitive_variables()
+def open_with_private(private, sealed, aad):
+    if len(private) != KEY_BYTES or len(sealed) < KEY_BYTES + NONCE_BYTES + TAG_BYTES:
+        raise DecryptionError()
+    ephemeral_public, body = sealed[:KEY_BYTES], sealed[KEY_BYTES:]
+    key = X25519PrivateKey.from_private_bytes(private)
+    recipient_public = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    try:
+        shared = key.exchange(X25519PublicKey.from_public_bytes(ephemeral_public))
+    except ValueError:
+        raise DecryptionError() from None
+    return unseal(_shared_key(shared, ephemeral_public, recipient_public), body, aad)
+
+
+# --- large data in chunks (the STREAM construction): each chunk is sealed with its position, and the last
+# chunk is marked, so chunks cannot be reordered, dropped or cut off without detection.
+
+STREAM_PREFIX_BYTES = 7
+STREAM_CHUNK_BYTES = 1024 * 1024
+
+
+def _stream_nonce(prefix, counter, final):
+    return prefix + counter.to_bytes(4, "big") + (b"\x01" if final else b"\x00")
+
+
+class StreamSealer:
+    def __init__(self, key, prefix, aad):
+        if len(key) != KEY_BYTES or len(prefix) != STREAM_PREFIX_BYTES:
+            raise ValueError("Bad stream key or prefix.")
+        self._cipher, self._prefix, self._aad, self._counter, self._done = AESGCM(key), prefix, aad, 0, False
+
+    def seal(self, chunk, final=False):
+        if self._done:
+            raise ValueError("The stream is already finished.")
+        sealed = self._cipher.encrypt(_stream_nonce(self._prefix, self._counter, final), chunk, self._aad)
+        self._counter += 1
+        self._done = final
+        return sealed
+
+
+class StreamOpener:
+    def __init__(self, key, prefix, aad):
+        if len(key) != KEY_BYTES or len(prefix) != STREAM_PREFIX_BYTES:
+            raise DecryptionError()
+        self._cipher, self._prefix, self._aad, self._counter = AESGCM(key), prefix, aad, 0
+
+    def open(self, sealed, final=False):
+        try:
+            chunk = self._cipher.decrypt(_stream_nonce(self._prefix, self._counter, final), sealed, self._aad)
+        except InvalidTag:
+            raise DecryptionError() from None
+        self._counter += 1
+        return chunk

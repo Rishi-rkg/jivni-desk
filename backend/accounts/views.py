@@ -14,6 +14,7 @@ from django.views.decorators.debug import sensitive_variables
 from django.views.decorators.http import require_GET, require_POST
 
 from audit.models import record_event
+from vault import backup as vault_backup
 from vault import services as vault
 from vault import session as vault_session
 
@@ -109,6 +110,7 @@ def sign_in(request):
     record_event(request, "auth.login", clinic=memberships[0].clinic)
     # The password is used once more here to open the clinic keys sealed for this person, then discarded.
     unlocked = vault.unlock(user, data["password"])
+    vault_backup.ensure_backup_keys(unlocked)
     response = JsonResponse(session_data(request, unlocked))
     vault_session.start(request, response, unlocked)
     return response
