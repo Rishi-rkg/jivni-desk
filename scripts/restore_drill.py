@@ -6,7 +6,6 @@ Asks for a staff password (or set BACKUP_PASSWORD). Uses a scratch database name
 the development PostgreSQL and a scratch folder for stored files, so the working data is never touched.
 Run it regularly: a backup that has never been restored is only a hope.
 """
-import os
 import subprocess
 import sys
 import tempfile
