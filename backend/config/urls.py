@@ -38,6 +38,7 @@ def health(request):
 urlpatterns = [
     path("health/", health),
     path("api/v1/auth/csrf/", auth.csrf),
+    path("api/v1/auth/setup/", auth.setup),
     path("api/v1/auth/login/", auth.sign_in),
     path("api/v1/auth/logout/", auth.sign_out),
     path("api/v1/auth/me/", auth.me),

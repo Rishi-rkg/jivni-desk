@@ -71,3 +71,10 @@ class Membership(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["clinic", "user"], name="unique_clinic_user")]
+
+
+class Installation(models.Model):
+    """One row, made by first-time setup. Its fixed primary key means two setups cannot both succeed."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1)
+    set_up_at = models.DateTimeField(auto_now_add=True)

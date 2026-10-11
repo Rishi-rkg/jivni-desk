@@ -25,6 +25,10 @@ Successful registration, note entry, photo upload and visit saves show explicit 
 
 Unsaved registration, visit and note changes warn before internal navigation away from the form/record or browser unloading. Notes may switch patient tabs without losing their draft. Signing out or switching clinics checks for unsaved changes before changing the session. Drafts are never stored in browser local storage; a refresh discards them after the browser warning. There is no autosave claim.
 
+## First-time setup
+
+A new installation opens on **Set up your clinic** instead of the sign-in: clinic name, the owner's name, username, password twice, and time zone (filled in from the computer). There is no encryption choice to make. The next screen shows the recovery key in large type with four plain rules, a Print button, and a tick box that must be ticked before **Continue to the clinic** works. The key is held only while that screen is open. Once a clinic exists, the setup screen never appears again.
+
 ## Backups
 
 Only the owner sees **Backups**. The screen follows the mockup: where backups are saved (with a live "OK, space free" or "not reachable" line per place), the backups made (with where each was saved or missed, and a Check button), the schedule, and a short note on restoring. Adding a place writes and reads back a test file before accepting the folder. Removing a place never deletes the backup files in it. A red line appears when no backup has succeeded within the warning period.

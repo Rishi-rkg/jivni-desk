@@ -61,6 +61,12 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## First-time setup (2026-10-11)
+
+137 backend tests pass on PostgreSQL 16; 25 frontend tests pass. The browser end-to-end run now starts from an **empty database**: the first test sets the clinic up through the real setup screen with a randomly generated password, sees a well-formed recovery key, cannot continue until the tick box is ticked, lands in the workspace, signs out and sees the ordinary sign-in. The later tests sign in with that account, register a patient, record a visit, scan the card, make a backup and check it. The restore drill was repeated on that backup and passed (1 clinic, 1 user, 1 patient, 1 visit, 34 audit events).
+
+Backend tests also confirm: setup runs only once; a second attempt creates nothing; invalid input creates nothing; the owner is not a Django superuser; and the recovery key appears in no database table.
+
 ## Backups and a restore drill (2026-10-11)
 
 | Check | Result |

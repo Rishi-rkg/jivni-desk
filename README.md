@@ -33,7 +33,9 @@ docker compose up --build
 
 The configuration generator creates ignored `.env` secrets without printing them. Do not commit this file. The example contains no usable keys or passwords.
 
-In another terminal, create the first clinic and its owner:
+Open **http://localhost:5173**. A new installation shows **Set up your clinic**: name the clinic, create the owner account, and write down the recovery key it shows once. Encryption is switched on as part of this.
+
+The same can be done from a terminal instead:
 
 ```sh
 docker compose exec backend python manage.py bootstrap_clinic --clinic "Synthetic Demo Clinic" --username owner
@@ -135,6 +137,7 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | Endpoint | Methods | Purpose |
 | --- | --- | --- |
 | `/api/v1/auth/csrf/` | GET | Obtain CSRF token before login |
+| `/api/v1/auth/setup/` | GET, POST | Whether first-time setup is needed; create the clinic, owner and encryption key and return the recovery key once. Closed once a clinic exists |
 | `/api/v1/auth/login/`, `/logout/` | POST | Create/destroy Django session |
 | `/api/v1/auth/me/` | GET | Current user, memberships and refreshed CSRF token |
 | `/api/v1/auth/clinic/` | POST | Select an active authorized clinic |

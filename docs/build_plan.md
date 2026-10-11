@@ -8,7 +8,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 130 backend tests pass on PostgreSQL 16 with none skipped, 22 frontend tests, 3 browser end-to-end tests, a restore drill into a fresh database, and Ruff, ESLint and Prettier all clean.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 137 backend tests pass on PostgreSQL 16 with none skipped, 25 frontend tests, 4 browser end-to-end tests that start from an empty database, a restore drill into a fresh database, and Ruff, ESLint and Prettier all clean.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -88,7 +88,7 @@ These come from reading the code. Each is small now and expensive later.
 
 What follows from this, as a packaging track inside Phase 1:
 
-1. **A first-time setup screen** that creates the clinic and owner, turns on encryption and shows the recovery key once. Today this is a command.
+1. ~~**A first-time setup screen** that creates the clinic and owner, turns on encryption and shows the recovery key once.~~ *Built 2026-10-11:* a new installation opens on "Set up your clinic"; the recovery key is shown once and must be acknowledged before the workspace opens; setup can never run a second time.
 2. **A database that needs no separate installation.** Proposed: SQLite inside the installed app (one file, present on every system including arm64), with the same append-only safeguards as database triggers, and PostgreSQL kept for Docker. The original plan named PostgreSQL only, so this is a change for the owner to confirm. Backups already use a format that restores into either.
 3. **One program to start**: it serves the application and its screens together, opens the browser, keeps running in the background and makes the scheduled backups. Installers for each system, and a Docker image built for both common processor types.
 4. **More than one computer in the clinic.** The app runs on one computer and the others use a browser. That needs an encrypted connection inside the clinic's network, which is not designed yet.

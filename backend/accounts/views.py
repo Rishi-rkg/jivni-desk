@@ -4,9 +4,10 @@ import json
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_protect
@@ -18,7 +19,7 @@ from vault import backup as vault_backup
 from vault import services as vault
 from vault import session as vault_session
 
-from .models import Membership
+from .models import Clinic, Installation, Membership, Role, User, valid_time_zone
 
 
 def session_data(request, unlocked=None):
@@ -183,3 +184,65 @@ def change_password(request):
     # Keeps this session signed in; other sessions of this user are signed out by Django.
     update_session_auth_hash(request, user)
     return JsonResponse({"detail": "Password changed.", "csrf_token": get_token(request)})
+
+
+@csrf_protect
+@sensitive_variables()
+def setup(request):
+    """First-time setup: create the clinic and its owner, turn on encryption, and show the recovery key once.
+
+    Open to whoever reaches a brand-new installation first, and closed for good once a clinic exists.
+    """
+    needed = not Clinic.objects.exists()
+    if request.method == "GET":
+        return JsonResponse({"needed": needed})
+    if request.method != "POST":
+        return JsonResponse({"detail": "Method not allowed."}, status=405)
+    if not needed:
+        return JsonResponse({"detail": "This installation is already set up. Sign in instead."}, status=409)
+    data = payload(request) or {}
+    text = {
+        key: data.get(key).strip() if isinstance(data.get(key), str) else ""
+        for key in ["clinic_name", "username", "full_name", "time_zone"]
+    }
+    password = data.get("password") if isinstance(data.get("password"), str) else ""
+    errors = {}
+    if not 1 <= len(text["clinic_name"]) <= 200:
+        errors["clinic_name"] = ["Enter the clinic's name."]
+    user = User(username=text["username"][:150], first_name=text["full_name"][:150])
+    try:
+        UnicodeUsernameValidator()(text["username"])
+        if not 1 <= len(text["username"]) <= 150:
+            raise ValidationError("Enter a username.")
+    except ValidationError:
+        errors["username"] = ["Enter a username using letters, digits and @ . + - _ only."]
+    try:
+        validate_password(password, user)
+    except ValidationError as error:
+        errors["password"] = error.messages
+    time_zone = text["time_zone"] or "Asia/Kolkata"
+    try:
+        valid_time_zone(time_zone)
+    except ValidationError as error:
+        errors["time_zone"] = error.messages
+    if errors:
+        return JsonResponse(errors, status=400)
+    try:
+        with transaction.atomic():
+            Installation.objects.create()
+            user.set_password(password)
+            user.save()
+            clinic = Clinic.objects.create(name=text["clinic_name"], time_zone=time_zone, currency="INR")
+            Membership.objects.create(clinic=clinic, user=user, role=Role.objects.get(pk="owner"))
+            # Encryption is not optional: the clinic's key is created with the clinic.
+            recovery = vault.create_clinic_key(clinic, user, password)
+    except IntegrityError:
+        return JsonResponse({"detail": "This installation is already set up. Sign in instead."}, status=409)
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    request.session["clinic_id"] = str(clinic.pk)
+    record_event(request, "clinic.setup", clinic, clinic)
+    unlocked = vault.unlock(user, password)
+    # The recovery key is returned exactly once, here. It is not stored and cannot be shown again.
+    response = JsonResponse({**session_data(request, unlocked), "recovery_key": recovery}, status=201)
+    vault_session.start(request, response, unlocked)
+    return response

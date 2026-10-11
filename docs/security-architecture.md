@@ -55,7 +55,7 @@ One consequence, already recorded as decision D3 in the build plan: **when nobod
 
 ## 4. The recovery key
 
-Shown once when the clinic is created, as ten groups of four characters. It is not stored anywhere. The owner writes it down and keeps it offline. Using it (`recover_clinic_access`) gives an owner a new password and access, then destroys that recovery key and issues a new one. Whoever holds the recovery key can open the clinic's records, so it deserves the same care as the clinic's cheque book.
+Shown once when the clinic is created, as ten groups of four characters. The setup screen will not continue until the person confirms they have written it down. It is not stored anywhere. The owner writes it down and keeps it offline. Using it (`recover_clinic_access`) gives an owner a new password and access, then destroys that recovery key and issues a new one. Whoever holds the recovery key can open the clinic's records, so it deserves the same care as the clinic's cheque book.
 
 ## 5. Backups
 
@@ -76,14 +76,14 @@ What a backup does not protect against: someone who has both a backup file and a
 | Session unlock, the two halves | `backend/vault/session.py` | Built, tested |
 | Unlock at sign-in, removal at sign-out | `backend/accounts/views.py` | Built, tested |
 | Change password with re-sealing | `POST /api/v1/auth/password/` | Built, tested; no screen yet |
-| Create clinic with key and recovery key | `bootstrap_clinic` command | Built, tested |
+| Create clinic with key and recovery key | First-time setup screen (`/api/v1/auth/setup/`), or the `bootstrap_clinic` command | Built, tested, including in a real browser from an empty database |
 | Add a user with access | `add_clinic_user --authorized-by` | Built, tested |
 | Keys for a clinic created earlier; access for an existing member | `init_clinic_keys`, `grant_clinic_access` | Built, tested |
 | Recovery | `recover_clinic_access` command | Built, tested; no screen yet |
 | Backups: make, copy to places, schedule check, retention, read-back check, restore | `backend/vault/backup.py`, `api.py`, Backups screen, `backup_now`, `restore_backup` | Built, tested, restore drill passed |
 | Encrypting patient fields, notes, visits, prescriptions, history, photos | not started | **Next** |
 | Searching encrypted names and phone numbers | not started | Needs the design in section 7 |
-| Screens: first-time setup, show recovery key, change password, manage staff access | not started | Mockups P5 to P8 |
+| Screens: change password, manage staff access, use the recovery key | not started | Mockups P5, P6, P8 |
 | Second factor, clinic key replacement procedure, narrow messaging key | not started | Planned |
 | Independent review | not done | Required before real data |
 

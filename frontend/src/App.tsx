@@ -18,6 +18,7 @@ import { Dashboard, BillingPlaceholder } from './WorkspaceScreens';
 import { DraftStateContext } from './useUnsavedChanges';
 import { AuditLogScreen, ClinicSettingsScreen } from './AdminScreens';
 import { BackupScreen } from './BackupScreen';
+import { SetupScreen } from './SetupScreen';
 import { LockScreen, useIdleLock } from './LockScreen';
 import { resolveScan, useScanner } from './Scanner';
 
@@ -199,6 +200,7 @@ function PlannedModules() {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [setupNeeded, setSetupNeeded] = useState(false);
   const [error, setError] = useState('');
   const [switching, setSwitching] = useState(false);
   const [draftDirty, setDraftDirty] = useState(false);
@@ -257,7 +259,11 @@ export default function App() {
         setSession(s);
       })
       .catch((e) => {
-        if (!(e instanceof ApiError && e.status === 401)) setError(e.message);
+        if (!(e instanceof ApiError && e.status === 401)) return setError(e.message);
+        // Nobody is signed in. On a brand-new installation there is nobody to sign in as yet.
+        return api<{ needed: boolean }>('auth/setup/')
+          .then((setup) => setSetupNeeded(setup.needed))
+          .catch(() => {});
       })
       .finally(() => setLoading(false));
   }, []);
@@ -291,6 +297,19 @@ export default function App() {
       <main className="login">
         <p role="status">Opening clinic…</p>
       </main>
+    );
+  if (!session && setupNeeded)
+    return (
+      <>
+        <SetupScreen
+          onDone={(s) => {
+            setSetupNeeded(false);
+            setSession(s);
+            navigate('/dashboard');
+          }}
+        />
+        <div className="dev-warning">Development build · Use synthetic patient data only</div>
+      </>
     );
   if (!session)
     return (

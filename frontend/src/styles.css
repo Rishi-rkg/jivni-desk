@@ -571,6 +571,40 @@ time {
 .table-title {
   padding: 20px 20px 0;
 }
+.setup {
+  width: min(520px, calc(100% - 40px));
+  margin-top: 6vh;
+}
+.recovery-key {
+  font-family: ui-monospace, monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  line-height: 1.9;
+  background: white;
+  border: 2px solid var(--accent);
+  border-radius: 5px;
+  padding: 16px 20px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.setup-points {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+.setup-points li {
+  margin-bottom: 6px;
+}
+.setup .check {
+  margin: 16px 0;
+}
+@media print {
+  .dev-warning,
+  .setup button,
+  .setup .check {
+    display: none;
+  }
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

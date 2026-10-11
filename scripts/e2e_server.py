@@ -1,10 +1,9 @@
-"""Backend for browser end-to-end tests: a fresh database, one synthetic clinic, then the dev server.
+"""Backend for browser end-to-end tests: a fresh, empty database, then the dev server.
 
 Started by Playwright (frontend/playwright.config.ts). Locally it uses the project database from
 scripts/dev_db.py; in CI it uses the PostgreSQL service named by the POSTGRES_* environment variables.
-The generated sign-in is written to .tools/e2e-credentials.json, which git ignores.
+The first test sets the clinic up and writes its sign-in to .tools/e2e-credentials.json, which git ignores.
 """
-import json
 import os
 import secrets
 import subprocess
@@ -49,12 +48,10 @@ def main():
     manage = [sys.executable, "manage.py"]
     backend = ROOT / "backend"
     subprocess.run([*manage, "migrate", "--noinput", "-v", "0"], cwd=backend, env=env, check=True)
-    credentials = {"username": "e2e-owner", "password": secrets.token_urlsafe(18)}
-    subprocess.run([*manage, "bootstrap_clinic", "--clinic", "Synthetic E2E Clinic", "--username", credentials["username"], "-v", "0"],
-                   cwd=backend, env={**env, "BOOTSTRAP_PASSWORD": credentials["password"]}, check=True, stdout=subprocess.DEVNULL)
-    target = ROOT / ".tools" / "e2e-credentials.json"
-    target.parent.mkdir(exist_ok=True)
-    target.write_text(json.dumps(credentials), encoding="utf-8")
+    # No clinic is created here: the first browser test sets one up through the first-time setup screen.
+    stale = ROOT / ".tools" / "e2e-credentials.json"
+    if stale.exists():
+        stale.unlink()
     raise SystemExit(subprocess.run([*manage, "runserver", f"127.0.0.1:{PORT}", "--noreload"], cwd=backend, env=env).returncode)
 
 
