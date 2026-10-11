@@ -4,8 +4,18 @@ import { api, setCSRF } from './api';
 import { ActivityLog, ClinicDetails } from './AdminScreens';
 import { BackupScreen } from './BackupScreen';
 import { ErrorMessage } from './components';
+import { RulesPanel, TemplatesPanel } from './MessagesScreen';
 import { WorkWeek } from './WorkWeek';
-import { ClinicSettings, FeatureName, Membership, ROLE_LABELS, Role, Session, canManageBackups } from './types';
+import {
+  ClinicSettings,
+  FeatureName,
+  Membership,
+  ROLE_LABELS,
+  Role,
+  Session,
+  canManageBackups,
+  featureOn,
+} from './types';
 import { SettingRow, Switch, notify, useLoad } from './ui';
 
 interface Section {
@@ -14,17 +24,52 @@ interface Section {
   group: string;
   /** Who may open it. The server enforces the same rule. */
   roles: Role[];
+  /** Shown only while this switch is on. */
+  feature?: FeatureName;
 }
 const OWNER: Role[] = ['owner'];
 const KEEPERS: Role[] = ['owner', 'admin'];
 const SECTIONS: Section[] = [
   { key: 'clinic', label: 'Clinic details', group: 'Clinic', roles: KEEPERS },
   { key: 'work-week', label: 'Work week', group: 'Clinic', roles: KEEPERS },
+  { key: 'messaging', label: 'Messaging', group: 'Clinic', roles: KEEPERS, feature: 'messages' },
   { key: 'account', label: 'My account', group: 'People', roles: KEEPERS },
   { key: 'switches', label: 'Switches', group: 'Features', roles: OWNER },
   { key: 'backups', label: 'Backups', group: 'Safety', roles: OWNER },
   { key: 'activity', label: 'Activity log', group: 'Safety', roles: KEEPERS },
 ];
+
+/** P58: how messages leave the clinic, and the wording and rules behind them. */
+function Messaging({ role }: { role: Role }) {
+  return (
+    <>
+      <div className="heading">
+        <div>
+          <h2>Messaging</h2>
+          <p className="muted">How WhatsApp messages are worded, when they are prepared, and how they are sent.</p>
+        </div>
+      </div>
+      <section className="panel">
+        <h2>How messages are sent</h2>
+        <p>
+          <strong>By a person, from WhatsApp on this computer or the clinic’s phone.</strong> A message is prepared
+          here, approved by a doctor or the owner, and then opened in WhatsApp with the wording ready; someone presses
+          Send there. Nothing is sent by itself, there is no account to connect and no cost per message.
+        </p>
+        <p className="muted small">
+          Sending automatically through the WhatsApp Business Platform is not available in this version. Because a
+          person sends each message, this application cannot show whether it was delivered or read.
+        </p>
+        <p className="muted small">
+          A message goes only to a patient who agreed to that kind of message, recorded on their record under More,
+          Message consent. A number written without a country code is taken to be an Indian number.
+        </p>
+      </section>
+      <RulesPanel role={role} />
+      <TemplatesPanel role={role} />
+    </>
+  );
+}
 
 export function SettingsScreen({
   session,
@@ -36,7 +81,9 @@ export function SettingsScreen({
   onSaved: () => void;
 }) {
   const { section } = useParams();
-  const sections = SECTIONS.filter((item) => item.roles.includes(member.role));
+  const sections = SECTIONS.filter(
+    (item) => item.roles.includes(member.role) && (!item.feature || featureOn(member, item.feature)),
+  );
   const current = sections.find((item) => item.key === (section ?? 'clinic'));
   if (!current) return <Navigate to="/settings/clinic" replace />;
   return (
@@ -61,6 +108,7 @@ export function SettingsScreen({
         <div>
           {current.key === 'clinic' && <ClinicDetails role={member.role} onSaved={onSaved} />}
           {current.key === 'work-week' && <WorkWeek role={member.role} />}
+          {current.key === 'messaging' && <Messaging role={member.role} />}
           {current.key === 'account' && <MyAccount session={session} onSaved={onSaved} />}
           {current.key === 'switches' && <Switches onSaved={onSaved} />}
           {current.key === 'backups' && canManageBackups(member.role) && <BackupScreen />}

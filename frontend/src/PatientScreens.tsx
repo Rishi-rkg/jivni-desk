@@ -36,6 +36,9 @@ import {
   displayName,
 } from './types';
 import { Avatar, Chip, Menu, MenuItem, StatusLabel, notify } from './ui';
+import { PatientMessages } from './MessagesScreen';
+import { WriteMessage } from './MessageWindows';
+import { statusOfMessage } from './messages';
 import { AmendVisit } from './VisitScreen';
 import { BookingWindow } from './WorkspaceScreens';
 
@@ -415,8 +418,8 @@ function Timeline({
     return (
       <>
         <strong>WhatsApp · {item.title}</strong>{' '}
-        <StatusLabel tone={item.status === 'sent' ? 'green' : item.status === 'failed' ? 'red' : 'amber'}>
-          {item.status.replace('_', ' ').replace(/^./, (letter) => letter.toUpperCase())}
+        <StatusLabel tone={statusOfMessage({ status: item.status, blocked: '' })[0]}>
+          {statusOfMessage({ status: item.status, blocked: '' })[1]}
         </StatusLabel>
         <p className="muted card-text">“{item.body}”</p>
       </>
@@ -551,16 +554,29 @@ function RememberPanel({ patient }: { patient: Patient }) {
 }
 
 type Window_ =
-  '' | 'archive' | 'card' | 'consent' | 'family' | 'alert' | 'history' | 'measurements' | 'note' | 'document' | 'book';
+  | ''
+  | 'archive'
+  | 'card'
+  | 'consent'
+  | 'family'
+  | 'alert'
+  | 'history'
+  | 'measurements'
+  | 'note'
+  | 'document'
+  | 'book'
+  | 'message';
 
 export function PatientProfile({
   role,
   billingOn = true,
   diaryOn = false,
+  messagesOn = false,
 }: {
   role: Role;
   billingOn?: boolean;
   diaryOn?: boolean;
+  messagesOn?: boolean;
 }) {
   const { id } = useParams();
   const location = useLocation();
@@ -591,6 +607,7 @@ export function PatientProfile({
     ...(clinical ? ['visits', 'prescriptions'] : []),
     'notes',
     ...(billing ? ['billing'] : []),
+    ...(messagesOn ? ['messages'] : []),
     ...(clinical ? ['documents'] : []),
   ];
   const tab = tabs.includes(params.get('tab') || '') ? params.get('tab')! : 'overview';
@@ -740,6 +757,11 @@ export function PatientProfile({
               onClick={() => navigate('/billing/new', { state: { patient: { id: patient.id, name } } })}
             >
               New invoice
+            </button>
+          )}
+          {messagesOn && !patient.archived_at && (
+            <button type="button" className="secondary" onClick={() => setOpen('message')}>
+              Message
             </button>
           )}
           {!!more.length && <Menu label="More ▾" items={more} />}
@@ -928,6 +950,7 @@ export function PatientProfile({
         </section>
       )}
 
+      {tab === 'messages' && messagesOn && <PatientMessages patient={{ id: patient.id, name }} role={role} />}
       {tab === 'notes' && (
         <section aria-label="notes content">
           <div className="heading">
@@ -1033,6 +1056,17 @@ export function PatientProfile({
         />
       )}
       {open === 'history' && <ChangeHistory patient={patient} onClose={() => setOpen('')} />}
+      {open === 'message' && (
+        <WriteMessage
+          role={role}
+          patient={{ id: patient.id, name }}
+          onClose={() => setOpen('')}
+          onDone={() => {
+            setOpen('');
+            refresh();
+          }}
+        />
+      )}
       {(open === 'book' || (!!bookDay && !labelsFor && diaryOn)) && (
         <BookingWindow
           role={role}

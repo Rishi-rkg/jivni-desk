@@ -120,7 +120,14 @@ export type TimelineItem =
       walk_in?: boolean;
       doctor_name: string;
     }
-  | { kind: 'message'; id: string; at: string; title: string; status: string; body: string };
+  | {
+      kind: 'message';
+      id: string;
+      at: string;
+      title: string;
+      status: 'waiting' | 'approved' | 'sent' | 'failed' | 'discarded' | 'received' | 'handled';
+      body: string;
+    };
 export interface Note {
   id: string;
   patient: string;

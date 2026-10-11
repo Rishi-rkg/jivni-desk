@@ -22,6 +22,7 @@ import {
   lineAmount,
 } from './billing';
 import { AddFromPriceList, CorrectBill, RecordPayment } from './BillingWindows';
+import { WriteMessage } from './MessageWindows';
 import { ErrorMessage } from './components';
 import { amount, clock, dateTime, money, shortDate } from './format';
 import { Product, useProductScans } from './Scanner';
@@ -55,7 +56,15 @@ const fromItem = (
 });
 const SOURCE_HINTS: Record<string, string> = { scan: '(scanned)', visit: '(from the visit)' };
 
-export function InvoiceScreen({ role, features }: { role: Role; features?: Partial<Features> }) {
+export function InvoiceScreen({
+  role,
+  features,
+  messagesOn = false,
+}: {
+  role: Role;
+  features?: Partial<Features>;
+  messagesOn?: boolean;
+}) {
   const { id } = useParams();
   const { data, setData, error, loading } = useLoad((signal) => api<Invoice>(`invoices/${id}/`, { signal }), [id]);
   if (loading && !data) return <p role="status">Loading the bill…</p>;
@@ -69,7 +78,7 @@ export function InvoiceScreen({ role, features }: { role: Role; features?: Parti
   return data.status === 'draft' ? (
     <InvoiceEditor key={data.id} bill={data} features={features} onSaved={setData} />
   ) : (
-    <InvoiceView bill={data} role={role} onChanged={setData} />
+    <InvoiceView bill={data} role={role} messagesOn={messagesOn} onChanged={setData} />
   );
 }
 
@@ -629,7 +638,18 @@ function GroupRows({
   );
 }
 
-function InvoiceView({ bill, role, onChanged }: { bill: Invoice; role: Role; onChanged: (bill: Invoice) => void }) {
+function InvoiceView({
+  bill,
+  role,
+  messagesOn,
+  onChanged,
+}: {
+  bill: Invoice;
+  role: Role;
+  messagesOn: boolean;
+  onChanged: (bill: Invoice) => void;
+}) {
+  const [messaging, setMessaging] = useState(false);
   const navigate = useNavigate();
   const [paying, setPaying] = useState(false);
   const [correcting, setCorrecting] = useState<'' | 'void' | 'credit' | 'refund'>('');
@@ -642,6 +662,9 @@ function InvoiceView({ bill, role, onChanged }: { bill: Invoice; role: Role; onC
   const more: MenuItem[] = [
     ...(lastPayment ? [{ label: 'Print receipt', to: `/print/receipt/${bill.id}/${lastPayment.id}` }] : []),
     { label: 'Download PDF', to: `/print/invoice/${bill.id}?pdf=1` },
+    ...(messagesOn && bill.patient && bill.status === 'issued'
+      ? [{ label: 'WhatsApp message about this bill', onSelect: () => setMessaging(true) }]
+      : []),
     ...(mayCorrect && bill.status === 'issued'
       ? ([
           { label: 'Issue credit note', onSelect: () => setCorrecting('credit') },
@@ -830,6 +853,16 @@ function InvoiceView({ bill, role, onChanged }: { bill: Invoice; role: Role; onC
             setCorrecting('');
             onChanged(updated);
           }}
+        />
+      )}
+      {messaging && bill.patient && (
+        <WriteMessage
+          role={role}
+          patient={bill.patient}
+          invoice={bill.id}
+          templateKey="invoice"
+          onClose={() => setMessaging(false)}
+          onDone={() => setMessaging(false)}
         />
       )}
     </>

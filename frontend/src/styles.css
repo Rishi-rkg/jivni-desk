@@ -2194,3 +2194,70 @@ button.slot.free:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Messages */
+.bubble {
+  background: #e7f3e4;
+  border-radius: 6px;
+  padding: 12px 14px;
+  max-width: 420px;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.queue .row {
+  gap: 10px;
+  justify-content: flex-start;
+}
+.queue .row.sel {
+  background: #eef4f7;
+}
+.queue .row .badge {
+  margin-left: auto;
+  white-space: nowrap;
+}
+button.queue-item {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+button.queue-item:hover {
+  background: none;
+}
+button.queue-item:hover strong {
+  text-decoration: underline;
+}
+.reply-text {
+  display: block;
+  margin: 2px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.insert-row .chip {
+  margin: 0 4px 4px 0;
+}
+hr.rule {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 18px 0;
+}
+.table-note {
+  padding: 10px 16px;
+  margin: 0;
+}
+.workspace-tabs .count {
+  margin-left: 6px;
+}
+.queue .row input[type='checkbox'] {
+  width: auto;
+  flex: none;
+  margin: 0;
+}

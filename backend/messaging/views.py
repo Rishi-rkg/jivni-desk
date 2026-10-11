@@ -200,16 +200,29 @@ class MessageViewSet(MessagingViewSet):
 
     @action(detail=False, methods=["post"])
     def preview(self, request):
-        """A template's wording for one patient, before anything is saved. Fields nothing is known for stay as written."""
+        """What the writing window needs for one patient, before anything is saved.
+
+        With a template: its wording, with the fields nothing is known for left as written. Always: the
+        values that can be inserted, the number it would go to, and whether each kind of message may go.
+        """
         clinic = self.member.clinic
         patient = self.patient(request.data.get("patient"))
-        template = self.template(request.data.get("template"))
+        template = self.template(request.data["template"]) if request.data.get("template") else None
         appointment, invoice = self.links(patient, request.data)
-        body, missing = render(
-            template.body,
-            context_for(clinic, patient, appointment or next_appointment(clinic, patient), invoice or latest_invoice(clinic, patient)),
+        context = context_for(clinic, patient, appointment or next_appointment(clinic, patient), invoice or latest_invoice(clinic, patient))
+        body, missing = render(template.body, context) if template else ("", [])
+        answers = consents([patient.pk])[patient.pk]
+        return Response(
+            {
+                "title": template.name if template else "Message",
+                "kind": template.kind if template else "care",
+                "body": body,
+                "missing": [FIELDS[name] for name in missing],
+                "values": [{"label": label, "value": str(context[name])} for name, label in FIELDS.items() if context.get(name)],
+                "to": patient.whatsapp_number or patient.phone,
+                "blocked": {kind: block_reason(patient, kind, answers) for kind in MessageTemplate.Kind.values},
+            }
         )
-        return Response({"title": template.name, "kind": template.kind, "body": body, "missing": [FIELDS[name] for name in missing]})
 
     def links(self, patient, data):
         """The appointment or bill a message is about, when the screen it was started from names one."""
@@ -430,6 +443,7 @@ class TemplateViewSet(MessagingViewSet):
     def row(self, template, used=()):
         return {
             "id": str(template.pk),
+            "key": template.key,
             "name": template.name,
             "kind": template.kind,
             "body": template.body,

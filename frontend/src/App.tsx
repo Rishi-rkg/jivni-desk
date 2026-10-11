@@ -16,6 +16,8 @@ import {
 import { PatientProfile } from './PatientScreens';
 import { PatientForm } from './PatientForm';
 import { PatientList } from './PatientList';
+import { MessagesScreen } from './MessagesScreen';
+import { Counts, onMessagesChanged } from './messages';
 import { NewEncounter } from './VisitScreen';
 import { Brand, ErrorMessage } from './components';
 import { Dashboard } from './WorkspaceScreens';
@@ -65,15 +67,6 @@ function ShortcutList({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <>
-      <h1>{title}</h1>
-      <p className="panel muted">This part of the application is being built and is not available yet.</p>
-    </>
-  );
-}
-
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,6 +99,27 @@ export default function App() {
   const lockForInactivity = useCallback(() => lock('idle'), [lock]);
   // Whether a scanned product may start a new bill; kept in a ref so the scan handler always sees today's answer.
   const billingRef = useRef(false);
+  // How many messages wait for approval, shown beside the Messages tab. Asked again whenever messages change.
+  const messagesRef = useRef(false);
+  const [waiting, setWaiting] = useState(0);
+  const signedIn = session?.user.id;
+  const activeClinic = session?.clinic_id;
+  useEffect(() => {
+    if (!signedIn) return;
+    const load = () => {
+      if (messagesRef.current)
+        api<Counts>('messages/counts/')
+          .then((counts) => setWaiting(counts.waiting))
+          .catch(() => {});
+      else setWaiting(0);
+    };
+    const timer = window.setTimeout(load, 0);
+    const stop = onMessagesChanged(load);
+    return () => {
+      window.clearTimeout(timer);
+      stop();
+    };
+  }, [signedIn, activeClinic]);
   useIdleLock(working, session?.idle_timeout_seconds, lockForInactivity);
   useShortcut('k', () => setFinder(true), { ctrl: true, active: working });
   useShortcut('l', () => lock('manual'), { ctrl: true, active: working });
@@ -251,6 +265,7 @@ export default function App() {
     ['/settings', 'Settings', canOpenSettings(role)],
   ];
   const allowed = (path: string) => tabs.some(([to, , shown]) => to === path && shown);
+  messagesRef.current = allowed('/messages');
   billingRef.current = allowed('/billing');
   const canAddProduct = (role === 'owner' || role === 'admin') && featureOn(member, 'billing');
   const guarded = (path: string, element: ReactNode) =>
@@ -331,6 +346,11 @@ export default function App() {
             .map(([to, label]) => (
               <NavLink key={to} to={to}>
                 {label}
+                {to === '/messages' && !!waiting && (
+                  <span className="count" aria-label={`${waiting} waiting for approval`}>
+                    {waiting}
+                  </span>
+                )}
               </NavLink>
             ))}
         </nav>
@@ -357,7 +377,12 @@ export default function App() {
               <Route
                 path="/patients/:id"
                 element={
-                  <PatientProfile role={role} billingOn={allowed('/billing')} diaryOn={allowed('/appointments')} />
+                  <PatientProfile
+                    role={role}
+                    billingOn={allowed('/billing')}
+                    diaryOn={allowed('/appointments')}
+                    messagesOn={allowed('/messages')}
+                  />
                 }
               />
               <Route
@@ -372,11 +397,14 @@ export default function App() {
                 }
               />
               <Route path="/appointments" element={guarded('/appointments', <AppointmentsScreen role={role} />)} />
-              <Route path="/messages" element={guarded('/messages', <ComingSoon title="Messages" />)} />
+              <Route path="/messages/:tab?" element={guarded('/messages', <MessagesScreen role={role} />)} />
               <Route path="/billing/new" element={guarded('/billing', <NewBill features={member.features} />)} />
               <Route
                 path="/billing/invoices/:id"
-                element={guarded('/billing', <InvoiceScreen role={role} features={member.features} />)}
+                element={guarded(
+                  '/billing',
+                  <InvoiceScreen role={role} features={member.features} messagesOn={allowed('/messages')} />,
+                )}
               />
               <Route path="/billing/:tab?" element={guarded('/billing', <BillingScreen role={role} />)} />
               <Route path="/library" element={guarded('/library', <LibraryScreen role={role} />)} />
