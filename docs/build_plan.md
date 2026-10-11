@@ -8,7 +8,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 108 backend tests pass on PostgreSQL 16 with none skipped, 19 frontend tests, 2 browser end-to-end tests (including a simulated card scan), Ruff, ESLint and Prettier all clean.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 130 backend tests pass on PostgreSQL 16 with none skipped, 22 frontend tests, 3 browser end-to-end tests, a restore drill into a fresh database, and Ruff, ESLint and Prettier all clean.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -79,6 +79,21 @@ These come from reading the code. Each is small now and expensive later.
 - **Settings has a "Work week"**, not "opening hours": pick month and year, select or deselect dates and times, quick buttons for regular clinic times and for different weekend times, and up to four saved work-week templates.
 - **Patient photos are cropped automatically around the face**, using the lightest face detection that works. Recognising patients by face is a possible future plug-in and is out of scope.
 
+### How the app is delivered (owner, 2026-10-11)
+
+- **A simple app that installs on any Mac, Windows or Linux computer, including arm64, and can also run in Docker.** This answers D2: the clinic runs it on its own computer. It is not a hosted service.
+- **Encryption is on from the first-time setup**, when the user creates the database. There is no unencrypted mode and no switch.
+- **Backups are built in**: saved to a local folder, a NAS, or a cloud drive that appears as a folder, and encrypted with the same clinic key. *Built 2026-10-11; see Phase 1.*
+- **The UI, pages and prints in `mockups/` are accepted for now** and are the reference for building screens.
+
+What follows from this, as a packaging track inside Phase 1:
+
+1. **A first-time setup screen** that creates the clinic and owner, turns on encryption and shows the recovery key once. Today this is a command.
+2. **A database that needs no separate installation.** Proposed: SQLite inside the installed app (one file, present on every system including arm64), with the same append-only safeguards as database triggers, and PostgreSQL kept for Docker. The original plan named PostgreSQL only, so this is a change for the owner to confirm. Backups already use a format that restores into either.
+3. **One program to start**: it serves the application and its screens together, opens the browser, keeps running in the background and makes the scheduled backups. Installers for each system, and a Docker image built for both common processor types.
+4. **More than one computer in the clinic.** The app runs on one computer and the others use a browser. That needs an encrypted connection inside the clinic's network, which is not designed yet.
+5. **One clinic per installation** is now fixed (it was D4's default); backups refuse to run otherwise.
+
 ### Still open
 
 Each has a default so work is not blocked.
@@ -86,9 +101,9 @@ Each has a default so work is not blocked.
 | # | Decision | Default until answered | Affects |
 | --- | --- | --- | --- |
 | D1 | ~~Country~~ India, decided. The legal points listed above still need professional confirmation | Follow the working defaults above | Consent, retention, invoice format, tax, WhatsApp rules |
-| D2 | Where it runs: a PC inside the clinic, or a hosted server | Hosted server with a managed database, because backups and remote access come almost free | Phase 1 deployment, print agent, outage behaviour |
+| D2 | ~~Where it runs~~ Decided: installed on the clinic's own computer, or Docker. Open sub-question: SQLite inside the installed app (recommended) or bundle PostgreSQL | SQLite for the installed app, PostgreSQL for Docker | Packaging, backups |
 | D3 | How unattended work reads patient data (see below) | Password-unlocked clinic key as the original plan specifies, plus a narrow messaging key | Phase 1, Phase 5 |
-| D4 | One clinic per installation, or many clinics on one server | Keep the multi-clinic data model already built; deploy one clinic per installation at first | Isolation testing, operations |
+| D4 | ~~One clinic per installation, or many~~ Decided by the packaged-app direction: one clinic per installation. The data model still carries a clinic ID everywhere | n/a | Backups, setup screen |
 | D5 | The clinic dispenses its own medicines and sells shelf products (decided). Still open: does it need stock counts now | No stock control yet; a product list with prices is enough for billing | Phase 4 scope |
 | D6 | WhatsApp route for the first release | Staff-sent drafts first, automated sending through the official Business Platform second | Phase 5 cost and consent |
 | D7 | Languages for the interface, printouts and messages | English first, with all user-facing text kept translatable | Every screen and template |
@@ -137,7 +152,7 @@ Step 2, the missing foundation:
 - **Recovery key** shown once at clinic setup, with a written and rehearsed recovery procedure and a plain statement of what is lost if both passwords and the recovery key are gone. *Built 2026-10-11 as commands (`bootstrap_clinic`, `recover_clinic_access`); the setup and recovery screens and the rehearsed written procedure remain.*
 - **Search over encrypted data** (finding 11). Recommended for a clinic of this size: keyed hashes for exact matches on phone and patient identifier, plus a per-clinic name index decrypted into server memory only while a user has the clinic unlocked. Write down what someone holding only the database could learn.
 - **Key lifecycle**: password change rewraps one grant, removing a user revokes their grant, rotation works without re-encrypting every record. *Built 2026-10-11 except the procedure for replacing a clinic key across all stored values.*
-- **Backups**: nightly encrypted backup of database and files together, kept off the machine, with a restore drill that is performed and timed.
+- **Backups**: *built 2026-10-11.* One encrypted file per backup holding the database and stored files; copied to any number of folders (local, NAS, mounted cloud drive) with a result per place; schedule, retention and an overdue warning; a full read-back check from the Backups screen; restore into an empty installation with a staff password or the recovery key; a restore drill script that was run and passed. Backups work with nobody signed in, because each is locked with a backup key whose opening half sits under the clinic key. Remaining: the app starting scheduled backups itself (arrives with the launcher), the in-app restore wizard, and warning on the dashboard.
 - **Accounts**: second factor for owner and clinicians, password reset that respects key grants, idle lock, session revocation, shared-cache login throttling (finding 8), and a user-management screen for the owner.
 - **Audit**: outcome, source address and request ID on every event, denied access recorded, scheduled off-host export, retention policy (finding 9).
 - **Clinic settings**: name, address, tax identifier, time zone, currency, logo. Later snapshots on invoices and labels read from here. *Built 2026-10-10 except the logo.*

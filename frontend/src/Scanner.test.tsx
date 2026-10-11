@@ -99,7 +99,7 @@ describe('barcode scanning', () => {
       clock.mockReturnValue((time += 200));
       fireEvent.keyDown(window, { key });
     }
-    clock.mockReturnValue((time += 200));
+    clock.mockReturnValue(time + 200);
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(requested.some((path) => path.includes('/scan/'))).toBe(false);
   });

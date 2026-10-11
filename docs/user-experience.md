@@ -25,6 +25,10 @@ Successful registration, note entry, photo upload and visit saves show explicit 
 
 Unsaved registration, visit and note changes warn before internal navigation away from the form/record or browser unloading. Notes may switch patient tabs without losing their draft. Signing out or switching clinics checks for unsaved changes before changing the session. Drafts are never stored in browser local storage; a refresh discards them after the browser warning. There is no autosave claim.
 
+## Backups
+
+Only the owner sees **Backups**. The screen follows the mockup: where backups are saved (with a live "OK, space free" or "not reachable" line per place), the backups made (with where each was saved or missed, and a Check button), the schedule, and a short note on restoring. Adding a place writes and reads back a test file before accepting the folder. Removing a place never deletes the backup files in it. A red line appears when no backup has succeeded within the warning period.
+
 ## Scanning
 
 A barcode scanner behaves like a keyboard that types very fast and presses Enter. Anywhere in the workspace, when no text field is in use, a scanned patient card opens that patient. In the dashboard search box a scanned or typed card code also opens the patient directly. A scan while typing in another field is left alone so it lands where the cursor is. If the open screen has unsaved work, the usual leave warning appears first. A code that matches nothing shows a plain message and changes nothing.

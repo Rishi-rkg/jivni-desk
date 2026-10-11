@@ -125,3 +125,41 @@ export const canReadClinical = (r: Role) => ['owner', 'clinician', 'assistant'].
 export const canWriteClinical = (r: Role) => ['owner', 'clinician'].includes(r);
 export const canAdministerClinic = (r: Role) => ['owner', 'admin'].includes(r);
 export const canWriteDemographics = (r: Role) => ['owner', 'clinician', 'assistant', 'reception'].includes(r);
+export interface BackupPlace {
+  id: string;
+  name: string;
+  kind: 'local' | 'nas' | 'cloud';
+  folder: string;
+  last_ok_at: string | null;
+  last_error: string;
+  reachable: boolean;
+  free_bytes: number | null;
+}
+export interface BackupRun {
+  id: string;
+  kind: 'manual' | 'automatic';
+  started_at: string;
+  finished_at: string | null;
+  file_name: string;
+  byte_size: number;
+  places: { place: string; name: string; ok: boolean; error?: string }[];
+  ok: boolean;
+  error: string;
+  verified_at: string | null;
+  verified_ok: boolean | null;
+}
+export interface BackupPolicy {
+  automatic: boolean;
+  frequency: 'daily' | 'twice_daily' | 'weekly';
+  at: string;
+  keep_daily_days: number;
+  keep_monthly_months: number;
+  warn_after_days: number;
+}
+export interface BackupOverview {
+  status: { last_ok_at: string | null; overdue: boolean; due: boolean; problem: string };
+  policy: BackupPolicy;
+  places: BackupPlace[];
+  runs: BackupRun[];
+}
+export const canManageBackups = (r: Role) => r === 'owner';

@@ -53,6 +53,19 @@ Provisioning is currently an operator command; there is no public signup or user
 
 Compose applies migrations on development startup. Named volumes preserve PostgreSQL data and photos. `docker compose down` stops the application while retaining those volumes. Back up and restore both together. After frontend dependency changes, run `docker compose exec frontend npm ci` to synchronize its dependency volume.
 
+## Backups
+
+The owner sets up backups on the **Backups** screen: add one or more folders (a local or USB drive, a NAS share, a cloud drive that appears as a folder), then **Back up now**. Every backup is one encrypted `.dhpb` file; there is no unencrypted option. **Check** reads a backup back in full.
+
+```sh
+python manage.py backup_now --if-due        # for the computer's scheduler; does nothing unless a backup is due
+python manage.py restore_backup FILE --check # prove a backup opens and reads back; changes nothing
+python manage.py restore_backup FILE         # restore into a new, empty installation (run migrate first)
+python scripts/restore_drill.py FILE         # restore into a scratch database and report what came back
+```
+
+Opening a backup needs a staff password, or the recovery key with `--recovery-key`. Without one of those nobody can open it.
+
 ## Checks
 
 See [initial verification results](docs/verification.md) for the checks actually run and the Docker limitation on the verification host.
@@ -142,6 +155,11 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | `/api/v1/encounters/{id}/` | GET | Encounter with observations/prescriptions |
 | `/api/v1/audit-events/` | GET | Clinic-scoped audit; owner/admin only; `outcome`, `page` filters |
 | `/api/v1/clinic/` | GET, PATCH | Clinic settings; any member reads, owner/admin change |
+| `/api/v1/backups/` | GET | Backup status, schedule, places and recent backups; owner only |
+| `/api/v1/backups/places/`, `/places/{id}/` | POST, DELETE | Add or remove a folder to save backups to; files already there are kept |
+| `/api/v1/backups/policy/` | PATCH | Schedule, retention and warning settings |
+| `/api/v1/backups/run/` | POST | Back up now |
+| `/api/v1/backups/runs/{id}/verify/` | POST | Read a backup back in full; changes nothing |
 | `/api/v1/modules/` | GET | Planned module metadata |
 | `/health/` | GET | 200 when the database answers, otherwise 503 |
 

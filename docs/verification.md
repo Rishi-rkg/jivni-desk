@@ -61,6 +61,19 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## Backups and a restore drill (2026-10-11)
+
+| Check | Result |
+| --- | --- |
+| Backend suite | 130 tests pass on PostgreSQL 16 and on SQLite (4 PostgreSQL-only checks skipped there) |
+| Frontend unit tests, lint, format, build | 22 passed; clean |
+| Browser end-to-end | 3 passed: the owner adds a backup folder, backs up and runs the read-back check through the real screen; the test confirms the file exists and contains neither the clinic name nor the username |
+| Restore drill | **Passed.** The backup made through the browser was restored by `scripts/restore_drill.py` into a newly created PostgreSQL database using the owner password: 1 clinic, 1 user, 1 patient, 1 visit and 29 audit events came back in about one second |
+
+The backup tests cover: backup then restore into an empty installation with identical IDs, patient code, visit text, audit count, photo bytes, passwords and clinic key; refusal to restore over existing data; opening by password, by recovery key and by the session's clinic key; a flipped byte anywhere, a cut-short file and appended data all detected; no readable names, clinical text, photo bytes or keys in the file; backups without anyone signed in; removed staff absent from later backups; copying to several places with per-place failures; schedule and overdue rules; retention that never deletes the newest backup or a file the application did not name; owner-only access.
+
+Not yet done: the drill used synthetic data on the development PC and a staff password. Before going live it must be repeated on the clinic's computer, with the recovery key, on a backup of realistic size. Automatic scheduling inside the app does not exist yet.
+
 ## Scan routing (2026-10-11)
 
 108 backend tests pass on PostgreSQL 16; 19 frontend tests pass; the browser end-to-end test now types a patient card code at scanner speed on a page with no field in use and lands on that patient. Not tested with a physical scanner; the 50 ms gap between characters is an assumption to confirm with the clinic's device.

@@ -8,6 +8,7 @@ import {
   Role,
   Session,
   canAdministerClinic,
+  canManageBackups,
   canWriteDemographics,
   displayName,
 } from './types';
@@ -16,6 +17,7 @@ import { ErrorMessage } from './components';
 import { Dashboard, BillingPlaceholder } from './WorkspaceScreens';
 import { DraftStateContext } from './useUnsavedChanges';
 import { AuditLogScreen, ClinicSettingsScreen } from './AdminScreens';
+import { BackupScreen } from './BackupScreen';
 import { LockScreen, useIdleLock } from './LockScreen';
 import { resolveScan, useScanner } from './Scanner';
 
@@ -366,6 +368,7 @@ export default function App() {
           <NavLink to="/modules">More tools</NavLink>
           <NavLink to="/settings">Clinic settings</NavLink>
           {canAdministerClinic(member.role) && <NavLink to="/audit">Audit log</NavLink>}
+          {canManageBackups(member.role) && <NavLink to="/backups">Backups</NavLink>}
         </nav>
         <div className="dev-warning">Development build · Use synthetic patient data only</div>
         <main className="content">
@@ -396,6 +399,10 @@ export default function App() {
               <Route
                 path="/audit"
                 element={canAdministerClinic(member.role) ? <AuditLogScreen /> : <Navigate to="/dashboard" replace />}
+              />
+              <Route
+                path="/backups"
+                element={canManageBackups(member.role) ? <BackupScreen /> : <Navigate to="/dashboard" replace />}
               />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

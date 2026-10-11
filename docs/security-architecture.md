@@ -2,7 +2,7 @@
 
 How DocHP protects patient records, what is built today, and what is not. Written to be read by the clinic owner as well as by developers. It complements [encryption.md](encryption.md), which lists the conditions for removing the startup guard.
 
-**Status, 2026-10-11.** The key system is built and tested: clinic keys, password and recovery-key access, session unlock, password change, recovery. **No patient field or file is encrypted yet.** That is the next step, and until it and the checks in section 7 are complete the application still refuses to run outside development mode. Use synthetic data only.
+**Status, 2026-10-11.** The key system is built and tested: clinic keys, password and recovery-key access, session unlock, password change, recovery, and encrypted backups. **No patient field or file is encrypted yet.** That is the next step, and until it and the checks in section 8 are complete the application still refuses to run outside development mode. Use synthetic data only.
 
 ## 1. What we are protecting against
 
@@ -51,13 +51,23 @@ At sign-in the password opens the person's grants. The clinic keys are then seal
 
 Each request brings the cookie, and only then can the server open the clinic key, in memory, for that request. A copy of the database alone or of the cookie alone opens nothing. Signing out, the idle lock and session expiry destroy the server's half.
 
-One consequence, already recorded as decision D3 in the build plan: **when nobody is signed in, the server cannot read patient data.** Overnight jobs cannot prepare messages. The plan's answer is to prepare them at sign-in, plus a separate narrow key for fixed reminders.
+One consequence, already recorded as decision D3 in the build plan: **when nobody is signed in, the server cannot read patient data.** Overnight jobs cannot prepare messages. The plan's answer is to prepare them at sign-in, plus a separate narrow key for fixed reminders. Backups are the exception: they can be made at any time because locking a backup needs no secret (section 5).
 
 ## 4. The recovery key
 
 Shown once when the clinic is created, as ten groups of four characters. It is not stored anywhere. The owner writes it down and keeps it offline. Using it (`recover_clinic_access`) gives an owner a new password and access, then destroys that recovery key and issues a new one. Whoever holds the recovery key can open the clinic's records, so it deserves the same care as the clinic's cheque book.
 
-## 5. What exists in the code
+## 5. Backups
+
+A backup is one file with the whole database and every stored file. It is sealed in one-megabyte chunks with a key made for that file; the chunks are numbered and the last one is marked, so a backup that was cut short, reordered or altered is detected. The file's key is locked with the clinic's **backup public key**. Locking needs no secret, so backups run on schedule even when nobody is signed in. Opening needs the backup private key, which is stored only sealed under the clinic key. So a backup opens with exactly what opens the records: a staff password or the recovery key.
+
+The readable start of the file holds only key identifiers and sealed copies of the keys, so it can be opened on a new computer with nothing else. Clinic name, staff names and counts are inside the sealed part. A backup taken after someone was removed no longer contains their access.
+
+Restore goes into a new, empty installation only. "Check" on the Backups screen reads a backup back in full without changing anything. `scripts/restore_drill.py` restores a backup into a scratch database and reports what came back; it should be run regularly.
+
+What a backup does not protect against: someone who has both a backup file and a staff password or the recovery key. Keep the recovery key away from the backup drives.
+
+## 6. What exists in the code
 
 | Part | Where | State |
 | --- | --- | --- |
@@ -70,25 +80,26 @@ Shown once when the clinic is created, as ten groups of four characters. It is n
 | Add a user with access | `add_clinic_user --authorized-by` | Built, tested |
 | Keys for a clinic created earlier; access for an existing member | `init_clinic_keys`, `grant_clinic_access` | Built, tested |
 | Recovery | `recover_clinic_access` command | Built, tested; no screen yet |
+| Backups: make, copy to places, schedule check, retention, read-back check, restore | `backend/vault/backup.py`, `api.py`, Backups screen, `backup_now`, `restore_backup` | Built, tested, restore drill passed |
 | Encrypting patient fields, notes, visits, prescriptions, history, photos | not started | **Next** |
-| Searching encrypted names and phone numbers | not started | Needs the design in section 6 |
+| Searching encrypted names and phone numbers | not started | Needs the design in section 7 |
 | Screens: first-time setup, show recovery key, change password, manage staff access | not started | Mockups P5 to P8 |
 | Second factor, clinic key replacement procedure, narrow messaging key | not started | Planned |
 | Independent review | not done | Required before real data |
 
-## 6. Decisions still needed before fields are encrypted
+## 7. Decisions still needed before fields are encrypted
 
 1. **Search.** Names and phone numbers cannot be searched with SQL once encrypted. Proposed: exact-match keyed hashes for phone and patient code, and a per-clinic name index opened in server memory while the clinic is unlocked. What someone holding only the database could learn from the hashes (that two patients share a phone number, for example) must be written down and accepted.
 2. **Existing synthetic rows.** Clinical tables are append-only by database trigger, so existing plaintext rows cannot simply be rewritten. As only synthetic data exists, the proposal is to start encrypted tables empty.
 3. **What stays readable.** Proposed plaintext: record IDs, timestamps, which clinic, who wrote it, archived state, and the patient code. Everything else about a patient is encrypted.
 
-## 7. Before real patient data
+## 8. Before real patient data
 
 All of the following, none of which is done:
 
 - every sensitive field and file encrypted, with the tests listed in [encryption.md](encryption.md);
 - the search design above built and its leakage documented;
-- encrypted backups and a restore that has actually been performed and timed, including recovery with the recovery key;
+- ~~encrypted backups and a restore that has actually been performed and timed~~ done 2026-10-11 on synthetic data (restore took about one second); repeat on the clinic's own computer with the recovery key before going live;
 - second-factor sign-in for owners and doctors;
 - a review of this design and its code by someone qualified who did not write it;
 - the legal points for India listed in the build plan confirmed with an adviser;
