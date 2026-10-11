@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jivni: everything you need to run your clinic</title>
+<meta name="description" content="Jivni is a clinic workspace for patient records, visits, prescriptions, labels, billing and correspondence. For one doctor or a team of five, on your own computer or in the browser.">
+<meta name="theme-color" content="#0c2a33">
+<link rel="icon" href="assets/jivni.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..700&family=Instrument+Sans:wght@400..700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/demo.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"><div class="aurora"><i></i><i></i><i></i><i></i></div></div>
+
+<header class="site-header">
+  <div class="glass">
+    <a class="brand" href="./"><img src="assets/jivni.svg" alt=""><span>Jivni</span></a>
+    <nav aria-label="Main">
+      <a href="./#features">Features</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="download.html">Download</a>
+    </nav>
+    <a class="btn btn-primary btn-small cta" href="pricing.html">Try now for free</a>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-copy rise">
+      <h1>Everything you need to run your clinic</h1>
+      <p class="size-line">Whether you are a team of one or five, with a single clinic or several branches.</p>
+      <p class="lede">Patients, visits, prescriptions, envelope labels, bills and messages in one calm workspace, built first for homeopathy practice.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="pricing.html">Try now for free</a>
+        <a class="btn btn-glass" href="download.html">Download for your computer</a>
+      </div>
+    </div>
+
+    <!-- Animated sample of the app. Decorative: the same story is told in the sections below. -->
+    <div class="demo" id="demo" aria-hidden="true">
+      <div class="demo-float"><div class="demo-tilt"><div class="demo-stage">
+        <div class="app">
+          <div class="app-top">
+            <div class="app-brand"><img src="assets/jivni.svg" alt="">Jivni</div>
+            <div class="app-search"><span class="typed"></span></div>
+            <div class="app-user">Dr. Mehta <i>RM</i></div>
+            <div class="results">
+              <div><span><strong>Anita</strong> Sharma, 34</span><small>PAT-W8KQ3G7DP9</small></div>
+              <div><span><strong>Anita</strong> Kulkarni, 61</span><small>PAT-4HX2M9QT7C</small></div>
+            </div>
+          </div>
+          <div class="app-tabs"><span class="on">Today</span><span>Patients</span><span>Appointments</span><span>Billing</span><span>Messages</span><span>Library</span><span>Settings</span></div>
+
+          <div class="view v-today on">
+            <h4>Good morning, Dr. Mehta</h4>
+            <div class="metrics">
+              <div><strong>12</strong>Appointments today</div>
+              <div><strong>3</strong>Waiting now</div>
+              <div><strong>5</strong>Follow-ups due</div>
+              <div><strong>2</strong>Labels to print</div>
+            </div>
+            <div class="card">
+              <h5>Waiting now</h5>
+              <div class="arow"><span>Anita Sharma</span><span>Follow-up, arrived 09:32</span></div>
+              <div class="arow"><span>Imran Qureshi</span><span>First visit, arrived 09:40</span></div>
+              <div class="arow"><span>Sunita Sharma</span><span>Medicine only, arrived 09:41</span></div>
+            </div>
+          </div>
+
+          <div class="view v-visit">
+            <div class="banner"><i>AS</i><div><strong>Anita Sharma</strong> <span class="badge">Draft</span><small>PAT-W8KQ3G7DP9, follow-up visit</small></div></div>
+            <div class="vcols stagger">
+              <div>
+                <div class="remember"><strong>Remember about Anita</strong>
+                  <ul><li>Teaches Kathak on weekends; recital in December.</li><li>Likes things explained slowly.</li></ul>
+                </div>
+                <div class="card"><h5>Complaint, in her words</h5><span class="dim">Headache now about once a week. Still worse in sunlight. Sleeping better.</span></div>
+              </div>
+              <div class="card">
+                <h5>Envelope 1</h5>
+                <div class="meds"><b>Arnica montana 30C</b><b>Bryonia alba 30C</b><span class="dim">doctor only</span></div>
+                <div class="dim" style="margin-bottom: 6px">Dosage, as printed on the label</div>
+                <div class="seg seg-freq"><span>once daily</span><span>twice daily</span><span>three times daily</span></div>
+                <div class="seg seg-when"><span>before meals</span><span>after meals</span></div>
+                <div class="preview"><span class="dim">Label will read</span><strong id="dose-main">4 tabs, …</strong><span id="dose-sub">14 days</span></div>
+                <div style="margin-top: 12px"><span class="finish">Finalise and print label</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-label paper label">
+          <div class="lhead"><img src="assets/jivni-mono.svg" alt=""><div><strong>Mehta Homeopathy Clinic</strong><br>14 Lake Road, Pune 411004</div></div>
+          <div class="lname">Anita Sharma</div>
+          <div class="ldose">4 tabs, twice daily</div>
+          <div>before meals, 14 days</div>
+          <div class="lfoot" style="display: block"><div class="bars"></div><div style="display: flex; justify-content: space-between"><span>06 Oct 2026</span><span>Next: 20 Oct 2026</span></div></div>
+        </div>
+        <div class="demo-toast">The label carries the dosage, never the medicine name</div>
+        <div class="cursor"><svg viewBox="0 0 26 26"><path d="M3 2.5l17.5 8.2-7.4 2.3-2.6 7.6z" fill="#fff" stroke="#10323c" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+      </div></div></div>
+    </div>
+  </div>
+
+  <section class="band wrap" aria-labelledby="fit">
+    <div class="band-head">
+      <h2 id="fit">It fits the clinic you have</h2>
+      <p class="lede">The same workspace works for a doctor alone and for a front desk, an assistant and two doctors sharing one patient list.</p>
+    </div>
+    <div class="glass pad">
+      <div class="glass sizes" role="tablist" aria-label="Clinic size">
+        <span class="thumb"></span>
+        <button role="tab" data-size="solo" aria-selected="false">Just me</button>
+        <button role="tab" data-size="team" aria-selected="true">A team of five</button>
+        <button role="tab" data-size="branches" aria-selected="false">Several branches</button>
+      </div>
+      <div class="size-panel" aria-live="polite">
+        <div><h3 id="size-title"></h3><p id="size-text"></p></div>
+        <div class="seats" id="size-seats"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band wrap" id="features" aria-labelledby="day">
+    <div class="band-head">
+      <h2 id="day">One place for the whole day</h2>
+      <p class="lede">From the patient walking in to the envelope going home.</p>
+    </div>
+    <div class="tiles">
+      <article class="glass pad tile big">
+        <h3>The patient's envelope says how to take it, and nothing else</h3>
+        <p>Each mix gets one 2 × 2 inch thermal label with the dosage, the date, the next visit and the patient's barcode. The remedy and potency stay in your record, never on anything the patient takes home.</p>
+        <div class="art" style="display: flex; justify-content: center; padding-bottom: 6px">
+          <div class="paper label tilt-left">
+            <div class="lhead"><img src="assets/jivni-mono.svg" alt=""><div><strong>Mehta Homeopathy Clinic</strong><br>14 Lake Road, Pune 411004</div></div>
+            <div class="lname">Imran Qureshi</div>
+            <div class="ldose">5 drops, at bedtime</div>
+            <div>in water, 3 weeks</div>
+            <div class="lfoot" style="display: block"><div class="bars"></div><div style="display: flex; justify-content: space-between"><span>06 Oct 2026</span><span>Next: 27 Oct 2026</span></div></div>
+          </div>
+        </div>
+      </article>
+      <article class="glass pad tile big">
+        <h3>A reference library that answers in your own words</h3>
+        <p>Type the symptoms as the patient described them and see which rubrics match and where they come from. Boericke's Materia Medica and Kent's Repertory are included, and your own notes sit on top without changing the books.</p>
+        <div class="art">
+          <div class="rubric"><span>Head, pain, sun, from exposure to</span><span>Kent, 14 remedies</span></div>
+          <div class="rubric"><span>Head, pain, right side</span><span>Kent, 62 remedies</span></div>
+          <div class="rubric"><span>Sleep, restless</span><span>Kent, 118 remedies</span></div>
+        </div>
+      </article>
+      <article class="glass pad tile">
+        <h3>Scan the card, open the patient</h3>
+        <p>Every label and bill carries the patient's barcode. One scan anywhere in the app opens the right record, even when a household shares a phone number.</p>
+      </article>
+      <article class="glass pad tile">
+        <h3>Visits that remember the person</h3>
+        <p>Next to the complaint and your notes is a doctor-only place for what helps you know the patient: a recital in December, a nervous first visit.</p>
+      </article>
+      <article class="glass pad tile">
+        <h3>Bills without retyping</h3>
+        <p>Your own mixed medicines are one line. Shelf products and supplements are scanned in as their own lines, for patients and walk-in buyers alike.</p>
+      </article>
+      <article class="glass pad tile big">
+        <h3>Locked with your password, backed up without you</h3>
+        <p>Encryption is switched on when you set up the clinic, and a recovery key is shown to you once. Backups are encrypted too and can go to a folder, a NAS or a cloud drive on a schedule.</p>
+        <div class="art stack">
+          <div class="keyline"><span>Recovery key</span><b>J7QK-•••••-•••••-•••••-M2XD</b></div>
+          <div class="keyline"><span class="dot live"></span><span>Last backup today 13:00, checked by reading it back</span></div>
+        </div>
+      </article>
+      <article class="glass pad tile big">
+        <h3>Messages you approve before they go</h3>
+        <p>Reminders and follow-ups are drafted for you and wait for a yes. No diagnosis, remedy or symptom is ever put in a message.</p>
+        <div class="art chiprow"><span class="chip">Appointment tomorrow, 3:00 PM</span><span class="chip">30-day check-in</span><span class="chip">Birthday greeting</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="band wrap" aria-labelledby="where">
+    <div class="band-head">
+      <h2 id="where">Keep it in the clinic, or let us host it</h2>
+    </div>
+    <div class="split">
+      <div class="photo" data-media="clinic-desk">
+        <div class="glass strong photo-over">
+          <h3>On your own computer</h3>
+          <p class="soft small" style="margin: 6px 0 14px">Install it on Windows, macOS or Linux. Your records stay on your machine and it works without the internet.</p>
+          <a class="btn btn-glass btn-small" href="download.html">Go to downloads</a>
+        </div>
+      </div>
+      <div class="photo" data-media="reception">
+        <div class="glass strong photo-over">
+          <h3>In your browser</h3>
+          <p class="soft small" style="margin: 6px 0 14px">Nothing to install or back up. Free for up to 30 patients, with paid plans from ₹99 a month.</p>
+          <a class="btn btn-primary btn-small" href="pricing.html">Try now for free</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="glass">
+    <a class="brand" href="./"><img src="assets/jivni.svg" alt=""><span>Jivni</span></a>
+    <a href="pricing.html">Pricing</a>
+    <a href="download.html">Download</a>
+    <a href="credits.html">Credits</a>
+    <span style="margin-left: auto">© <span data-year></span> Jivni</span>
+  </div>
+</footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/site.js"></script>
+<script src="assets/demo.js"></script>
+</body>
+</html>
