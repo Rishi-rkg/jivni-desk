@@ -243,10 +243,19 @@ Drawn at the bottom of [overlays.html](overlays.html): main, secondary, destruct
 6. The visit page is built around the complaint and free notes, including personal details that help the doctor remember the patient (a hobby, family, a story), plus prescribing with medicine search and dosage units.
 7. The clinic is in India: rupees, GST, UPI, April to March financial year.
 
+**Added on 11 Oct 2026 (second round)**
+
+8. The clinic is GST-registered. The GSTIN, GST column and GST box print on every bill; if no GSTIN is entered in Settings, none of them print.
+9. A visit can have several envelopes, each with its own label.
+10. "Remember about the patient" notes are for doctors only.
+11. Wanted later, not now: two patients open side by side, for a parent who brings a child who is also a patient.
+
 **Still open**
 
-1. Is the clinic GST-registered? If not, bills show no GST column and can be titled "Bill of Supply". The rates in the mockups are examples for the accountant to confirm.
-2. "Remember about the patient" notes are shown to doctors only. Should reception see them too?
-3. One envelope holds one mix with one dosage line; a visit can have several envelopes. Does that match how medicines are handed over?
-4. Should product stock be counted (stock control), or only sold from a price list?
-5. Is the prescribed-medicines charge per week, per envelope, or typed in each time?
+1. GST rates per kind of item, for the accountant to confirm.
+2. Should product stock be counted (stock control), or only sold from a price list?
+3. Is the prescribed-medicines charge per week, per envelope, or typed in each time?
+
+## 9. Viewing the prototype
+
+Run `node mockups/serve.js` from the repository folder and open http://localhost:4173. Previous and Next at the top of each screen, or the left and right arrow keys, flip through all 16 screens.

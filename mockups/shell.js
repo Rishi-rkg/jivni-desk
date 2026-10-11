@@ -35,7 +35,13 @@
   var roleOptions = Object.keys(ROLES).map(function (k) {
     return "<option value='" + k + "'" + (k === role ? " selected" : "") + ">" + ROLES[k][0] + "</option>";
   }).join("");
-  var frame = "<div class='mock-bar'><a href='index.html'>&larr; All screens</a>" +
+  var ORDER = ["login", "dashboard", "patients", "patient-register", "patient-overview", "visit", "print-label", "invoice", "print-bill",
+    "billing", "appointments", "messages", "library", "printing", "settings", "overlays"];
+  var here = ORDER.indexOf((location.pathname.split("/").pop() || "").replace(".html", ""));
+  var prev = ORDER[(here + ORDER.length - 1) % ORDER.length] + ".html", next = ORDER[(here + 1) % ORDER.length] + ".html";
+  var flip = here < 0 ? "" : "<a id='flip-prev' href='" + prev + "'>&lsaquo; Previous</a><span>" + (here + 1) + " of " + ORDER.length +
+    "</span><a id='flip-next' href='" + next + "'>Next &rsaquo;</a>";
+  var frame = "<div class='mock-bar'><a href='index.html'>All screens</a>" + flip +
     "<span>Prototype. Nothing is saved, sent or printed. All names are invented.</span><span class='spacer'></span>" +
     "<label>View as <select id='proto-role'>" + roleOptions + "</select></label></div>";
   if (!body.hasAttribute("data-bare")) {
@@ -222,6 +228,11 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closeAll();
+    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName);
+    if (here >= 0 && !typing && !e.ctrlKey && !e.altKey && !e.metaKey && !document.querySelector(".modal-backdrop")) {
+      if (e.key === "ArrowRight") location.href = next;
+      if (e.key === "ArrowLeft") location.href = prev;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openDialog("finder"); }
   });
   var gs = document.getElementById("global-search");
