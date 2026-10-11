@@ -227,6 +227,12 @@ class NotesAndDocumentsTests(PatientTestCase):
         self.assertEqual((picture.status_code, picture.data["mime_type"]), (201, "image/jpeg"))
         self.addCleanup(default_storage.delete, PatientDocument.objects.get(title="Scan").storage_key)
         self.assertEqual(len(self.client.get(self.url(tail="documents/")).data["results"]), 2)
+        # The newest documents across the clinic, each with its patient's name, for clinical roles only.
+        every = self.client.get("/api/v1/documents/").data["results"]
+        self.assertEqual(len(every), 2)
+        self.assertEqual({row["patient"] for row in every}, {self.anita.pk})
+        self.assertTrue(all(row["patient_name"] for row in every))
+        self.assertTrue(AuditEvent.objects.filter(action="document.list_all").exists())
         for title, data in [("", PDF), ("Program", b"MZ\x90\x00 not a document"), ("Web page", b"<html><script>alert(1)</script></html>")]:
             bad = SimpleUploadedFile("x.pdf", data, content_type="application/pdf")
             self.assertEqual(

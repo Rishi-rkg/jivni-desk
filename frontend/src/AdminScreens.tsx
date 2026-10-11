@@ -341,6 +341,8 @@ const ACTION_LABELS: Record<string, string> = {
   'print.prescription_data': 'Prepared a prescription',
   'print.card_data': 'Prepared a patient card',
   'dashboard.view': 'Opened the dashboard',
+  'audit.export': 'Exported the activity log',
+  'document.list_all': 'Listed patient documents',
   'auth.two_step_on': 'Turned on two-step sign-in',
   'auth.two_step_off': 'Turned off two-step sign-in',
   'auth.two_step_failed': 'Wrong two-step code at sign-in',
@@ -385,16 +387,50 @@ const ACTION_LABELS: Record<string, string> = {
   'message_campaign.create': 'Prepared a campaign',
 };
 
+/** What an entry was about: the first part of its action name. */
+const ABOUT: [string, string][] = [
+  ['auth', 'Signing in and out'],
+  ['patient', 'Patients'],
+  ['encounter', 'Visits'],
+  ['note', 'Notes'],
+  ['document', 'Documents'],
+  ['appointment', 'Appointments'],
+  ['invoice', 'Bills'],
+  ['message', 'Messages'],
+  ['print_job', 'Printing'],
+  ['team', 'Users and roles'],
+  ['clinic', 'Clinic settings'],
+  ['backup', 'Backups'],
+  ['access', 'Refused access'],
+];
+
 export function ActivityLog() {
   const [outcome, setOutcome] = useState('');
+  const [actor, setActor] = useState('');
+  const [about, setAbout] = useState('');
+  const [from, setFrom] = useState('');
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Page<AuditEvent> | null>(null);
   const [error, setError] = useState('');
+  const filters = [
+    outcome && `outcome=${outcome}`,
+    actor && `actor=${actor}`,
+    about && `about=${about}`,
+    from && `from=${from}`,
+  ]
+    .filter(Boolean)
+    .join('&');
+  useEffect(() => {
+    api<{ id: string; name: string }[]>('audit-events/people/')
+      .then((list) => setPeople(Array.isArray(list) ? list : []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
     setError('');
-    api<Page<AuditEvent>>(`audit-events/?page=${page}${outcome ? `&outcome=${outcome}` : ''}`, {
+    api<Page<AuditEvent>>(`audit-events/?page=${page}${filters ? `&${filters}` : ''}`, {
       signal: controller.signal,
     })
       .then(setData)
@@ -402,7 +438,7 @@ export function ActivityLog() {
         if (e.name !== 'AbortError') setError(e.message);
       });
     return () => controller.abort();
-  }, [outcome, page]);
+  }, [filters, page]);
 
   return (
     <>
@@ -411,6 +447,57 @@ export function ActivityLog() {
           <h2>Activity log</h2>
           <p className="muted">Who opened or changed what, newest first. Record contents are never stored here.</p>
         </div>
+        <a className="button secondary" href={`/api/v1/audit-events/export/${filters ? `?${filters}` : ''}`}>
+          Export
+        </a>
+      </div>
+      <div className="toolbar">
+        <label>
+          Who
+          <select
+            value={actor}
+            onChange={(e) => {
+              setActor(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Everyone</option>
+            {people.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          About
+          <select
+            value={about}
+            onChange={(e) => {
+              setAbout(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Everything</option>
+            {ABOUT.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Since
+          <input
+            type="date"
+            value={from}
+            max={isoDay()}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              setPage(1);
+            }}
+          />
+        </label>
         <label>
           Show
           <select

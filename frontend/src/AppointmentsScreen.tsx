@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { api } from './api';
 import { ErrorMessage } from './components';
 import { addDays, ageSex, clock, isoDay, longDate, shortDate, weekdayDate } from './format';
+import { WriteMessage } from './MessageWindows';
 import { PatientPicker } from './PatientWindows';
 import { Role, canWriteClinical, canWriteDemographics } from './types';
 import { ChoiceStrip, Menu, MenuItem, Modal, StatusLabel, Tone, notify, useLoad } from './ui';
@@ -67,7 +68,7 @@ export function statusOf(appointment: Appointment): [Tone, string] {
 
 const mondayOf = (day: string) => addDays(day, -((new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7));
 
-export function AppointmentsScreen({ role }: { role: Role }) {
+export function AppointmentsScreen({ role, messagesOn = false }: { role: Role; messagesOn?: boolean }) {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -87,6 +88,11 @@ export function AppointmentsScreen({ role }: { role: Role }) {
   }>(preset ? { patient: preset } : null);
   const [walkIn, setWalkIn] = useState(false);
   const [cancelling, setCancelling] = useState<Appointment | null>(null);
+  const [messaging, setMessaging] = useState<null | {
+    patient: { id: string; name: string };
+    appointment?: string;
+    templateKey: string;
+  }>(null);
   const [error, setError] = useState('');
   const from = view === 'day' ? day : mondayOf(day);
   const to = view === 'day' ? day : addDays(from, 6);
@@ -134,6 +140,19 @@ export function AppointmentsScreen({ role }: { role: Role }) {
         ? [
             { label: 'Mark arrived', onSelect: () => act(appointment, 'arrive') },
             { label: 'Reschedule…', onSelect: () => setBooking({ move: appointment, patient: appointment.patient }) },
+            ...(messagesOn && appointment.time
+              ? [
+                  {
+                    label: 'Send reminder now',
+                    onSelect: () =>
+                      setMessaging({
+                        patient: appointment.patient,
+                        appointment: appointment.id,
+                        templateKey: 'appointment_reminder',
+                      }),
+                  },
+                ]
+              : []),
           ]
         : []),
       ...(open && canWriteClinical(role) ? [{ label: 'Start visit', onSelect: () => startVisit(appointment) }] : []),
@@ -378,9 +397,25 @@ export function AppointmentsScreen({ role }: { role: Role }) {
                   {item.booked ? (
                     <StatusLabel tone="green">Booked</StatusLabel>
                   ) : (
-                    <button type="button" className="link-button" onClick={() => setBooking({ patient: item.patient })}>
-                      Book
-                    </button>
+                    <span className="actions">
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => setBooking({ patient: item.patient })}
+                      >
+                        Book
+                      </button>
+                      {messagesOn && (
+                        <button
+                          type="button"
+                          className="link-button"
+                          aria-label={`Message ${item.patient.name}`}
+                          onClick={() => setMessaging({ patient: item.patient, templateKey: 'check_in_30' })}
+                        >
+                          Message
+                        </button>
+                      )}
+                    </span>
                   )}
                 </div>
               ))}
@@ -478,6 +513,19 @@ export function AppointmentsScreen({ role }: { role: Role }) {
             setWalkIn(false);
             refresh();
             go({ day: today, view: 'day' });
+          }}
+        />
+      )}
+      {messaging && (
+        <WriteMessage
+          role={role}
+          patient={messaging.patient}
+          appointment={messaging.appointment}
+          templateKey={messaging.templateKey}
+          onClose={() => setMessaging(null)}
+          onDone={() => {
+            setMessaging(null);
+            refresh();
           }}
         />
       )}

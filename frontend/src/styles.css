@@ -2292,3 +2292,6 @@ select.narrow {
 tr.muted td strong {
   font-weight: 500;
 }
+input.narrow-search {
+  width: 220px;
+}

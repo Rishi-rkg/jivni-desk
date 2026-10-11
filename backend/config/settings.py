@@ -68,7 +68,10 @@ elif DATABASE_ENGINE == "postgresql":
             "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
             "HOST": os.environ.get("POSTGRES_HOST", "db"),
             "PORT": os.environ.get("POSTGRES_PORT", "5432"),
-            "CONN_MAX_AGE": 60,
+            # Kept open between requests where a fixed set of workers reuses them. The development server starts
+            # a thread for every browser connection and never reuses one, so there they would only pile up
+            # until the database refuses new ones.
+            "CONN_MAX_AGE": 0 if DEBUG else 60,
         }
     }
 else:

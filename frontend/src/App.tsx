@@ -68,6 +68,21 @@ function ShortcutList({ onClose }: { onClose: () => void }) {
   );
 }
 
+/** P64: an address that leads nowhere, said plainly, with a way back. */
+function NotFound() {
+  return (
+    <section className="panel">
+      <h1>That page was not found</h1>
+      <p className="muted">
+        The address may be mistyped, or the page may belong to a part of the application your role does not use.
+      </p>
+      <Link className="button" to="/dashboard">
+        Go to the dashboard
+      </Link>
+    </section>
+  );
+}
+
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -407,7 +422,10 @@ export default function App() {
                   />
                 }
               />
-              <Route path="/appointments" element={guarded('/appointments', <AppointmentsScreen role={role} />)} />
+              <Route
+                path="/appointments"
+                element={guarded('/appointments', <AppointmentsScreen role={role} messagesOn={allowed('/messages')} />)}
+              />
               <Route path="/messages/:tab?" element={guarded('/messages', <MessagesScreen role={role} />)} />
               <Route path="/billing/new" element={guarded('/billing', <NewBill features={member.features} />)} />
               <Route
@@ -433,7 +451,8 @@ export default function App() {
               <Route path="/backups" element={<Navigate to="/settings/backups" replace />} />
               {/* Print pages are drawn above, without the tabs; this keeps the catch-all from sending them away. */}
               <Route path="/print/*" element={null} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           )}
         </main>

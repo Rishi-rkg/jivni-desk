@@ -187,5 +187,36 @@ test('users and security: an invitation, a first sign-in, two-step sign-in, a re
   await expect(page.getByRole('alert')).toHaveText('No active clinic membership.');
   await signIn(page);
   await page.getByRole('link', { name: 'Patients', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Synthetic Smoke-Test' })).toBeVisible();
+  await expect(page.getByLabel('Search patients')).toBeVisible();
+  await expect(page.getByRole('table').getByRole('link', { name: 'Synthetic Smoke-Test' })).toBeVisible();
+
+  // The activity log narrows to one subject and exports what it shows.
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
+  await sections.getByRole('link', { name: 'Activity log' }).click();
+  await page.getByLabel('About').selectOption('team');
+  await expect(page.getByRole('cell', { name: 'Invited a user' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Reset a user’s password' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Signed in' })).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Export', exact: true })).toHaveAttribute(
+    'href',
+    '/api/v1/audit-events/export/?about=team',
+  );
+  await page.getByLabel('About').selectOption('auth');
+  await expect(page.getByRole('cell', { name: 'Used the recovery key' })).toBeVisible();
+  // Every patient's documents in one list, and a plain page for an address that leads nowhere.
+  await page.getByRole('link', { name: 'Printing', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Printing sections' })
+    .getByRole('link', { name: 'Patient documents' })
+    .click();
+  await expect(
+    page
+      .getByRole('row')
+      .filter({ hasText: 'Synthetic blood report' })
+      .getByRole('link', { name: 'Synthetic Smoke-Test' }),
+  ).toBeVisible();
+  await page.goto('/nowhere-at-all');
+  await expect(page.getByRole('heading', { name: 'That page was not found' })).toBeVisible();
+  await page.getByRole('link', { name: 'Go to the dashboard' }).click();
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), / })).toBeVisible();
 });

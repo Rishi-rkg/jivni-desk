@@ -550,7 +550,29 @@ class PhotoViewSet(mixins.RetrieveModelMixin, ClinicViewSet):
 
 
 class DocumentViewSet(ClinicViewSet):
-    """A patient's document itself, for viewing. Clinical roles only."""
+    """Patients' documents: the newest across the clinic, and one document itself for viewing. Clinical roles only."""
+
+    def list(self, request):
+        require_role(request, CLINICAL_READ)
+        documents = (
+            PatientDocument.objects.filter(patient__clinic=self.member.clinic)
+            .select_related("patient", "uploaded_by")
+            .order_by("-created_at")[:300]
+        )
+        self.event("document.list_all")
+        return Response(
+            {
+                "results": [
+                    {
+                        **DocumentSerializer(document).data,
+                        "patient_name": " ".join(
+                            part for part in [document.patient.first_name, document.patient.middle_name, document.patient.last_name] if part
+                        ),
+                    }
+                    for document in documents
+                ]
+            }
+        )
 
     def retrieve(self, request, pk=None):
         require_role(request, CLINICAL_READ)
@@ -835,12 +857,67 @@ class AuditViewSet(mixins.ListModelMixin, ClinicViewSet):
     def get_queryset(self):
         require_role(self.request, CLINIC_ADMIN)
         queryset = AuditEvent.objects.filter(clinic=self.member.clinic).select_related("actor").order_by("-occurred_at", "id")
-        outcome = self.request.query_params.get("outcome")
-        if outcome in {"success", "denied", "failed"}:
-            queryset = queryset.filter(outcome=outcome)
+        params, clinic = self.request.query_params, self.member.clinic
+        if params.get("outcome") in {"success", "denied", "failed"}:
+            queryset = queryset.filter(outcome=params["outcome"])
+        if params.get("actor"):
+            try:
+                queryset = queryset.filter(actor_id=uuid.UUID(params["actor"]))
+            except ValueError:
+                raise serializers.ValidationError({"actor": "Unknown person."}) from None
+        # What the action was about: its name up to the first dot, such as patient, invoice or message.
+        if params.get("about"):
+            queryset = queryset.filter(action__startswith=f"{params['about'][:30]}.")
+        for name, edge in (("from", "gte"), ("to", "lt")):
+            if params.get(name):
+                try:
+                    day = datetime.date.fromisoformat(params[name])
+                except ValueError:
+                    raise serializers.ValidationError({name: "Use a date like 2026-10-06."}) from None
+                if name == "to":
+                    day += datetime.timedelta(days=1)
+                queryset = queryset.filter(
+                    **{f"occurred_at__{edge}": datetime.datetime.combine(day, datetime.time.min, tzinfo=clinic.tzinfo)}
+                )
         return queryset
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         self.event("audit.list")
+        return response
+
+    @action(detail=False, methods=["get"])
+    def people(self, request):
+        """Everyone who appears in this clinic's log, for the "Who" filter."""
+        require_role(request, CLINIC_ADMIN)
+        events = AuditEvent.objects.filter(clinic=self.member.clinic, actor__isnull=False)
+        users = {event["actor_id"]: event for event in events.values("actor_id", "actor__username", "actor__first_name").distinct()}
+        rows = [{"id": str(user_id), "name": row["actor__first_name"] or row["actor__username"]} for user_id, row in users.items()]
+        return Response(sorted(rows, key=lambda row: row["name"].lower()))
+
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        """The log, as filtered, for a spreadsheet. It holds no record contents, as the log itself does not."""
+        import csv
+
+        clinic = self.member.clinic
+        events = self.get_queryset()[:10000]
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="activity-log.csv"'
+        response.write("\ufeff")
+        writer = csv.writer(response)
+        writer.writerow(["When", "Who", "Action", "Result", "Kind of record", "Record ID", "From"])
+        for event in events:
+            writer.writerow(
+                [
+                    timezone.localtime(event.occurred_at, clinic.tzinfo).strftime("%Y-%m-%d %H:%M:%S"),
+                    patient_extras.spreadsheet_safe(event.actor.username if event.actor else ""),
+                    event.action,
+                    event.outcome,
+                    event.resource_type,
+                    event.resource_id or "",
+                    event.source_ip or "",
+                ]
+            )
+        self.event("audit.export")
         return response

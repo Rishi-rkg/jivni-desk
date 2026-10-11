@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import { Appointment, addMonths, monthCells, monthName, statusOf } from './AppointmentsScreen';
-import { isoDay, weekdayDate } from './format';
+import { isoDay, setClinicLocale, weekdayDate } from './format';
 import { Role, Session } from './types';
 import { clearNotices } from './ui';
 import { greeting } from './WorkspaceScreens';
@@ -24,6 +24,9 @@ function mount(path: string) {
   render(<RouterProvider router={router} />);
   return router;
 }
+// The clinic's own date, as the screens use it. Without this the test's "today" is the computer's, which differs
+// from the clinic's for part of every day.
+setClinicLocale('Asia/Kolkata', 'INR');
 const today = isoDay();
 const booked: Appointment = {
   id: 'a1',

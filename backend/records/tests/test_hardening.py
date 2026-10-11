@@ -2,7 +2,7 @@
 
 import time
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from unittest import mock
 
 from django.core.cache import cache
@@ -160,6 +160,36 @@ class HardeningAPITests(TestCase):
         self.assertEqual(response.data["results"][0]["actor_username"], "")
         rows = self.client.get("/api/v1/audit-events/").data["results"]
         self.assertEqual(next(row for row in rows if row["action"] == "patient.view")["actor_username"], "doctor")
+
+    def test_the_log_filters_by_person_subject_and_day_and_exports(self):
+        self.role("owner")
+        other = User.objects.create_user(username="desk", password="synthetic-password", first_name="Priya Desk")
+        Membership.objects.create(clinic=self.clinic, user=other, role_id="reception")
+        AuditEvent.objects.create(clinic=self.clinic, actor=other, action="invoice.view")
+        AuditEvent.objects.create(clinic=self.clinic, actor=other, action="=patient.view")
+        AuditEvent.objects.create(clinic=self.other_clinic, actor=other, action="patient.view")
+        self.client.get(f"/api/v1/patients/{self.patient.pk}/")
+        by_person = self.client.get(f"/api/v1/audit-events/?actor={other.pk}").data
+        self.assertEqual(by_person["count"], 2)
+        about = self.client.get("/api/v1/audit-events/?about=patient").data["results"]
+        self.assertEqual([row["action"] for row in about], ["patient.view"])
+        today = self.clinic.today()
+        self.assertEqual(self.client.get(f"/api/v1/audit-events/?from={today}&to={today}&about=invoice").data["count"], 1)
+        self.assertEqual(self.client.get(f"/api/v1/audit-events/?to={today - timedelta(days=1)}").data["count"], 0)
+        self.assertEqual(self.client.get("/api/v1/audit-events/?from=yesterday").status_code, 400)
+        self.assertEqual(self.client.get("/api/v1/audit-events/?actor=someone").status_code, 400)
+        people = self.client.get("/api/v1/audit-events/people/").data
+        self.assertEqual([row["name"] for row in people], ["doctor", "Priya Desk"])
+        sheet = self.client.get(f"/api/v1/audit-events/export/?actor={other.pk}")
+        self.assertEqual((sheet.status_code, sheet["Content-Type"]), (200, "text/csv; charset=utf-8"))
+        lines = sheet.content.decode("utf-8-sig").splitlines()
+        self.assertEqual(lines[0], "When,Who,Action,Result,Kind of record,Record ID,From")
+        self.assertEqual(len(lines), 3)
+        self.assertTrue(all(",desk," in line for line in lines[1:]))
+        self.assertTrue(AuditEvent.objects.filter(action="audit.export").exists())
+        self.role("clinician")
+        for path in ["", "people/", "export/"]:
+            self.assertEqual(self.client.get(f"/api/v1/audit-events/{path}").status_code, 403, path)
 
     # --- clinic settings
 

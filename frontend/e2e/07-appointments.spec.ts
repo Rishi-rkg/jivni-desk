@@ -41,7 +41,8 @@ test('appointments: the work week, booking by phone, a quick new patient, a walk
   await shot(page, '07-work-week');
 
   // Book from a phone number. The first Monday of next month is a working day whatever today is.
-  const now = new Date();
+  // The clinic's own date (India), which is a day ahead of the test machine's for part of every day.
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const first = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1));
   const monday = String(1 + ((8 - first.getUTCDay()) % 7)).padStart(2, '0');
   await page.getByRole('link', { name: 'Appointments', exact: true }).click();
@@ -65,6 +66,16 @@ test('appointments: the work week, booking by phone, a quick new patient, a walk
   const day = page.getByRole('region', { name: 'Day' });
   await expect(day.getByRole('link', { name: 'Synthetic Smoke-Test' })).toBeVisible();
   await expect(day.getByText(/^Booked/)).toBeVisible();
+  // A reminder can be prepared there and then, with the day and time filled in.
+  await page.getByRole('button', { name: 'Actions for Synthetic Smoke-Test' }).click();
+  await page.getByRole('menuitem', { name: 'Send reminder now' }).click();
+  const reminder = page.getByRole('dialog', { name: 'WhatsApp message to Synthetic Smoke-Test' });
+  await expect(reminder.getByLabel('Message')).toHaveValue(
+    /reminder of your appointment at Synthetic E2E Clinic on Mon \d\d \w+ \d{4} at 09:30\./,
+  );
+  // This patient's number is too short to be a real one, and the window says so before anything is sent.
+  await expect(reminder.getByText(/Not sendable now:/)).toBeVisible();
+  await reminder.getByRole('button', { name: 'Discard' }).click();
 
   // A caller nobody knows yet: the booking window asks only for a name.
   await day.getByRole('button', { name: 'Free · click to book' }).first().click();

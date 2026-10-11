@@ -5,6 +5,7 @@ import { api } from './api';
 import { ErrorMessage } from './components';
 import { clock, shortDate } from './format';
 import { EnvelopeLabel, LabelData, LabelSettings, dosageParts, labelSize } from './Labels';
+import { ViewDocument } from './PatientWindows';
 import { Role, canAdministerClinic, canReadClinical } from './types';
 import { Chip, Modal, SettingRow, StatusLabel, Switch, notify, useLoad } from './ui';
 
@@ -33,9 +34,10 @@ interface Job {
   created_at: string;
 }
 
-const SECTIONS: { key: string; label: string; group?: string; kind?: Kind }[] = [
+const SECTIONS: { key: string; label: string; group?: string; kind?: Kind; clinical?: boolean }[] = [
   { key: 'queue', label: 'Print queue' },
   { key: 'printers', label: 'Printers' },
+  { key: 'documents', label: 'Patient documents', clinical: true },
   { key: 'invoice', label: 'Invoice (A4)', group: 'Templates', kind: 'invoice' },
   { key: 'receipt', label: 'Receipt', group: 'Templates', kind: 'receipt' },
   { key: 'prescription', label: 'Prescription', group: 'Templates', kind: 'prescription' },
@@ -45,7 +47,8 @@ const SECTIONS: { key: string; label: string; group?: string; kind?: Kind }[] = 
 
 export function PrintingScreen({ role }: { role: Role }) {
   const { section = 'queue' } = useParams();
-  const current = SECTIONS.find((item) => item.key === section);
+  const sections = SECTIONS.filter((item) => !item.clinical || canReadClinical(role));
+  const current = sections.find((item) => item.key === section);
   if (!current) return <Navigate to="/printing" replace />;
   return (
     <>
@@ -54,9 +57,9 @@ export function PrintingScreen({ role }: { role: Role }) {
       </div>
       <div className="cols cols-nav">
         <nav className="side-nav" aria-label="Printing sections">
-          {SECTIONS.map((item, index) => (
+          {sections.map((item, index) => (
             <span key={item.key} style={{ display: 'contents' }}>
-              {item.group && SECTIONS[index - 1]?.group !== item.group && <span className="group">{item.group}</span>}
+              {item.group && sections[index - 1]?.group !== item.group && <span className="group">{item.group}</span>}
               <NavLink
                 to={item.key === 'queue' ? '/printing' : `/printing/${item.key}`}
                 className={item.key === current.key ? 'active' : ''}
@@ -70,12 +73,93 @@ export function PrintingScreen({ role }: { role: Role }) {
         <div>
           {current.key === 'queue' && <Queue />}
           {current.key === 'printers' && <Printers />}
+          {current.key === 'documents' && <AllDocuments />}
           {current.kind && (
             <TemplateEditor key={current.kind} kind={current.kind} editable={canAdministerClinic(role)} />
           )}
         </div>
       </div>
     </>
+  );
+}
+
+interface DocumentRow {
+  id: string;
+  patient: string;
+  patient_name: string;
+  title: string;
+  mime_type: string;
+  uploaded_by_name: string;
+  created_at: string;
+}
+
+/** P52: lab reports and other papers across every patient, newest first. */
+function AllDocuments() {
+  const { data, error } = useLoad((signal) => api<{ results: DocumentRow[] }>('documents/', { signal }), []);
+  const [text, setText] = useState('');
+  const [viewing, setViewing] = useState<DocumentRow | null>(null);
+  const wanted = text.trim().toLowerCase();
+  const rows = (data?.results ?? []).filter(
+    (row) => !wanted || row.title.toLowerCase().includes(wanted) || row.patient_name.toLowerCase().includes(wanted),
+  );
+  return (
+    <section className="panel flush">
+      <div className="heading">
+        <div>
+          <h2>Patient documents</h2>
+          <p className="muted small">Lab reports and other papers kept with patients, newest first.</p>
+        </div>
+        <input
+          type="search"
+          className="narrow-search"
+          aria-label="Find a document"
+          placeholder="Title or patient"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+      </div>
+      <ErrorMessage message={error} />
+      {data && !rows.length && (
+        <p className="empty">
+          {data.results.length
+            ? 'No document matches.'
+            : 'No documents yet. One is added from a patient’s record with “Add document”.'}
+        </p>
+      )}
+      {!!rows.length && (
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Added</th>
+                <th>Patient</th>
+                <th>Document</th>
+                <th>Kind</th>
+                <th>Added by</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <td>{shortDate(row.created_at)}</td>
+                  <td>
+                    <Link to={`/patients/${row.patient}?tab=documents`}>{row.patient_name}</Link>
+                  </td>
+                  <td>
+                    <button type="button" className="link-button" onClick={() => setViewing(row)}>
+                      {row.title}
+                    </button>
+                  </td>
+                  <td>{row.mime_type === 'application/pdf' ? 'PDF' : 'Picture'}</td>
+                  <td>{row.uploaded_by_name}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {viewing && <ViewDocument document={viewing} onClose={() => setViewing(null)} />}
+    </section>
   );
 }
 
