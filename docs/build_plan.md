@@ -8,7 +8,7 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks: 72 backend tests (69 pass on SQLite, 3 PostgreSQL-only trigger tests skipped because this PC has no PostgreSQL) and 13 frontend tests.
+The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 73 backend tests pass on PostgreSQL 16 with none skipped, 13 frontend tests, 2 browser end-to-end tests, Ruff, ESLint and Prettier all clean.
 
 **The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
 
@@ -22,7 +22,7 @@ The first two code commits are from 2026-10-06. Work on this plan started on 202
 | 6 Knowledge library | Interface stub only | Everything |
 | 7 AI features | Interface stub only | Everything |
 
-Also: Docker Compose and CI are written but have never run, and the repository has no remote.
+Also: the repository's home is now `Documents\GitHub\clinic-management`. It has no GitHub remote yet, so CI has never run. Docker Desktop is installed but Compose has not been run.
 
 ## 2. Review findings to fix before building more
 
@@ -56,7 +56,7 @@ These come from reading the code. Each is small now and expensive later.
 
 **Tooling**
 
-15. **No linting, formatting or type checking** for either side, and no browser end-to-end tests. Frontend components are written as very long single lines, which makes diffs hard to review.
+15. **No linting, formatting or type checking** for either side, and no browser end-to-end tests. *Fixed 2026-10-11:* Ruff, ESLint, Prettier and a Playwright smoke test are in place and both sides were reformatted once. Frontend components are written as very long single lines, which makes diffs hard to review.
 16. **Python versions differ**: the local virtual environment is 3.11, Docker and CI use 3.12. *Addressed 2026-10-10:* CI now tests both.
 17. **CI has never run** because nothing has been pushed.
 
@@ -117,10 +117,10 @@ The seven phases keep the original's numbering and intent. Each lists the remain
 
 Step 1, housekeeping, about a week of small changes:
 
-- Push to a private remote, get CI green, run Docker Compose once on a machine that has Docker.
+- Push to a private remote, get CI green, run Docker Compose once. *Still open:* the repository is not yet published to GitHub, and Docker Desktop needs its first launch by the owner.
 - ~~Fix findings 2, 3, 6, 7, 14 and 16.~~ Done 2026-10-10, together with finding 10 and most of finding 9.
-- Add Ruff for the backend, ESLint and Prettier for the frontend; reformat the frontend once in a single commit.
-- Add one Playwright smoke test: sign in, register a patient, record a visit, sign out.
+- ~~Add Ruff for the backend, ESLint and Prettier for the frontend; reformat the frontend once in a single commit.~~ Done 2026-10-11.
+- ~~Add one Playwright smoke test: sign in, register a patient, record a visit, sign out.~~ Done 2026-10-11 (`npm run e2e`).
 
 Step 2, the missing foundation:
 
@@ -156,8 +156,9 @@ Exit: staff can register, find by name, phone or scan, open and update patient r
 ### Phase 3: Clinical records (mostly built)
 
 - **Draft, finalise, amend** for visits (finding 5). Drafts are stored on the server under the same protection as records. A finalised visit is immutable; an amendment is a new record that points at it.
-- **Homeopathic case-taking.** Sections for the presenting complaint, mentals, physical generals, particulars with modalities, past and family history, and a follow-up form that records the response to the previous prescription. Free text stays available in every section.
-- **Structured symptoms** (`Symptom`, `EncounterSymptom`) alongside free text, so later phases can search and link to rubrics.
+- **The visit page, as the owner described it**: a "remember about the patient" box, the complaint, the doctor's notes, then prescribing. It is deliberately simpler than textbook case-taking sections (mentals, generals, particulars); those are not built unless the doctor asks for them.
+- **Prescribing by envelope** (model still being settled with the owner in the mockups work): one envelope is one mix with one dosage line, and a visit can have several envelopes. Each envelope gets one label. The current `Prescription` and `PrescriptionItem` tables will be reshaped to match once the owner confirms.
+- **Structured symptoms** (`Symptom`, `EncounterSymptom`) are deferred to Phase 6, where the library needs them; the visit page stays free text.
 - **Medicine catalogue, minimal**: the `Medicine` and `MedicineAlias` tables with name, abbreviation and potency scales, used for prescription autocomplete and the `medicine_id` link. Prescriptions still store the snapshot. The full library stays in Phase 6.
 - **Personal notes about the patient**: a doctor-only place, visible while taking the visit, for what helps the doctor remember the person, kept apart from clinical notes so it is never mistaken for history or printed.
 - **Dosage instructions as their own field** on each prescription, written for the patient ("twice, 4 tabs before meals") with dosage units, because this is the only prescription text that leaves the clinic.
@@ -175,7 +176,7 @@ Exit: the doctor completes a full day of synthetic consultations without leaving
 ### Phase 4: Billing and printing
 
 - **Job queue and outbox**, built once here and reused by Phases 5 to 7.
-- **Billing data**: invoice drafted from a finalised visit without choosing the patient again. The doctor's dispensed medicines are one line with no remedy names. Shelf medicines, consumables and supplements come from a product list with prices and are separate lines. Discounts, and tax from clinic settings once the GST treatment is confirmed.
+- **Billing data**: invoice drafted from a finalised visit without choosing the patient again. The doctor's dispensed medicines are one line with no remedy names. Shelf medicines, consumables and supplements come from a product list with prices and are separate lines; product sales are in scope from the first billing release. Whether the clinic is GST-registered is still an open question with the owner. Discounts, and tax from clinic settings once the GST treatment is confirmed.
 - **Invoice lifecycle** exactly as the original section 19: draft, issued, partially paid, paid, void, refunded. Issued invoices are immutable snapshots with gapless numbering per clinic and financial year. Corrections are credit notes, never edits.
 - **Payments** are recorded, not processed: cash, card, bank transfer or local instant payment, including part payments.
 - **Templates separate from data**: invoice, prescription and label templates are versioned, and each issued document records which version rendered it.

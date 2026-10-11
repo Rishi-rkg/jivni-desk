@@ -55,6 +55,18 @@ Compose applies migrations on development startup. Named volumes preserve Postgr
 
 See [initial verification results](docs/verification.md) for the checks actually run and the Docker limitation on the verification host.
 
+Without Docker, from the repository root (PostgreSQL 16 installed; the script keeps a private development database in `.tools/`):
+
+```sh
+python scripts/dev_db.py test          # backend suite on PostgreSQL, including trigger tests
+python scripts/dev_db.py stop          # stop the development database
+cd backend && ruff check . && ruff format --check .
+cd frontend && npm run lint && npm run format:check && npm test && npm run build
+cd frontend && npm run e2e             # browser test: starts its own backend, database and frontend
+```
+
+With Docker Compose:
+
 ```sh
 docker compose exec backend python manage.py test --settings=config.test_settings
 docker compose exec -e TEST_DATABASE=postgres backend python manage.py test --settings=config.test_settings

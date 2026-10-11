@@ -46,6 +46,21 @@ The browser check confirmed: a date of birth of the clinic's today was accepted 
 
 CI has still never run because the repository has no remote.
 
+## Tooling and PostgreSQL (2026-10-11)
+
+| Check | Result |
+| --- | --- |
+| Backend suite on PostgreSQL 16.15 | 73 passed, none skipped. This is the first PostgreSQL run of migrations `accounts.0003`, `audit.0002` and `records.0003` to `0005`, including the guard triggers on patient codes and demographic history |
+| Fast SQLite backend suite | 73 tests: 69 passed, 4 PostgreSQL-only checks skipped |
+| Ruff lint and format check | Clean. Migration files are byte-identical to before linting |
+| ESLint, Prettier check, TypeScript build | Clean |
+| Frontend unit tests | 13 passed |
+| Browser end-to-end (Playwright, Chromium, 1366 × 768) | 2 passed against a fresh PostgreSQL database: sign in, register a patient and see the card code, record a visit with a prescription, find it in the audit log, sign out; and a refused wrong password |
+| Docker Compose | **Not run.** Docker Desktop 4.94 is installed but has not been started; its first launch and licence acceptance are the owner's |
+| CI | **Never run.** The repository has not been published to GitHub. The new lint and end-to-end CI jobs are therefore unverified |
+
+PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
+
 ## Phase 2 groundwork (2026-10-10)
 
-Patient codes, scan lookup, reissue, WhatsApp number, duplicate check and demographic history: 70 backend tests, 67 passed and 3 PostgreSQL-only trigger checks skipped; 13 frontend tests passed; TypeScript build passed; no migration drift. The data migration that issues codes to existing patients was run forwards and backwards on a throwaway SQLite database. **Not verified on PostgreSQL:** migration `0005_patient_code_guards` attaches the two existing guard functions to the new tables with the same statement form as migration `0002`, but it has not been executed against PostgreSQL.
+Patient codes, scan lookup, reissue, WhatsApp number, duplicate check and demographic history: 70 backend tests, 67 passed and 3 PostgreSQL-only trigger checks skipped; 13 frontend tests passed; TypeScript build passed; no migration drift. The data migration that issues codes to existing patients was run forwards and backwards on a throwaway SQLite database. **Not verified on PostgreSQL:** migration `0005_patient_code_guards` attaches the two existing guard functions to the new tables with the same statement form as migration `0002`, but it had not been executed against PostgreSQL at that time. It passed on 2026-10-11; see above.
