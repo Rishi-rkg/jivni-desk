@@ -13,7 +13,7 @@ A new clinical table must be added to the lists below AND to a new PostgreSQL mi
 """
 
 from django.db import connections
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, pre_migrate
 
 # Rows may be added but never changed or removed.
 APPEND_ONLY_TABLES = [
@@ -72,6 +72,24 @@ def install_sqlite_guards(using="default"):
             cursor.execute(statement)
 
 
+def remove_sqlite_guards(using="default"):
+    """Take the SQLite guards off for the length of a migration.
+
+    SQLite changes a table by building a new one and renaming it, and refuses the rename while any
+    trigger mentions a table that is missing at that moment (the observation guard reads the visit
+    table). The guards go back on as soon as the migration finishes; see install_sqlite_guards.
+    """
+    connection = connections[using]
+    if connection.vendor != "sqlite":
+        return
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT name FROM sqlite_master WHERE type = 'trigger'")
+        for (name,) in cursor.fetchall():
+            if not name.startswith("guard_"):
+                continue
+            cursor.execute(f'DROP TRIGGER IF EXISTS "{name}"')
+
+
 def guarded_tables(using="default"):
     """{table: set of trigger names} as the database reports them. Used by tests and health checks."""
     connection = connections[using]
@@ -86,9 +104,14 @@ def guarded_tables(using="default"):
     return found
 
 
+def _before_migrate(sender, using, **kwargs):
+    remove_sqlite_guards(using)
+
+
 def _after_migrate(sender, using, **kwargs):
     install_sqlite_guards(using)
 
 
 def connect():
+    pre_migrate.connect(_before_migrate, dispatch_uid="records.remove_sqlite_guards")
     post_migrate.connect(_after_migrate, dispatch_uid="records.install_sqlite_guards")

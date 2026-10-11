@@ -141,7 +141,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PatientNote
-        fields = ["id", "patient", "body", "author_name", "amends", "created_at"]
+        fields = ["id", "patient", "kind", "body", "author_name", "amends", "created_at"]
         read_only_fields = ["id", "author_name", "created_at"]
 
     def validate(self, attrs):
@@ -185,8 +185,13 @@ class PrescriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prescription
-        fields = ["id", "instructions", "items", "created_at"]
+        fields = ["id", "instructions", "dosage_line", "dosage", "items", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+    def validate_dosage(self, value):
+        if not isinstance(value, dict) or len(value) > 12 or any(len(str(key)) > 40 or len(str(item)) > 100 for key, item in value.items()):
+            raise serializers.ValidationError("Dosage parts must be a short set of named values.")
+        return value
 
 
 class EncounterSerializer(serializers.ModelSerializer):
@@ -207,6 +212,8 @@ class EncounterSerializer(serializers.ModelSerializer):
             "assessment",
             "internal_notes",
             "follow_up_date",
+            "visit_type",
+            "progress",
             "observations",
             "prescriptions",
             "created_at",

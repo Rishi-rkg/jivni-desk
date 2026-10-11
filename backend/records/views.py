@@ -121,7 +121,10 @@ class PatientViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         patient = self.get_object()
         # Timeline summary is bounded; full collections have paginated endpoints.
         encounters = patient.encounters.select_related("clinician").prefetch_related("observations", "prescriptions__items")[:50]
-        notes = patient.notes.select_related("author").order_by("-created_at", "id")[:50]
+        notes = patient.notes.select_related("author").order_by("-created_at", "id")
+        if self.member.role_id not in CLINICAL_WRITE:
+            notes = notes.exclude(kind=PatientNote.Kind.REMEMBER)
+        notes = notes[:50]
         self.event("patient.timeline", patient)
         return Response(
             {
@@ -296,6 +299,12 @@ class NoteViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, ClinicViewSet)
             except ValueError:
                 raise serializers.ValidationError({"patient": "Invalid patient ID."}) from None
             queryset = queryset.filter(patient_id=patient_id)
+        # "Remember about the patient" notes are for doctors only, whatever is asked for.
+        if self.member.role_id not in CLINICAL_WRITE:
+            queryset = queryset.exclude(kind=PatientNote.Kind.REMEMBER)
+        kind = self.request.query_params.get("kind")
+        if kind in PatientNote.Kind.values:
+            queryset = queryset.filter(kind=kind)
         return queryset
 
     def list(self, request, *args, **kwargs):

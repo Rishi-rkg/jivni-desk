@@ -108,4 +108,11 @@ class DatabaseGuardTests(TestCase):
             cursor.execute("DROP TRIGGER guard_append_only_delete_records_patientnote")
         self.assertNotIn("guard_append_only_delete_records_patientnote", guards.guarded_tables()["records_patientnote"])
         guards.install_sqlite_guards()  # what runs after every migrate
+        # Before a migrate they all come off (SQLite cannot rebuild a table while a trigger mentions it) ...
+        guards.remove_sqlite_guards()
+        self.assertEqual(guards.guarded_tables(), {})
+        # ... and afterwards every one is back.
+        guards.install_sqlite_guards()
+        for table in guards.APPEND_ONLY_TABLES + guards.IDENTITY_TABLES:
+            self.assertTrue(guards.guarded_tables().get(table), table)
         self.assertIn("guard_append_only_delete_records_patientnote", guards.guarded_tables()["records_patientnote"])

@@ -202,8 +202,15 @@ class PatientRevision(AppendOnlyRecord):
 
 
 class PatientNote(AppendOnlyRecord):
+    class Kind(models.TextChoices):
+        CLINICAL = "clinical", "Clinical note"
+        # "Remember about the patient": a hobby, a family member, how they like things explained.
+        # For the doctor's eyes only; never printed, sent or shown to other staff.
+        REMEMBER = "remember", "Remember about the patient"
+
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="notes")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.CLINICAL)
     body = models.TextField()
     amends = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
 
@@ -222,6 +229,21 @@ class Encounter(AppendOnlyRecord):
     assessment = models.TextField(blank=True)
     internal_notes = models.TextField(blank=True)
     follow_up_date = models.DateField(null=True, blank=True)
+    visit_type = models.CharField(
+        max_length=14, blank=True, choices=[("first", "First visit"), ("follow_up", "Follow-up"), ("medicine_only", "Medicine only")]
+    )
+    # How the patient has been since the last visit.
+    progress = models.CharField(
+        max_length=14,
+        blank=True,
+        choices=[
+            ("much_better", "Much better"),
+            ("better", "Better"),
+            ("no_change", "No change"),
+            ("worse", "Worse"),
+            ("new_complaint", "New complaint"),
+        ],
+    )
 
     class Meta:
         ordering = ["-occurred_at", "-created_at", "id"]
@@ -257,9 +279,20 @@ class Observation(AppendOnlyRecord):
 
 
 class Prescription(AppendOnlyRecord):
+    """One envelope: one mix of medicines with one dosage line. A visit can have several.
+
+    The medicines in the mix are the items. `dosage_line` is the sentence written for the patient, exactly
+    as it was when the envelope was made up; `dosage` keeps the parts it was built from.
+    """
+
     encounter = models.ForeignKey(Encounter, on_delete=models.PROTECT, related_name="prescriptions")
     prescriber = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     instructions = models.TextField(blank=True)
+    dosage_line = models.CharField(max_length=200, blank=True)
+    dosage = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
 
 
 class PrescriptionItem(AppendOnlyRecord):
@@ -267,8 +300,9 @@ class PrescriptionItem(AppendOnlyRecord):
     # Snapshot text; a future library reference must never rewrite historical prescriptions.
     medicine_name_snapshot = models.CharField(max_length=200)
     potency = models.CharField(max_length=60, blank=True)
-    dose = models.CharField(max_length=100)
-    frequency = models.CharField(max_length=100)
+    # In an envelope the dosage belongs to the whole mix, so these are optional per medicine.
+    dose = models.CharField(max_length=100, blank=True)
+    frequency = models.CharField(max_length=100, blank=True)
     duration = models.CharField(max_length=100, blank=True)
     instructions = models.TextField(blank=True)
     quantity = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
