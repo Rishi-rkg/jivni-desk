@@ -197,7 +197,10 @@ class PlacesAndScheduleTests(BackupTestCase):
         gone = self.place(clinic, "Cloud drive", self.folder / "not-mounted")
         run = backup.run_backup(clinic)
         self.assertTrue(run.ok)
-        self.assertEqual([place["ok"] for place in run.places], [True, True, False])
+        # Places made in the same instant have no fixed order, so compare by name.
+        self.assertEqual(
+            {place["name"]: place["ok"] for place in run.places}, {"This computer": True, "Clinic NAS": True, "Cloud drive": False}
+        )
         self.assertEqual((self.folder / run.file_name).read_bytes(), (second / run.file_name).read_bytes())
         self.assertFalse(list(self.folder.glob("*.partial")) + list(second.glob("*.partial")))
         nas.refresh_from_db()
