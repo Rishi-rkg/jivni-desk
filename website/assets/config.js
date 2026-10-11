@@ -74,15 +74,15 @@ window.JIVNI = {
       license: null,
     },
     {
-      // NOT CLEARED FOR PUBLISHING: edited from an image on mobiletransaction.org
-      // that has no stock licence. Replace or license before the site goes live.
+      // The owner traced the source image on 2026-10-11 and found it is
+      // Creative Commons with no attribution required. Credited anyway.
       id: "doctor-scan",
       src: "assets/media/doctor-scan.jpg",
       alt: "A doctor pointing a handheld barcode scanner at a small paper envelope",
       brief: "Doctor scanning a prescription envelope",
-      author: "mobiletransaction.org (source image)",
+      author: "the photographer of the source image, as published on mobiletransaction.org",
       source: "https://www.mobiletransaction.org/wp-content/uploads/2022/05/barcode-scanner-retail-example.jpg",
-      license: "no licence obtained",
+      license: "Creative Commons, no attribution required",
       edited: "clothing, item and background replaced with Qwen Image Edit",
     },
     {
