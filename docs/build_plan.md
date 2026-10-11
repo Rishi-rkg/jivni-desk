@@ -10,21 +10,21 @@ A browser-based clinic operating system for a homeopathy practice, from a solo p
 
 ## 1. Where the project stands
 
-The first two code commits are from 2026-10-06. Work on this plan started on 2026-10-10 with Phase 1 step 1; findings marked *Fixed* in section 2 are done and tested. Current checks (2026-10-11): 179 backend tests pass on both SQLite and PostgreSQL 16, 31 frontend tests, 5 browser end-to-end tests from an empty database, and the GitHub checks and four-platform build are green. Release v0.1.1 exists as a draft with installers and portable builds for Windows x64, macOS Apple silicon, Linux x64 and Linux arm64; the owner ran the Mac build on an M4 and confirmed the menu-bar icon and menu work.
+**Status on 2026-10-11.** Every page and window drawn in `mockups/` is built except those listed under "Missing" below. Checks: 315 backend tests pass on both SQLite and PostgreSQL 16, 90 frontend tests, and 11 browser end-to-end tests that start from an empty database and run against both the development stack and the one-program installed app. `docs/verification.md` records what was run.
 
-**The build did not follow the original phase order.** It skipped most of Phase 1 (encryption, key handling, backups, restore, clinic settings) and went straight to parts of Phases 2 and 3. That is why the application refuses to start outside development mode. The first job is to go back and finish the foundation.
+**The build did not follow the original phase order**, and it still has not finished Phase 1: patient fields are not encrypted. That is why the application refuses to start outside development mode and shows a banner on every screen. Finishing that is the next job.
 
 | Original phase | Built | Missing |
 | --- | --- | --- |
-| 1 Foundation | Login, sessions, six roles, clinic membership, audit events with outcome and source, PostgreSQL schema with append-only triggers, clinic settings, idle lock, audit log screen | Encryption and key handling, recovery key, backup, restore, second factor, password reset, user management screen |
-| 2 Patient MVP | Registration, search, profile, photo upload, notes, timeline, `PatientIdentifier` codes with scan lookup and reissue, `whatsapp_number`, duplicate check and demographic history (API only) | Webcam capture, printed barcode card, screens for editing demographics, duplicate warning and history, spreadsheet import |
-| 3 Clinical records | Visits with complaint, symptoms, history, assessment, internal notes, follow-up date, height and weight, prescriptions with snapshots, prescription history | Structured symptoms, `medicine_id` link and `doctor_notes` on prescription items, attachments, prescription PDF, any way to correct a saved visit |
-| 4 Billing and printing | Interface stubs only | Everything |
-| 5 Appointments and correspondence | Interface stub only | Everything |
-| 6 Knowledge library | Interface stub only | Everything |
-| 7 AI features | Interface stub only | Everything |
+| 1 Foundation | Sign-in, sessions, six roles, audit with outcome and source, append-only triggers on both databases, first-time setup, clinic key with a grant per user and a recovery key, encrypted backups with a read-back check and a restore drill, clinic settings, idle lock, users and roles, one-time passwords, two-step sign-in, recovery from the sign-in page, session revocation, activity log with filters and export | **Encryption of patient fields and files**, search over encrypted data, replacing a clinic key across stored values, independent review, a rehearsed deployment, shared-cache login throttling, audit retention |
+| 2 Patient MVP | Registration with duplicate check, list with filters, record with one timeline, photo with crop, patient code and printed barcode card, scan routing, edit with change history, family, consent, alert, documents, archive, spreadsheet import and export | A bundled face detector for browsers without one |
+| 3 Clinical records | Draft, finalise, amend; envelopes with a dosage builder; products advised; "remember" notes; height, weight, blood pressure, pulse; saved prescription sets; last-visit panel; follow-ups due | Structured symptoms and a medicine catalogue with IDs (waiting on the library), temperature |
+| 4 Billing and printing | Price list, bills, walk-in sales, payments, refunds, credit notes, void, day-end, exports; A4 bill, receipt, prescription, labels, patient card and day sheet through the print window; layouts with versions; print queue | The print agent (not needed while the print window serves), stock control |
+| 5 Appointments and correspondence | Work week, appointments, walk-ins, waiting list, dashboard; consent; templates, rules, approval queue, staff-sent messages, campaigns, noted replies | Automatic sending through the WhatsApp Business Platform, delivery status, incoming replies, the narrow messaging key |
+| 6 Knowledge library | Built in another work stream: Boericke and Kent as text files with a clinic layer and search | See `knowledge/README.md` |
+| 7 AI features | Interface stub only; the switch stays off | Everything |
 
-Also: the repository's home is now `Documents\GitHub\clinic-management`. It has no GitHub remote yet, so CI has never run. Docker Desktop is installed but Compose has not been run.
+Also not built from the screen list: a PIN for unlocking (P56), a separate Dispense page (P28) and the Stock page (P63). The repository is private on GitHub and its checks run on every push. Docker Compose is written but has never been run.
 
 ## 2. Review findings to fix before building more
 
@@ -39,7 +39,7 @@ These come from reading the code. Each is small now and expensive later.
 2. **Dates are judged in UTC.** `TIME_ZONE = "UTC"` in `backend/config/settings.py` and `not_future` in `backend/records/models.py` use the UTC date. A clinic east of UTC cannot enter today's date as a date of birth during its early morning, and follow-up dates are compared against the UTC date of the visit. Add a clinic time zone to clinic settings and use it for every "today" decision. *Fixed 2026-10-10.* `Clinic.time_zone`, `Clinic.today()`.
 3. **`archived_at` is a client-writable field.** `PatientSerializer` accepts any timestamp from any role that can edit demographics, including reception, and the same request can un-archive. Replace it with explicit archive and restore actions limited to owner and clinician, stamped by the server and audited under their own action names. *Fixed 2026-10-10.*
 4. **Demographic history is lost.** A PATCH overwrites fields, and sending `address: null` hard-deletes the address row. The audit log records that a change happened but not what changed. This breaks the original principle that historical records stay historical. *Fixed 2026-10-10 in the API:* every edit writes a `PatientRevision` with old and new values in the same transaction. A screen to view it is still to come.
-5. **A saved visit can never be corrected.** Visits are append-only from the first save, there is no draft state, and only notes support amendments. One typo in a potency is permanent.
+5. **A saved visit can never be corrected.** Visits are append-only from the first save, there is no draft state, and only notes support amendments. One typo in a potency is permanent. *Fixed 2026-10-11:* a visit is a draft until it is finalised, and a finalised visit is corrected by an amendment beside it.
 6. **`internal_notes` is shown to every clinical reader**, including assistants. The original plan calls these doctor-only notes. *Fixed 2026-10-10.* Returned only to owner and clinician.
 
 **Security and audit**
@@ -60,7 +60,7 @@ These come from reading the code. Each is small now and expensive later.
 
 15. **No linting, formatting or type checking** for either side, and no browser end-to-end tests. *Fixed 2026-10-11:* Ruff, ESLint, Prettier and a Playwright smoke test are in place and both sides were reformatted once. Frontend components are written as very long single lines, which makes diffs hard to review.
 16. **Python versions differ**: the local virtual environment is 3.11, Docker and CI use 3.12. *Addressed 2026-10-10:* CI now tests both.
-17. **CI has never run** because nothing has been pushed.
+17. **CI has never run** because nothing has been pushed. *Fixed 2026-10-11:* the repository is private on GitHub and the checks run on every push.
 
 ## 3. Decisions
 

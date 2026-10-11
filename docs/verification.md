@@ -1,4 +1,8 @@
-# Initial MVP verification
+# Verification record
+
+Newest first. The first entry on this page ("Initial MVP") is the oldest and is kept as it was written.
+
+## Initial MVP
 
 Verified on October 6, 2026 (America/New_York) in a Windows development environment.
 
@@ -22,6 +26,39 @@ Only synthetic data was used. The screenshot below records the verified timeline
 ![Synthetic patient timeline](screenshots/patient-timeline.jpg)
 
 Envelope encryption remains unimplemented. The production startup guard and the documented deployment gates remain in force. Test success does not establish production readiness or regulatory compliance.
+
+## Every screen in the mockups (2026-10-11)
+
+Run on the development PC (Windows 11) after the last change of the day.
+
+| Check | Result |
+| --- | --- |
+| Backend suite on SQLite | 315 tests passed |
+| Backend suite on PostgreSQL 16, with the trigger tests | 315 passed, 1 skipped by design |
+| Migrations from a database that already held rows, both engines | Applied; rows kept; guards back in place |
+| Ruff, migration drift | Clean |
+| Frontend: ESLint, Prettier, TypeScript, build | Clean (the build warns that one script file is larger than 500 kB) |
+| Frontend unit tests | 90 passed in 13 files |
+| Browser tests, development stack (Vite, Django, PostgreSQL) | 11 passed, from an empty database |
+| Browser tests, one-program app (waitress, built screens, SQLite) | 11 passed, from an empty data folder |
+| GitHub checks | Green on the last push of the day (see below for two that failed first) |
+
+**What the browser tests do.** Set the clinic up; register patients; record a visit by envelope and amend it; back up and read the backup back; search the library; make a price list, a walk-in sale by scanned barcode and a patient bill with a part payment; print the bill, a receipt, envelope labels, the patient card, a prescription and the day sheet to PDF and check each page count and paper size; import patients from a spreadsheet; save a work week, book by phone number, add a new caller, a walk-in, cancel; write a message from a template, send it through a stand-in for WhatsApp, fail and retry it, run a campaign, note a reply; invite a doctor, sign in with the one-time password, choose a password, set up two-step sign-in with a real code, reset, switch off, make a new recovery key and use it to reset the owner's password.
+
+**Printing was checked as PDF only.** No paper printer and no thermal label printer was available. The label page is 2 × 2 inches (144 × 144 points) and 50 × 25 mm in the PDF; whether a particular label printer feeds it straight has to be tried on that printer with the test label on the Printers page.
+
+**WhatsApp was not contacted.** The tests answer `https://wa.me/` with a stand-in page and check the address the application opens. Opening the real link in WhatsApp was not tried.
+
+**Two-step sign-in** was checked against the published examples of RFC 6238 and with codes computed by the test; no phone app was used.
+
+**Found and fixed while checking.**
+- The development and browser-test server kept one database connection per browser connection and never reused them, so a long run reached PostgreSQL's limit of 100 and requests failed. Connections are now kept open only outside debug mode.
+- The browser tests exceeded the limit of 300 requests a minute per user. The limit stays; the test servers raise it.
+- Two tests took "today" from the computer instead of the clinic and failed for the hours each day when India is a date ahead.
+- One browser test asserts on today's print queue and fails if the clinic's midnight passes between printing and looking (seen once on GitHub at 23:58 India time). Left as it is.
+- On GitHub's machines the visit step once took longer than five seconds; the cause was not established. The step now waits longer, and failed runs keep their traces.
+
+**Not checked.** Docker Compose. macOS and arm64 builds. The installers built from this state (the last installers are v0.1.1). Real patient data, which the application still refuses: no patient field is encrypted yet.
 
 ## Reference library: full Boericke and Kent's Repertory (2026-10-11)
 

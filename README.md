@@ -1,26 +1,25 @@
 # Jivni
 
-Jivni is a clinic workspace for a small homeopathy practice: patient records, visits, prescriptions and encrypted backups, running on the clinic's own computer. Django 5.2 LTS and Django REST Framework own the clinical data and API; PostgreSQL 16 owns persistence; React + TypeScript provide the interface. Docker Compose is the standard local development environment.
+Jivni is a clinic workspace for a small homeopathy practice, from one practitioner to a team of five: patients, visits and prescriptions by envelope, appointments, billing, printing, WhatsApp messages sent by staff, a reference library and encrypted backups, running on the clinic's own computer. Django 5.2 LTS and Django REST Framework own the data and the API; SQLite (the installed app) or PostgreSQL 16 (Docker) owns persistence; React and TypeScript provide the interface.
 
-**This is a production-oriented foundation, not a production deployment. Use synthetic patient data only. Patient fields, photos, local volumes and backups are currently plaintext. Startup rejects production mode until envelope encryption has been implemented and verified.** Passwords are hashed with Argon2; that does not encrypt patient records.
+**Use synthetic patient data only.** The key system, the recovery key and encrypted backups are built, but patient fields and photos are still stored unencrypted in the database and in storage. The application refuses to start outside development mode, and shows a banner on every screen, until field encryption has been built and reviewed. Passwords are hashed with Argon2; that does not encrypt patient records.
 
 ## Included
 
-- Session login/logout, CSRF protection, clinic selection and clinic membership checks on every record request.
-- Clinic, custom UUID user, seeded roles, memberships and immutable patient UUIDs.
-- Patient demographics, address, protected photo upload/storage metadata, append-only notes and amendments.
-- Encounters with symptoms, history, assessment, internal notes, follow-up date, time-stamped height/weight observations, prescriptions and structured medicine snapshots.
-- Versioned REST API, pagination, name/phone/UUID search, audit events for access, writes, refused access and failed sign-ins, each with outcome, source address and request ID.
-- Clinic settings (time zone, address, tax identifier, currency). Dates of birth and follow-ups are judged by the clinic's local date.
-- Idle lock after 15 minutes without activity (`SESSION_IDLE_SECONDS`); the lock screen keeps unsaved work, and active typing keeps the session alive.
-- Clinic settings and audit log screens; archive and restore actions for patients.
-- Login, searchable patient list, registration, patient profile/timeline, photo upload, notes and encounter/prescription entry.
-- Separate, inactive interfaces for billing, WhatsApp correspondence, knowledge, printing, barcode lookup and AI drafting.
-- Committed migrations, model/API tests, frontend workflow tests and PostgreSQL-backed CI configuration.
+Eight tabs, fewer by role: Dashboard, Patients, Appointments, Messages, Billing, Library, Printing, Settings. The owner can switch whole parts off.
 
-No messaging, AI requests, library-based treatment suggestions, billing or printing are enabled. Photo upload is implemented; browser webcam capture is a future addition.
+- **Getting in.** First-time setup with the recovery key shown once; sign-in that also unlocks the clinic's key; two-step sign-in with an authenticator app; a lock screen that keeps unsaved work; "Use recovery key" for an owner who has lost every password.
+- **Patients.** Registration with a duplicate check, photo, message consent and a printed barcode card; a list with filters; one record with a banner, details, alert, family links, documents and a single timeline; every change to details kept; spreadsheet import with a trial run.
+- **Visits.** A draft that saves itself and is seen by doctors only, then finalised and never edited (corrections are amendments beside it). Prescribing by envelope: one mix, one dosage line, one label. Doctor-only "remember about the patient" notes. Height, weight, blood pressure, pulse.
+- **Appointments.** Booking starts from a phone number, then a tapped day and a tapped time inside the clinic's work week; walk-ins and a waiting list; follow-ups due; a day sheet on paper.
+- **Billing.** Price list with product barcodes; bills for a patient or a walk-in buyer; prices that include GST; payments, refunds, credit notes and void; day-end; exports. An issued bill is frozen in the database.
+- **Printing.** Through the computer's own print window, each page at its own paper size: A4 bill, receipt and prescription, 2 inch envelope labels, the patient card, the day sheet. "Save as PDF" gives a PDF.
+- **Messages.** Prepared by rule, from a template or by hand; approved by a doctor or the owner; then opened in WhatsApp for a person to press Send. Nothing is sent by itself. Consent is checked twice; a sent message is frozen.
+- **Library.** Boericke's Materia Medica and Kent's Repertory as searchable text, with the clinic's own layer over them.
+- **Settings.** Clinic details and logo, work week, price list, users and roles, switches, messaging, print layouts, security, encrypted backups with a read-back check, activity log with filters and export, import and export.
+- **One scan service.** A patient card opens the patient from anywhere; a product pack goes to the open bill or starts one.
 
-The interface now uses a laptop workspace with clinic navigation and patient-specific tabs. See [user flows and UX decisions](docs/user-experience.md) for the dashboard, visit workflow, navigation and draft behavior.
+Not built: encryption of patient fields; sending WhatsApp messages automatically, with delivery status and incoming replies; a helper for a label printer (the print window is used instead); a PIN for unlocking; a separate Dispense page; stock control; AI drafting. The last two have switches that stay off.
 
 ## Run it as one program
 
@@ -100,7 +99,7 @@ Opening a backup needs a staff password, or the recovery key with `--recovery-ke
 
 ## Checks
 
-See [initial verification results](docs/verification.md) for the checks actually run and the Docker limitation on the verification host.
+See [the verification record](docs/verification.md) for the checks actually run, newest first, and what was not checked.
 
 Without Docker, from the repository root (PostgreSQL 16 installed; the script keeps a private development database in `.tools/`):
 
@@ -152,16 +151,16 @@ Photo storage uses Django's replaceable storage backend. JPEG/PNG uploads are si
 
 ## Roles
 
-| Role | View demographics | Edit demographics/photos | View clinical history | Create notes/encounters | View audit |
-| --- | --- | --- | --- | --- | --- |
-| Owner | Yes | Yes | Yes | Yes | Yes |
-| Clinician | Yes | Yes | Yes | Yes | No |
-| Clinical assistant | Yes | Yes | Yes | No | No |
-| Reception | Yes | Yes | No | No | No |
-| Billing | Yes | No | No | No | No |
-| Administrator | Yes | No | No | No | Yes |
+| Role | Patients' details | Clinical records | Visits and prescriptions | Appointments | Bills and payments | Messages | Settings |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Owner | Edit | Read | Write | Yes | Everything, including corrections | Approve and send | Everything |
+| Doctor (`clinician`) | Edit | Read | Write | Yes | Bills | Approve and send | Own account |
+| Clinical assistant | Edit | Read | No | Yes | No | No | Own account |
+| Reception | Edit | No | No | Yes | Bills and payments | Prepare, send what was approved | Own account |
+| Billing | Read | No | No | No | Everything, including corrections and day-end | No | Own account |
+| Administrator | No patient records | No | No | No | Price list only | Templates and rules | Clinic details, work week, layouts, activity log |
 
-Role permissions are centrally defined in `accounts/access.py`; frontend checks only improve usability. The backend remains authoritative. Administrators are not automatically clinicians. Production will need more granular permissions and operator provisioning controls.
+Role sets live in `backend/accounts/access.py`; the screens only hide what the server would refuse. Users and roles, switches, security, backups and import are the owner's alone. A clinic always keeps at least one owner.
 
 ## API quick reference
 
@@ -187,7 +186,24 @@ Role permissions are centrally defined in `accounts/access.py`; frontend checks 
 | `/api/v1/notes/` | GET, POST | Append notes/amendments; `patient`, `page` filters |
 | `/api/v1/encounters/` | GET, POST | Nested encounter entry; `patient`, `page` filters |
 | `/api/v1/encounters/{id}/` | GET | Encounter with observations/prescriptions |
-| `/api/v1/audit-events/` | GET | Clinic-scoped audit; owner/admin only; `outcome`, `page` filters |
+| `/api/v1/audit-events/` | GET | Clinic-scoped audit; owner/admin only; `outcome`, `actor`, `about`, `from`, `to`, `page` filters |
+| `/api/v1/auth/two-step/start/`, `/confirm/`, `/off/` | POST | Set up or turn off your own two-step sign-in |
+| `/api/v1/auth/recover/` | POST | An owner's new password from the recovery key, which is then replaced; no sign-in needed, few attempts allowed |
+| `/api/v1/clinic/users/`, `/users/{id}/`, `/users/{id}/{reset-password,sign-out,two-step-off}/` | GET, POST, PATCH | Users and roles; owner only. An invitation or reset answers once with a one-time password |
+| `/api/v1/clinic/security/`, `/recovery-key/`, `/sessions/end/` | GET, POST | The Security page: a new recovery key, sign everyone out |
+| `/api/v1/dashboard/` | GET | The day's figures and queue, by role |
+| `/api/v1/patients/{id}/feed/`, `/consent/`, `/family/`, `/documents/`, `/measurements/` | GET, POST | The record's timeline and its parts |
+| `/api/v1/patients/import/`, `/export/` | POST, GET | Spreadsheet import with a trial run; export. Owner only |
+| `/api/v1/visit-drafts/`, `/api/v1/encounters/{id}/amendments/`, `/api/v1/prescription-sets/` | GET, POST, PUT, DELETE | Drafts, amendments and saved sets |
+| `/api/v1/work-days/`, `/work-days/templates/` | GET, POST, PUT | The work week, a month at a time, and up to four saved weeks |
+| `/api/v1/appointments/` and its `slots/`, `by-phone/`, `quick-patient/`, `follow-ups/`, `{id}/{arrive,seen,cancel,no-show,reschedule}/` | GET, POST | The diary |
+| `/api/v1/price-items/`, `/api/v1/invoices/` and its `find/`, `from-visit/`, `{id}/{issue,payments,refund,credit-note,void}/`, `/api/v1/payments/`, `/api/v1/billing/{summary,day-end,export}/` | GET, POST, PATCH | Billing |
+| `/api/v1/print-templates/`, `/api/v1/print-data/...`, `/api/v1/print-jobs/` | GET, POST, PUT | Layouts, what each print page needs, and the print queue |
+| `/api/v1/messages/` and its `counts/`, `preview/`, `bulk/`, `replies/`, `{id}/{approve,send,discard,failed,retry,handled}/` | GET, POST, PATCH | The message queue. `send/` marks a message sent and answers with the WhatsApp link |
+| `/api/v1/message-templates/`, `/message-rules/`, `/message-campaigns/` | GET, POST, PATCH | Wording, when messages are prepared, and campaigns |
+| `/api/v1/documents/`, `/api/v1/documents/{id}/` | GET | Patients' documents across the clinic, and one document |
+| `/api/v1/audit-events/people/`, `/export/` | GET | The people in the log, and the log as a spreadsheet |
+| `/api/v1/knowledge/...` | GET, POST | The reference library; see `knowledge/README.md` |
 | `/api/v1/clinic/` | GET, PATCH | Clinic settings; any member reads, owner/admin change |
 | `/api/v1/backups/` | GET | Backup status, schedule, places and recent backups; owner only |
 | `/api/v1/backups/places/`, `/places/{id}/` | POST, DELETE | Add or remove a folder to save backups to; files already there are kept |
@@ -205,13 +221,12 @@ Read [the security architecture](docs/security-architecture.md), [the envelope-e
 
 ## Next milestones
 
-1. Implement and independently review authenticated envelope encryption for fields and files; key wrapping, rotation, recovery, encrypted backups and restore drills. Remove the production startup guard only after those gates pass.
-2. Add MFA, password reset/account recovery, shared throttling cache, stricter provisioning, patient access authorization and granular role controls.
-3. Introduce formal encounter finalization/amendments, encrypted demographic revisions, concurrency controls, consent records, document attachments and webcam capture.
-4. Add clinic settings, appointments, validated patient import/export and tested backup/restore operations.
-5. Implement billing with immutable issued snapshots, document rendering and private delivery.
-6. Add consent-aware WhatsApp drafts/approval queues, source-attributed medicine reference revisions, printing and opaque barcode identifiers through the existing interfaces.
-7. Consider AI drafting only after provider contracts, data minimization and clinician approval workflows exist.
+1. Encrypt patient fields and files with the key system that is already built, settle how search works over encrypted data, and have the encryption reviewed by someone who did not write it. Only then is the startup guard removed.
+2. Run Docker Compose end to end and write the deployment up as rehearsed steps.
+3. Sign the installers, and build macOS and arm64 on those machines.
+4. Send WhatsApp messages automatically through the official Business Platform, with delivery status and incoming replies.
+5. Smaller pieces left from the screen designs: a PIN for unlocking, a Dispense page for the assistant, stock control.
+6. AI drafting, only if the owner wants it, and only with a provider agreement and a view of exactly what is sent.
 
 ## Technical references
 

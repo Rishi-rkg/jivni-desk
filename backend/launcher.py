@@ -25,7 +25,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 APP_NAME = "Jivni"
-VERSION = "0.1.1"
+VERSION = "0.2.0"
 DEFAULT_PORT = 8765
 BACKUP_CHECK_SECONDS = 300
 log = logging.getLogger("jivni.launcher")
