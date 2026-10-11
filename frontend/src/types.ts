@@ -46,6 +46,7 @@ export interface Patient {
 export interface Note {
   id: string;
   patient: string;
+  kind?: 'clinical' | 'remember';
   body: string;
   author_name: string;
   amends: string | null;
@@ -71,6 +72,7 @@ export interface PrescriptionItem {
 export interface Prescription {
   id?: string;
   instructions: string;
+  dosage_line?: string;
   items: PrescriptionItem[];
 }
 export interface Encounter {
@@ -84,6 +86,8 @@ export interface Encounter {
   assessment: string;
   internal_notes?: string;
   follow_up_date: string | null;
+  visit_type?: string;
+  progress?: string;
   observations: Observation[];
   prescriptions: Prescription[];
 }

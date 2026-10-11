@@ -13,7 +13,8 @@ import {
   canWriteDemographics,
   displayName,
 } from './types';
-import { NewPatient, PatientProfile, NewEncounter } from './PatientScreens';
+import { NewPatient, PatientProfile } from './PatientScreens';
+import { NewEncounter } from './VisitScreen';
 import { Brand, ErrorMessage } from './components';
 import { Dashboard, BillingPlaceholder } from './WorkspaceScreens';
 import { DraftStateContext } from './useUnsavedChanges';

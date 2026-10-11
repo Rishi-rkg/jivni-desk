@@ -1,14 +1,12 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from './api';
 import { ErrorMessage } from './components';
 import {
   Encounter,
   Note,
-  Observation,
   Page,
   Patient,
-  PrescriptionItem,
   Role,
   canReadClinical,
   canWriteClinical,
@@ -17,7 +15,6 @@ import {
 } from './types';
 import { BillingPlaceholder } from './WorkspaceScreens';
 import { useUnsavedChanges } from './useUnsavedChanges';
-import { RemedySearch } from './Library';
 
 export function NewPatient() {
   const [error, setError] = useState('');
@@ -200,16 +197,20 @@ function EncounterCard({ encounter: e, expanded = false }: { encounter: Encounte
         )}
         {e.prescriptions.map((rx) => (
           <div className="prescription" key={rx.id}>
-            <h4>Prescription</h4>
+            <h4>{rx.dosage_line ? `Envelope: ${rx.dosage_line}` : 'Prescription'}</h4>
             {rx.items.map((item) => (
               <p key={item.id}>
                 <strong>
                   {item.medicine_name_snapshot} {item.potency}
-                </strong>{' '}
-                — {item.dose}, {item.frequency}
-                {item.duration && `, ${item.duration}`}
-                <br />
-                {item.instructions}
+                </strong>
+                {(item.dose || item.frequency) &&
+                  ` — ${[item.dose, item.frequency, item.duration].filter(Boolean).join(', ')}`}
+                {item.instructions && (
+                  <>
+                    <br />
+                    {item.instructions}
+                  </>
+                )}
                 {item.quantity && ` · Quantity: ${item.quantity}`}
               </p>
             ))}
@@ -649,233 +650,6 @@ export function PatientProfile({ role }: { role: Role }) {
           {tab === 'billing' && <BillingPlaceholder patientName={displayName(patient)} />}
         </section>
       </div>
-    </>
-  );
-}
-
-const blankItem = (): PrescriptionItem => ({
-  medicine_name_snapshot: '',
-  potency: '',
-  dose: '',
-  frequency: '',
-  duration: '',
-  instructions: '',
-  quantity: null,
-});
-
-export function NewEncounter({ role }: { role: Role }) {
-  const { id } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [items, setItems] = useState<PrescriptionItem[]>([]);
-  const [dirty, setDirty] = useState(false);
-  const { allowNavigation, prompt } = useUnsavedChanges(dirty || !!items.length);
-  useEffect(() => {
-    const controller = new AbortController();
-    if (canWriteClinical(role))
-      api<Patient>(`patients/${id}/`, { signal: controller.signal })
-        .then(setPatient)
-        .catch((e) => {
-          if (e.name !== 'AbortError') setError(e.message);
-        });
-    return () => controller.abort();
-  }, [id, role]);
-  if (!canWriteClinical(role)) return <Navigate to={`/patients/${id}`} replace />;
-  function updateItem(index: number, field: keyof PrescriptionItem, value: string) {
-    setItems((old) =>
-      old.map((item, i) =>
-        i === index ? { ...item, [field]: field === 'quantity' ? (value ? Number(value) : null) : value } : item,
-      ),
-    );
-  }
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError('');
-    setBusy(true);
-    const data = new FormData(event.currentTarget);
-    const observations: Observation[] = [];
-    for (const kind of ['height', 'weight'] as const)
-      if (data.get(kind))
-        observations.push({ kind, value: String(data.get(kind)), unit: kind === 'height' ? 'cm' : 'kg' });
-    const occurredAt = new Date(String(data.get('occurred_at'))).toISOString();
-    const payload = {
-      patient: id,
-      occurred_at: occurredAt,
-      chief_complaint: data.get('chief_complaint'),
-      symptoms: data.get('symptoms'),
-      history: data.get('history'),
-      assessment: data.get('assessment'),
-      internal_notes: data.get('internal_notes'),
-      follow_up_date: data.get('follow_up_date') || null,
-      observations: observations.map((o) => ({ ...o, measured_at: occurredAt })),
-      prescriptions: items.length ? [{ instructions: data.get('prescription_instructions') || '', items }] : [],
-    };
-    try {
-      await api('encounters/', { method: 'POST', body: JSON.stringify(payload) });
-      allowNavigation.current = true;
-      navigate(`/patients/${id}?tab=visits`, { state: { ...location.state, message: 'Visit saved.' } });
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  const localNow = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  return (
-    <>
-      {prompt}
-      <Link state={location.state} to={`/patients/${id}?tab=visits`}>
-        ← Patient record
-      </Link>
-      <div className="heading profile-heading">
-        <div>
-          <h1>New visit</h1>
-          {patient && (
-            <p>
-              {displayName(patient)} · Born {patient.date_of_birth}
-            </p>
-          )}
-        </div>
-        <span className="muted">{dirty || items.length ? 'Unsaved visit' : 'New consultation'}</span>
-      </div>
-      <ErrorMessage message={error} />
-      <form className="stack visit-form" onChangeCapture={() => setDirty(true)} onSubmit={submit}>
-        <div className="visit-layout">
-          <section className="panel stack">
-            <h2>Consultation</h2>
-            <label>
-              Visit date and time
-              <input name="occurred_at" type="datetime-local" required defaultValue={localNow} max={localNow} />
-            </label>
-            <label>
-              Chief complaint
-              <textarea name="chief_complaint" required rows={2} />
-            </label>
-            <div className="clinical-grid">
-              <label>
-                Symptoms
-                <textarea name="symptoms" rows={4} />
-              </label>
-              <label>
-                History of illness
-                <textarea name="history" rows={4} />
-              </label>
-              <label>
-                Assessment
-                <textarea name="assessment" rows={4} />
-              </label>
-              <label>
-                Internal clinical notes
-                <textarea name="internal_notes" rows={4} />
-              </label>
-            </div>
-          </section>
-          <aside className="stack visit-support">
-            <section className="panel">
-              <fieldset>
-                <legend>Observations</legend>
-                <div className="form-grid">
-                  <label>
-                    Height (cm)
-                    <input name="height" type="number" min="0.01" max="99999.99" step="0.01" />
-                  </label>
-                  <label>
-                    Weight (kg)
-                    <input name="weight" type="number" min="0.01" max="99999.99" step="0.01" />
-                  </label>
-                  <label>
-                    Follow-up date
-                    <input name="follow_up_date" type="date" />
-                  </label>
-                </div>
-              </fieldset>
-            </section>
-            <section className="panel">
-              <fieldset>
-                <legend>Prescription</legend>
-                <p className="muted">Add the medicines prescribed during this visit.</p>
-                <details className="remedy-lookup">
-                  <summary>Look up a remedy in the library</summary>
-                  <RemedySearch
-                    chooseLabel="Add to prescription"
-                    onChoose={(remedy) =>
-                      setItems((old) => [...old, { ...blankItem(), medicine_name_snapshot: remedy.name }])
-                    }
-                  />
-                </details>
-                {items.map((item, i) => (
-                  <div className="rx-form" key={i}>
-                    <div className="heading">
-                      <h3>Item {i + 1}</h3>
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => setItems((old) => old.filter((_, j) => j !== i))}
-                      >
-                        Remove item {i + 1}
-                      </button>
-                    </div>
-                    <div className="form-grid">
-                      {(
-                        ['medicine_name_snapshot', 'potency', 'dose', 'frequency', 'duration', 'instructions'] as const
-                      ).map((field) => (
-                        <label key={field}>
-                          {
-                            {
-                              medicine_name_snapshot: 'Medicine name',
-                              potency: 'Potency',
-                              dose: 'Dose',
-                              frequency: 'Frequency',
-                              duration: 'Duration',
-                              instructions: 'Instructions',
-                            }[field]
-                          }
-                          <input
-                            value={item[field]}
-                            required={['medicine_name_snapshot', 'dose', 'frequency'].includes(field)}
-                            onChange={(e) => updateItem(i, field, e.target.value)}
-                          />
-                        </label>
-                      ))}
-                      <label>
-                        Quantity
-                        <input
-                          type="number"
-                          min={1}
-                          step={1}
-                          value={item.quantity ?? ''}
-                          onChange={(e) => updateItem(i, 'quantity', e.target.value)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                ))}
-                <button type="button" className="secondary" onClick={() => setItems((old) => [...old, blankItem()])}>
-                  Add medicine
-                </button>
-                {items.length > 0 && (
-                  <label>
-                    Prescription instructions
-                    <textarea name="prescription_instructions" rows={2} />
-                  </label>
-                )}
-              </fieldset>
-            </section>
-          </aside>
-        </div>
-        <div className="save-bar">
-          <span className="muted">The visit, observations and prescription save together.</span>
-          <div className="actions">
-            <Link state={location.state} to={`/patients/${id}?tab=visits`}>
-              Cancel
-            </Link>
-            <button disabled={busy || !patient || !!patient.archived_at}>{busy ? 'Saving…' : 'Save visit'}</button>
-          </div>
-        </div>
-      </form>
     </>
   );
 }

@@ -27,15 +27,26 @@ test('a clinician signs in, registers a patient, records a visit and signs out',
   await expect(page.getByText(/^PAT-[2-9A-Z]{10}$/)).toBeVisible();
 
   await page.getByRole('link', { name: 'New visit' }).click();
-  await page.getByLabel('Chief complaint').fill('Synthetic complaint for the smoke test');
-  await page.getByLabel('Internal clinical notes').fill('Synthetic internal note');
-  await page.getByRole('button', { name: 'Add medicine' }).click();
+  // Something to remember about the person, kept apart from the clinical record.
+  await page.getByLabel('Add something to remember').fill('Synthetic: teaches dance on weekends');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByText('Synthetic: teaches dance on weekends')).toBeVisible();
+  await page.getByLabel("Complaint, in the patient's words").fill('Synthetic complaint for the smoke test');
+  await page.getByLabel("Doctor's notes for this visit").fill('Synthetic internal note');
+  // One envelope: a mix of two medicines with one dosage line.
+  await page.getByRole('button', { name: 'Add an envelope' }).click();
   await page.getByLabel('Medicine name').fill('Synthetic remedy');
-  await page.getByLabel('Dose').fill('4 pills');
-  await page.getByLabel('Frequency').fill('twice daily');
+  await page.getByRole('button', { name: 'Add a medicine to this mix' }).click();
+  await page.getByLabel('Medicine name').nth(1).fill('Second synthetic remedy');
+  await page.getByLabel('Amount', { exact: true }).fill('4');
+  await page.getByLabel('When', { exact: true }).selectOption('before meals');
+  await page.getByLabel('For', { exact: true }).fill('14');
+  await expect(page.getByText('Label will read: 4 tabs, twice daily before meals · 14 days')).toBeVisible();
+  await page.getByRole('button', { name: '2 weeks' }).click();
   await page.getByRole('button', { name: 'Save visit' }).click();
   await expect(page.getByText('Visit saved.')).toBeVisible();
   await expect(page.getByText('Synthetic complaint for the smoke test').first()).toBeVisible();
+  await expect(page.getByText('Envelope: 4 tabs, twice daily before meals · 14 days')).toBeVisible();
 
   // A barcode scanner types the card code very fast and presses Enter; that opens the patient from anywhere.
   const code = (await page.getByText(/^PAT-[2-9A-Z]{10}$/).textContent()) ?? '';

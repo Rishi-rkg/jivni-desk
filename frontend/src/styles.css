@@ -620,6 +620,42 @@ time {
   width: 40px;
   height: 40px;
 }
+.remember ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.remember li {
+  margin-bottom: 4px;
+}
+.remember-add {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+.remember-add label {
+  flex: 1;
+}
+.medicine-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+.dosage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.label-preview {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  background: white;
+  border: 1px dashed #acbbc3;
+  border-radius: 3px;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

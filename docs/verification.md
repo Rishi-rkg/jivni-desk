@@ -83,6 +83,14 @@ CI has still never run because the repository has no remote.
 
 PostgreSQL note: the Windows installer placed the programs in `C:\Program Files\PostgreSQL\16` but its step that creates the database service failed, most likely because the generated superuser password began with a character the installer's script read as an option. No service exists. Development uses a private database in `.tools/pgdata` started by `scripts/dev_db.py`, which needs no service or admin rights.
 
+## Release v0.1.1 and the envelope visit screen (2026-10-11)
+
+- **GitHub:** the ordinary checks pass. The packaging build passed on Windows x64, macOS Apple silicon, Linux x64 and Linux arm64, each running the browser tests against its own built program, and produced a draft release with eight files. Windows arm64 and Intel Mac were removed after failing: the `cryptography` library has no ready-made build for them.
+- **Mac, by the owner on an M4:** the app opened after allowing it in Privacy & Security (it is unsigned), and the menu-bar icon and its menu worked.
+- **Envelopes and remember notes:** 179 backend tests on SQLite and on PostgreSQL (exit status checked), 31 frontend tests, 5 browser tests including a two-medicine envelope with its dosage line and a remember note.
+- **Migration against existing records:** `records.0006` was run on SQLite and PostgreSQL databases that already held a visit, a note and a prescription; rows were kept and every guard was present afterwards. This check found that the SQLite guards blocked any table rebuild; fixed by removing them before a migration and restoring them after.
+- **Not done:** the Windows and Linux builds in the v0.1.1 draft predate the envelope screen; nobody has used the new visit screen by hand.
+
 ## Jivni: tray application, installers and portable builds (2026-10-11)
 
 *The application was renamed from DocHP to Jivni at this point. Sections below this one were written before the rename and keep the old name and paths.*
