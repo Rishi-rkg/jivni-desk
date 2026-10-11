@@ -5,14 +5,22 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import { Session } from './types';
 
-const session: Session = { user: { id: 'user-id', username: 'doctor', name: '' }, clinic_id: 'clinic-id', memberships: [{ clinic_id: 'clinic-id', clinic_name: 'Test clinic', role: 'clinician' }], csrf_token: 'token' };
-const response = (data: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } }));
+const session: Session = {
+  user: { id: 'user-id', username: 'doctor', name: '' },
+  clinic_id: 'clinic-id',
+  memberships: [{ clinic_id: 'clinic-id', clinic_name: 'Test clinic', role: 'clinician' }],
+  csrf_token: 'token',
+};
+const response = (data: unknown, status = 200) =>
+  Promise.resolve(new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } }));
 function mount(path = '/') {
-  const router = createMemoryRouter([{ path: '*', element: <App/> }], { initialEntries: [path] });
-  render(<RouterProvider router={router}/>);
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] });
+  render(<RouterProvider router={router} />);
   return router;
 }
-beforeEach(() => { vi.restoreAllMocks(); });
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('clinic workflows', () => {
   it('logs in with a CSRF token and shows the patient list', async () => {
@@ -52,9 +60,23 @@ describe('clinic workflows', () => {
   });
 
   it('reception sees demographics without requesting clinical records', async () => {
-    const mock = vi.spyOn(globalThis, 'fetch').mockImplementation(url => {
-      if (String(url).endsWith('me/')) return response({ ...session, memberships: [{ ...session.memberships[0], role: 'reception' }] });
-      return response({ id: 'patient-id', first_name: 'Synthetic', middle_name: '', last_name: 'Patient', date_of_birth: '1990-01-01', gender: 'other', phone: '', email: '', address: null, photos: [], archived_at: null, created_at: '' });
+    const mock = vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
+      if (String(url).endsWith('me/'))
+        return response({ ...session, memberships: [{ ...session.memberships[0], role: 'reception' }] });
+      return response({
+        id: 'patient-id',
+        first_name: 'Synthetic',
+        middle_name: '',
+        last_name: 'Patient',
+        date_of_birth: '1990-01-01',
+        gender: 'other',
+        phone: '',
+        email: '',
+        address: null,
+        photos: [],
+        archived_at: null,
+        created_at: '',
+      });
     });
     mount('/patients/patient-id');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
@@ -63,11 +85,23 @@ describe('clinic workflows', () => {
   });
 
   it('keeps patient context and an unsaved note while switching patient tabs', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(url => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
       const path = String(url);
       if (path.endsWith('me/')) return response(session);
       if (/encounters|notes/.test(path)) return response({ count: 0, next: null, previous: null, results: [] });
-      return response({ id: 'patient-id', first_name: 'Synthetic', middle_name: '', last_name: 'Patient', date_of_birth: '1990-01-01', gender: 'other', phone: '', email: '', address: null, photos: [], archived_at: null });
+      return response({
+        id: 'patient-id',
+        first_name: 'Synthetic',
+        middle_name: '',
+        last_name: 'Patient',
+        date_of_birth: '1990-01-01',
+        gender: 'other',
+        phone: '',
+        email: '',
+        address: null,
+        photos: [],
+        archived_at: null,
+      });
     });
     mount('/patients/patient-id?tab=notes');
     await userEvent.type(await screen.findByLabelText('Add patient note'), 'Unsaved context');
@@ -87,8 +121,20 @@ describe('clinic workflows', () => {
   });
 
   it('preserves the patient search when returning from a record', async () => {
-    const patient = { id: 'patient-id', first_name: 'Synthetic', middle_name: '', last_name: 'Patient', date_of_birth: '1990-01-01', gender: 'other', phone: '', email: '', address: null, photos: [], archived_at: null };
-    vi.spyOn(globalThis, 'fetch').mockImplementation(url => {
+    const patient = {
+      id: 'patient-id',
+      first_name: 'Synthetic',
+      middle_name: '',
+      last_name: 'Patient',
+      date_of_birth: '1990-01-01',
+      gender: 'other',
+      phone: '',
+      email: '',
+      address: null,
+      photos: [],
+      archived_at: null,
+    };
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
       const path = String(url);
       if (path.endsWith('me/')) return response(session);
       if (path.includes('patients/?')) return response({ count: 1, next: null, previous: null, results: [patient] });

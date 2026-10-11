@@ -5,14 +5,36 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import { Role, Session } from './types';
 
-const sessionFor = (role: Role): Session => ({ user: { id: 'user-id', username: 'doctor', name: '' }, clinic_id: 'clinic-id', memberships: [{ clinic_id: 'clinic-id', clinic_name: 'Test clinic', role }], csrf_token: 'token', idle_timeout_seconds: 900 });
-const patient = { id: 'patient-id', first_name: 'Synthetic', middle_name: '', last_name: 'Patient', date_of_birth: '1990-01-01', gender: 'other', phone: '', email: '', address: null, photos: [], archived_at: null, created_at: '' };
+const sessionFor = (role: Role): Session => ({
+  user: { id: 'user-id', username: 'doctor', name: '' },
+  clinic_id: 'clinic-id',
+  memberships: [{ clinic_id: 'clinic-id', clinic_name: 'Test clinic', role }],
+  csrf_token: 'token',
+  idle_timeout_seconds: 900,
+});
+const patient = {
+  id: 'patient-id',
+  first_name: 'Synthetic',
+  middle_name: '',
+  last_name: 'Patient',
+  date_of_birth: '1990-01-01',
+  gender: 'other',
+  phone: '',
+  email: '',
+  address: null,
+  photos: [],
+  archived_at: null,
+  created_at: '',
+};
 const empty = { count: 0, next: null, previous: null, results: [] };
-const response = (data: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } }));
+const response = (data: unknown, status = 200) =>
+  Promise.resolve(new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } }));
 function mount(path: string) {
-  render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App/> }], { initialEntries: [path] })}/>);
+  render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />);
 }
-beforeEach(() => { vi.restoreAllMocks(); });
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('workspace lock', () => {
   it('locks on an expired session, keeps the unsaved note and unlocks with the password', async () => {
@@ -22,10 +44,25 @@ describe('workspace lock', () => {
       const path = String(url);
       if (path.endsWith('me/')) return response(sessionFor('clinician'));
       if (path.endsWith('csrf/')) return response({ csrf_token: 'fresh-token' });
-      if (path.endsWith('login/')) { signedIn = true; logins.push(JSON.parse(options?.body as string)); return response({ ...sessionFor('clinician'), csrf_token: 'new-token' }); }
-      if (path.endsWith('notes/') && options?.method === 'POST') return signedIn
-        ? response({ id: 'note-id', patient: 'patient-id', body: 'Kept through the lock', author_name: '', amends: null, created_at: '2026-01-01T00:00:00Z' }, 201)
-        : response({ detail: 'Authentication credentials were not provided.' }, 401);
+      if (path.endsWith('login/')) {
+        signedIn = true;
+        logins.push(JSON.parse(options?.body as string));
+        return response({ ...sessionFor('clinician'), csrf_token: 'new-token' });
+      }
+      if (path.endsWith('notes/') && options?.method === 'POST')
+        return signedIn
+          ? response(
+              {
+                id: 'note-id',
+                patient: 'patient-id',
+                body: 'Kept through the lock',
+                author_name: '',
+                amends: null,
+                created_at: '2026-01-01T00:00:00Z',
+              },
+              201,
+            )
+          : response({ detail: 'Authentication credentials were not provided.' }, 401);
       if (/encounters|notes/.test(path)) return response(empty);
       return response(patient);
     });
@@ -53,7 +90,10 @@ describe('archive and restore', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation((url, options) => {
       const path = String(url);
       if (path.endsWith('me/')) return response(sessionFor('clinician'));
-      if (options?.method === 'POST') { calls.push(path); return response({ ...patient, archived_at: path.endsWith('archive/') ? '2026-01-02T00:00:00Z' : null }); }
+      if (options?.method === 'POST') {
+        calls.push(path);
+        return response({ ...patient, archived_at: path.endsWith('archive/') ? '2026-01-02T00:00:00Z' : null });
+      }
       if (/encounters|notes/.test(path)) return response(empty);
       return response(patient);
     });
@@ -68,7 +108,9 @@ describe('archive and restore', () => {
   });
 
   it('does not offer archiving to reception', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(url => String(url).endsWith('me/') ? response(sessionFor('reception')) : response(patient));
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) =>
+      String(url).endsWith('me/') ? response(sessionFor('reception')) : response(patient),
+    );
     mount('/patients/patient-id');
     expect(await screen.findByRole('heading', { name: 'Synthetic Patient' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Archive patient' })).not.toBeInTheDocument();
@@ -76,13 +118,25 @@ describe('archive and restore', () => {
 });
 
 describe('clinic administration', () => {
-  const settings = { id: 'clinic-id', name: 'Test clinic', time_zone: 'UTC', address: '', phone: '', email: '', tax_identifier: '', currency: '' };
+  const settings = {
+    id: 'clinic-id',
+    name: 'Test clinic',
+    time_zone: 'UTC',
+    address: '',
+    phone: '',
+    email: '',
+    tax_identifier: '',
+    currency: '',
+  };
 
   it('lets the owner save clinic settings', async () => {
     let saved: Record<string, string> | null = null;
     vi.spyOn(globalThis, 'fetch').mockImplementation((url, options) => {
       if (String(url).endsWith('me/')) return response(sessionFor('owner'));
-      if (options?.method === 'PATCH') { saved = JSON.parse(options.body as string); return response({ ...settings, ...saved }); }
+      if (options?.method === 'PATCH') {
+        saved = JSON.parse(options.body as string);
+        return response({ ...settings, ...saved });
+      }
       return response(settings);
     });
     mount('/settings');
@@ -95,7 +149,9 @@ describe('clinic administration', () => {
   });
 
   it('shows settings read-only to other roles and hides the audit log', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(url => String(url).endsWith('me/') ? response(sessionFor('clinician')) : response(settings));
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) =>
+      String(url).endsWith('me/') ? response(sessionFor('clinician')) : response(settings),
+    );
     mount('/settings');
     expect(await screen.findByLabelText('Clinic name')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Save settings' })).not.toBeInTheDocument();
@@ -104,11 +160,29 @@ describe('clinic administration', () => {
 
   it('shows the owner failed sign-ins in plain words', async () => {
     const requested: string[] = [];
-    vi.spyOn(globalThis, 'fetch').mockImplementation(url => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
       const path = String(url);
       if (path.endsWith('me/')) return response(sessionFor('owner'));
       requested.push(path);
-      return response({ count: 1, next: null, previous: null, results: [{ id: 'event-id', actor: null, actor_username: '', action: 'auth.login_failed', outcome: 'failed', resource_type: 'User', resource_id: '12345678-aaaa-bbbb-cccc-000000000000', source_ip: '127.0.0.1', request_id: null, occurred_at: '2026-01-01T00:00:00Z' }] });
+      return response({
+        count: 1,
+        next: null,
+        previous: null,
+        results: [
+          {
+            id: 'event-id',
+            actor: null,
+            actor_username: '',
+            action: 'auth.login_failed',
+            outcome: 'failed',
+            resource_type: 'User',
+            resource_id: '12345678-aaaa-bbbb-cccc-000000000000',
+            source_ip: '127.0.0.1',
+            request_id: null,
+            occurred_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
     });
     mount('/audit');
     const row = (await screen.findByText('Failed sign-in')).closest('tr')!;

@@ -15,13 +15,17 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       // Patient data must never reach browser storage; drafts live in memory only.
-      'no-restricted-globals': ['error',
+      'no-restricted-globals': [
+        'error',
         { name: 'localStorage', message: 'Patient data must not be stored in the browser.' },
         { name: 'sessionStorage', message: 'Patient data must not be stored in the browser.' },
-        { name: 'indexedDB', message: 'Patient data must not be stored in the browser.' }],
-      'no-restricted-properties': ['error',
+        { name: 'indexedDB', message: 'Patient data must not be stored in the browser.' },
+      ],
+      'no-restricted-properties': [
+        'error',
         { object: 'window', property: 'localStorage', message: 'Patient data must not be stored in the browser.' },
-        { object: 'window', property: 'sessionStorage', message: 'Patient data must not be stored in the browser.' }],
+        { object: 'window', property: 'sessionStorage', message: 'Patient data must not be stored in the browser.' },
+      ],
     },
   },
   { files: ['*.config.{js,ts}', 'e2e/**/*.ts'], languageOptions: { globals: globals.node } },
